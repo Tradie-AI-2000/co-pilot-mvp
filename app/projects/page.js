@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { enhancedProjects, enhancedClients } from "@/services/enhancedMockData";
 import { Search, Filter, Plus, Building, MapPin, Calendar, DollarSign, Briefcase } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 import AddProjectModal from "@/components/AddProjectModal";
 
-export default function ProjectsPage() {
+function ProjectsContent() {
     const [projects, setProjects] = useState(enhancedProjects);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProject, setEditingProject] = useState(null);
@@ -305,5 +305,13 @@ export default function ProjectsPage() {
                 }
             `}</style>
         </div>
+    );
+}
+
+export default function ProjectsPage() {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-screen text-slate-400">Loading projects...</div>}>
+            <ProjectsContent />
+        </Suspense>
     );
 }
