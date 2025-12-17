@@ -26,8 +26,10 @@ export default function Sidebar() {
   return (
     <aside className="sidebar glass-panel">
       <div className="logo-container">
-        <h1 className="logo-text text-gradient">Stellar Co-Pilot</h1>
-        <p className="logo-sub">Labour Hire Edition</p>
+        <div className="logo-image-wrapper">
+          <img src="/images/logo.png" alt="Stellar Co-Pilot" className="logo-img" />
+        </div>
+        <p className="logo-sub neon-gradient">Labour Hire Co-Pilot</p>
       </div>
 
       <nav className="nav-menu">
@@ -75,19 +77,35 @@ export default function Sidebar() {
 
         .logo-container {
           margin-bottom: 2.5rem;
+          text-align: center;
         }
 
-        .logo-text {
-          font-size: 1.5rem;
-          font-weight: 700;
-          margin-bottom: 0.25rem;
+        .logo-image-wrapper {
+             width: 100%;
+             margin-bottom: 0.5rem;
+             display: flex;
+             justify-content: center;
+        }
+
+        .logo-img {
+            max-width: 100%;
+            height: auto;
+            max-height: 80px; /* Adjust based on logo aspect ratio */
         }
 
         .logo-sub {
-          font-size: 0.75rem;
-          color: var(--text-muted);
+          font-size: 0.85rem;
+          font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 1px;
+        }
+        
+        .neon-gradient {
+            background: linear-gradient(90deg, #00f3ff, #ffeb3b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
         }
 
         .nav-menu {

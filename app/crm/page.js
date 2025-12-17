@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { enhancedClients } from "@/services/enhancedMockData";
+import { useData } from "@/context/DataContext";
 import EnhancedClientDetailsModal from "@/components/EnhancedClientDetailsModal";
 import ClientCard from "@/components/ClientCard";
 import AddClientModal from "@/components/AddClientModal";
 import { Search, Filter, Plus, Users, Upload, Download } from "lucide-react";
 
 export default function CRMPage() {
-  const [clients, setClients] = useState(enhancedClients);
+  const { clients, addClient, updateClient } = useData();
   const [selectedClient, setSelectedClient] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
@@ -17,13 +17,12 @@ export default function CRMPage() {
   };
 
   const handleUpdateClient = (updatedClient) => {
-    const updatedList = clients.map(c => c.id === updatedClient.id ? updatedClient : c);
-    setClients(updatedList);
+    updateClient(updatedClient);
     setSelectedClient(updatedClient);
   };
 
   const handleAddClient = (newClient) => {
-    setClients([newClient, ...clients]);
+    addClient(newClient);
     setIsAddModalOpen(false);
   };
 

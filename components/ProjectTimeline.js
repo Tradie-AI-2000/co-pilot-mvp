@@ -20,7 +20,7 @@ export default function ProjectTimeline({ project }) {
             </div>
 
             <div className="phases-wrapper">
-                {project.phases.map((phase, index) => (
+                {(project.phases || []).map((phase, index) => (
                     <div key={index} className={`phase-item ${phase.status.toLowerCase().replace(' ', '-')}`}>
                         <div className="phase-marker">
                             <div className="dot"></div>
@@ -88,7 +88,7 @@ export default function ProjectTimeline({ project }) {
             <div className="signals-section">
                 <h3>Hiring Signals</h3>
                 <div className="signals-grid">
-                    {project.hiringSignals.map((signal, index) => (
+                    {(project.hiringSignals || []).map((signal, index) => (
                         <div key={index} className={`signal-card ${signal.urgency.toLowerCase()}`}>
                             <div className="signal-header">
                                 <span className="role">{signal.role}</span>

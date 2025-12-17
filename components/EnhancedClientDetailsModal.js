@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { enhancedProjects } from "@/services/enhancedMockData";
-import { candidates } from "@/services/mockData";
+import { useData } from "@/context/DataContext";
 import { useRouter } from "next/navigation";
 import { X, Send, CheckSquare, Square, Plus, Calendar, Phone, Coffee, MessageCircle, User, AlertTriangle, HardHat, Truck, MapPin, TrendingUp, Shield, Users, Edit2, Save, Trash2, Mail, DollarSign, Search, Lightbulb, Activity, Check } from "lucide-react";
 
 export default function EnhancedClientDetailsModal({ client, onClose, onUpdate }) {
+    const { projects: availableProjectsMetadata, updateProject, candidates } = useData(); // Renaming to avoid conflict if needed, or just use projects directly
     const [activeTab, setActiveTab] = useState("people");
     const [newNote, setNewNote] = useState("");
     const [newTask, setNewTask] = useState("");
@@ -26,21 +26,68 @@ export default function EnhancedClientDetailsModal({ client, onClose, onUpdate }
 
     const handleLinkProject = () => {
         if (!selectedProjectId) return;
-        const updated = {
+
+        // 1. Update Client (Local & Parent)
+        const updatedClient = {
             ...localClient,
             projectIds: [...(localClient.projectIds || []), selectedProjectId]
         };
-        setLocalClient(updated);
-        onUpdate(updated);
+        setLocalClient(updatedClient);
+        onUpdate(updatedClient);
+
+        // 2. Update Project (Global)
+        const projectToUpdate = availableProjectsMetadata.find(p => p.id === selectedProjectId);
+        if (projectToUpdate) {
+            const updatedProject = {
+                ...projectToUpdate,
+                assignedCompanyIds: [...(projectToUpdate.assignedCompanyIds || []), localClient.id]
+            };
+            updateProject(updatedProject);
+        }
+
         setIsLinking(false);
         setSelectedProjectId("");
     };
 
-    const availableProjects = enhancedProjects.filter(p => !localClient.projectIds?.includes(p.id));
+    const handleUnlinkProject = (projectId) => {
+        // 1. Update Client (Local & Parent)
+        const updatedClient = {
+            ...localClient,
+            projectIds: localClient.projectIds.filter(id => id !== projectId)
+        };
+        setLocalClient(updatedClient);
+        onUpdate(updatedClient);
+
+        // 2. Update Project (Global)
+        const projectToUpdate = availableProjectsMetadata.find(p => p.id === projectId);
+        if (projectToUpdate) {
+            const updatedProject = {
+                ...projectToUpdate,
+                assignedCompanyIds: (projectToUpdate.assignedCompanyIds || []).filter(id => id !== localClient.id)
+            };
+            updateProject(updatedProject);
+        }
+    };
+
+    const availableProjects = availableProjectsMetadata.filter(p => !localClient.projectIds?.includes(p.id));
 
     const updateContact = (index, field, value) => {
         const updatedContacts = [...localClient.keyContacts];
         updatedContacts[index] = { ...updatedContacts[index], [field]: value };
+        setLocalClient({ ...localClient, keyContacts: updatedContacts });
+    };
+
+    const handleAddKeyContact = () => {
+        const newContact = { name: "", role: "", phone: "", influence: "Neutral" };
+        setLocalClient({
+            ...localClient,
+            keyContacts: [...(localClient.keyContacts || []), newContact]
+        });
+    };
+
+    const handleDeleteKeyContact = (index) => {
+        const updatedContacts = [...localClient.keyContacts];
+        updatedContacts.splice(index, 1);
         setLocalClient({ ...localClient, keyContacts: updatedContacts });
     };
 
@@ -74,6 +121,26 @@ export default function EnhancedClientDetailsModal({ client, onClose, onUpdate }
                 [field]: value
             }
         });
+    };
+
+    const updateNetwork = (index, field, value) => {
+        const updatedNetwork = [...(localClient.network || [])];
+        updatedNetwork[index] = { ...updatedNetwork[index], [field]: value };
+        setLocalClient({ ...localClient, network: updatedNetwork });
+    };
+
+    const handleAddNetwork = () => {
+        const newContact = { name: "", relation: "Connection" };
+        setLocalClient({
+            ...localClient,
+            network: [...(localClient.network || []), newContact]
+        });
+    };
+
+    const handleDeleteNetwork = (index) => {
+        const updatedNetwork = [...(localClient.network || [])];
+        updatedNetwork.splice(index, 1);
+        setLocalClient({ ...localClient, network: updatedNetwork });
     };
 
     const handleAddNote = () => {
@@ -124,24 +191,51 @@ export default function EnhancedClientDetailsModal({ client, onClose, onUpdate }
             <div className="modal-content" onClick={e => e.stopPropagation()}>
                 <div className="modal-header">
                     <div>
-                        <h2 className="text-2xl font-bold text-white mb-1">{localClient.name}</h2>
-                        <div className="flex items-center gap-3 text-sm">
-                            <span className="text-slate-400">{localClient.industry}</span>
-                            <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
-                                {localClient.tier || "Standard Client"}
-                            </span>
-                        </div>
+                        {isEditing ? (
+                            <div className="space-y-2">
+                                <input
+                                    className="edit-input font-bold text-2xl w-full"
+                                    value={localClient.name}
+                                    onChange={(e) => setLocalClient({ ...localClient, name: e.target.value })}
+                                />
+                                <div className="flex gap-2">
+                                    <input
+                                        className="edit-input text-sm"
+                                        value={localClient.industry}
+                                        onChange={(e) => setLocalClient({ ...localClient, industry: e.target.value })}
+                                        placeholder="Industry"
+                                    />
+                                    <select
+                                        className="bg-slate-900 border border-slate-700 text-white text-sm rounded-md px-2 outline-none"
+                                        value={localClient.tier || "Standard Client"}
+                                        onChange={(e) => setLocalClient({ ...localClient, tier: e.target.value })}
+                                    >
+                                        <option value="Tier 1">Tier 1</option>
+                                        <option value="Tier 2">Tier 2</option>
+                                        <option value="Standard Client">Standard Client</option>
+                                    </select>
+                                </div>
+                            </div>
+                        ) : (
+                            <>
+                                <h2 className="text-2xl font-bold text-white mb-1">{localClient.name}</h2>
+                                <div className="flex items-center gap-3 text-sm">
+                                    <span className="text-slate-400">{localClient.industry}</span>
+                                    <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+                                        {localClient.tier || "Standard Client"}
+                                    </span>
+                                </div>
+                            </>
+                        )}
                     </div>
                     <div className="flex items-center gap-2">
-                        {activeTab === 'war-room' && (
-                            <button
-                                onClick={isEditing ? handleSave : () => setIsEditing(true)}
-                                className={`action-btn ${isEditing ? 'save' : 'edit'}`}
-                            >
-                                {isEditing ? <Save size={18} /> : <Edit2 size={18} />}
-                                {isEditing ? "Save Changes" : "Edit Details"}
-                            </button>
-                        )}
+                        <button
+                            onClick={isEditing ? handleSave : () => setIsEditing(true)}
+                            className={`action-btn ${isEditing ? 'save' : 'edit'}`}
+                        >
+                            {isEditing ? <Save size={18} /> : <Edit2 size={18} />}
+                            {isEditing ? "Save Changes" : "Edit Details"}
+                        </button>
                         <button onClick={onClose} className="close-btn">
                             <X size={24} />
                         </button>
@@ -190,17 +284,35 @@ export default function EnhancedClientDetailsModal({ client, onClose, onUpdate }
                     {/* TAB 1: KEY PEOPLE */}
                     {activeTab === 'people' && (
                         <div className="space-y-6">
-                            <h3 className="section-title">Key Decision Makers</h3>
+                            <div className="flex justify-between items-center">
+                                <h3 className="section-title">Key Decision Makers</h3>
+                                {isEditing && (
+                                    <button
+                                        onClick={handleAddKeyContact}
+                                        className="flex items-center gap-2 bg-secondary/10 hover:bg-secondary/20 text-secondary px-3 py-1.5 rounded-md transition-colors text-sm font-medium border border-secondary/20"
+                                    >
+                                        <Plus size={14} /> Add Person
+                                    </button>
+                                )}
+                            </div>
                             <div className="grid grid-cols-1 gap-4">
                                 {localClient.keyContacts?.map((contact, idx) => (
                                     <div key={idx} className="contact-card">
                                         <div className="contact-header">
                                             <div className="w-full">
                                                 {isEditing ? (
-                                                    <div className="space-y-2 mb-2">
-                                                        <input className="edit-input font-bold text-lg" value={contact.name} onChange={(e) => updateContact(idx, 'name', e.target.value)} placeholder="Name" />
-                                                        <input className="edit-input text-sm" value={contact.role} onChange={(e) => updateContact(idx, 'role', e.target.value)} placeholder="Role" />
-                                                        <input className="edit-input text-sm" value={contact.phone} onChange={(e) => updateContact(idx, 'phone', e.target.value)} placeholder="Phone" />
+                                                    <div className="flex justify-between items-start">
+                                                        <div className="space-y-2 mb-2 flex-1">
+                                                            <input className="edit-input font-bold text-lg" value={contact.name} onChange={(e) => updateContact(idx, 'name', e.target.value)} placeholder="Name" />
+                                                            <input className="edit-input text-sm" value={contact.role} onChange={(e) => updateContact(idx, 'role', e.target.value)} placeholder="Role" />
+                                                            <input className="edit-input text-sm" value={contact.phone} onChange={(e) => updateContact(idx, 'phone', e.target.value)} placeholder="Phone" />
+                                                        </div>
+                                                        <button
+                                                            onClick={() => handleDeleteKeyContact(idx)}
+                                                            className="text-slate-500 hover:text-red-400 p-2 ml-2"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
                                                     </div>
                                                 ) : (
                                                     <>
@@ -292,11 +404,23 @@ export default function EnhancedClientDetailsModal({ client, onClose, onUpdate }
                             </div>
                             <div className="space-y-4">
                                 {localClient.projectIds?.map(pid => {
-                                    const project = enhancedProjects.find(p => p.id === pid);
+                                    const project = availableProjectsMetadata.find(p => p.id === pid);
                                     if (!project) return null;
 
                                     return (
-                                        <div key={pid} className="project-card glass-panel p-4 hover:border-secondary/50 transition-all cursor-pointer">
+                                        <div key={pid} className="project-card glass-panel p-4 hover:border-secondary/50 transition-all cursor-pointer relative group">
+                                            {isEditing && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleUnlinkProject(pid);
+                                                    }}
+                                                    className="absolute -top-2 -right-2 bg-red-500 text-white p-1.5 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-red-600"
+                                                    title="Unlink Project"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            )}
                                             <div className="flex justify-between items-start mb-3">
                                                 <div>
                                                     <div className="font-bold text-white text-lg mb-1">{project.name}</div>
@@ -347,20 +471,58 @@ export default function EnhancedClientDetailsModal({ client, onClose, onUpdate }
                     {/* TAB 3: THE NETWORK */}
                     {activeTab === 'network' && (
                         <div className="space-y-6">
-                            <h3 className="section-title">Client Network</h3>
+                            <div className="flex justify-between items-center">
+                                <h3 className="section-title">Client Network</h3>
+                                {isEditing && (
+                                    <button
+                                        onClick={handleAddNetwork}
+                                        className="flex items-center gap-2 bg-secondary/10 hover:bg-secondary/20 text-secondary px-3 py-1.5 rounded-md transition-colors text-sm font-medium border border-secondary/20"
+                                    >
+                                        <Plus size={14} /> Add Contact
+                                    </button>
+                                )}
+                            </div>
                             <div className="grid grid-cols-1 gap-4">
                                 {localClient.network?.map((net, idx) => (
-                                    <div key={idx} className="network-card glass-panel p-4 flex justify-between items-center">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold">
-                                                {net.name.substring(0, 2)}
+                                    <div key={idx} className="network-card glass-panel p-4 flex justify-between items-center group">
+                                        <div className="flex items-center gap-3 w-full">
+                                            <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold shrink-0">
+                                                {net.name ? net.name.substring(0, 2) : "??"}
                                             </div>
-                                            <div>
-                                                <div className="font-bold text-white">{net.name}</div>
-                                                <div className="text-xs text-slate-400">{net.relation}</div>
+                                            <div className="w-full">
+                                                {isEditing ? (
+                                                    <div className="flex gap-2 w-full pr-4">
+                                                        <input
+                                                            className="edit-input w-1/2"
+                                                            value={net.name}
+                                                            onChange={(e) => updateNetwork(idx, 'name', e.target.value)}
+                                                            placeholder="Name"
+                                                        />
+                                                        <input
+                                                            className="edit-input w-1/2"
+                                                            value={net.relation}
+                                                            onChange={(e) => updateNetwork(idx, 'relation', e.target.value)}
+                                                            placeholder="Relation"
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <div>
+                                                        <div className="font-bold text-white">{net.name}</div>
+                                                        <div className="text-xs text-slate-400">{net.relation}</div>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
-                                        <button className="text-xs text-slate-400 hover:text-white">View</button>
+                                        {isEditing ? (
+                                            <button
+                                                onClick={() => handleDeleteNetwork(idx)}
+                                                className="text-slate-500 hover:text-red-400 p-2"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        ) : (
+                                            <button className="text-xs text-slate-400 hover:text-white shrink-0">View</button>
+                                        )}
                                     </div>
                                 ))}
                                 {(!localClient.network || localClient.network.length === 0) && (
@@ -472,7 +634,17 @@ export default function EnhancedClientDetailsModal({ client, onClose, onUpdate }
                     {/* TAB: CANDIDATES */}
                     {activeTab === 'candidates' && (
                         <div className="space-y-6">
-                            <h3 className="section-title">Active Candidates</h3>
+                            <div className="flex justify-between items-center">
+                                <h3 className="section-title">Active Candidates</h3>
+                                {isEditing && (
+                                    <button
+                                        onClick={() => router.push('/candidates')}
+                                        className="text-xs bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded border border-slate-700 transition-colors"
+                                    >
+                                        Manage Placements
+                                    </button>
+                                )}
+                            </div>
                             <div className="grid grid-cols-1 gap-4">
                                 {candidates.filter(c => c.currentEmployer === localClient.name).map(candidate => (
                                     <div key={candidate.id} className="glass-panel p-4 flex justify-between items-center">
@@ -502,7 +674,45 @@ export default function EnhancedClientDetailsModal({ client, onClose, onUpdate }
 
                     {/* TAB 5: ACTIVITY */}
                     {activeTab === 'activity' && (
-                        <div className="space-y-6">
+                        <div className="space-y-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div className="tasks-section">
+                                <h3 className="section-title mb-3">Tasks</h3>
+                                <div className="add-task">
+                                    <input
+                                        type="text"
+                                        value={newTask}
+                                        onChange={(e) => setNewTask(e.target.value)}
+                                        placeholder="Add a new task..."
+                                        onKeyDown={(e) => e.key === 'Enter' && handleAddTask()}
+                                    />
+                                    <button onClick={handleAddTask} className="add-btn">
+                                        <Plus size={20} />
+                                    </button>
+                                </div>
+                                <div className="tasks-list">
+                                    {localClient.tasks?.map(task => (
+                                        <div key={task.id} className={`task-item ${task.completed ? 'completed' : ''}`}>
+                                            <button
+                                                className="check-btn"
+                                                onClick={() => toggleTask(task.id)}
+                                            >
+                                                {task.completed ? <CheckSquare size={20} /> : <Square size={20} />}
+                                            </button>
+                                            <span className="task-text">{task.text}</span>
+                                            {task.dueDate && (
+                                                <span className="task-date">
+                                                    <Calendar size={12} />
+                                                    {task.dueDate}
+                                                </span>
+                                            )}
+                                        </div>
+                                    ))}
+                                    {(!localClient.tasks || localClient.tasks.length === 0) && (
+                                        <div className="empty-state">No tasks pending</div>
+                                    )}
+                                </div>
+                            </div>
+
                             <div className="notes-section">
                                 <h3 className="section-title mb-3">Notes</h3>
                                 <div className="add-note">

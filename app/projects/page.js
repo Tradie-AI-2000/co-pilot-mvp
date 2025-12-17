@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { enhancedProjects, enhancedClients } from "@/services/enhancedMockData";
+import { useData } from "@/context/DataContext";
 import { Search, Filter, Plus, Building, MapPin, Calendar, DollarSign, Briefcase } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 import AddProjectModal from "@/components/AddProjectModal";
 
 function ProjectsContent() {
-    const [projects, setProjects] = useState(enhancedProjects);
+    const { projects, addProject, updateProject, clients } = useData();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProject, setEditingProject] = useState(null);
     const searchParams = useSearchParams();
@@ -37,15 +37,10 @@ function ProjectsContent() {
     const handleSaveProject = (projectData) => {
         if (editingProject) {
             // Update existing project
-            setProjects(projects.map(p => p.id === editingProject.id ? { ...p, ...projectData } : p));
+            updateProject({ ...editingProject, ...projectData });
         } else {
             // Create new project
-            const newProject = {
-                id: `P${Date.now()}`,
-                ...projectData,
-                assignedCompanyIds: [] // Default for now
-            };
-            setProjects([newProject, ...projects]);
+            addProject(projectData);
         }
         setIsModalOpen(false);
     };
@@ -98,7 +93,7 @@ function ProjectsContent() {
                                 <span className="label">Assigned Companies:</span>
                                 <div className="company-badges">
                                     {project.assignedCompanyIds?.map(id => {
-                                        const company = enhancedClients.find(c => c.id === id);
+                                        const company = clients.find(c => c.id === id);
                                         return company ? (
                                             <span key={id} className={`company-badge tier-${company.tier}`}>
                                                 {company.name}

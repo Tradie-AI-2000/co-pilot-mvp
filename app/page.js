@@ -1,33 +1,39 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
+import { useData } from "@/context/DataContext"; // Import context
 import StatCard from "@/components/StatCard";
 import ProjectWatchlistCard from "@/components/ProjectWatchlistCard";
 import FocusFeedCard from "@/components/FocusFeedCard";
 import GeospatialMap from "@/components/GeospatialMap";
 import ActivityFeedWidget from "@/components/ActivityFeedWidget";
 import ProjectDetailPanel from "@/components/ProjectDetailPanel";
-import { enhancedClients } from "@/services/enhancedMockData";
 import { getWatchlistProjects } from "@/services/projectService";
 
 export default function PredictiveCommandCenter() {
+  const { candidates, projects, clients } = useData(); // Consume global data
   const [selectedProject, setSelectedProject] = useState(null);
   const [watchlist, setWatchlist] = useState([]);
 
   useEffect(() => {
+    // In a real app, watchlist could also be in context or derived
     setWatchlist(getWatchlistProjects());
   }, []);
 
-  // Mock Data for Scoreboard
+  // Derived Metrics
+  const activePlacements = candidates.filter(c => c.status === "On Job").length; // Real-time count
+  const hotJobs = projects.filter(p => p.status === "Active" || p.status === "Planning").length;
+
+  // Calculated Stats
   const stats = [
     { title: "MTD Billings", value: "$85k", subtext: "vs $70k Target", progress: 85, status: "success", trend: "up" },
     { title: "Activity Pulse", value: "124", subtext: "Calls/Mtgs", progress: 92, status: "purple", trend: "up" },
-    { title: "Active Placements", value: "42", subtext: "+3 this week", progress: 100, status: "neutral", trend: "up" },
+    { title: "Active Placements", value: activePlacements.toString(), subtext: "+3 this week", progress: 100, status: "neutral", trend: "up" },
     { title: "Compliance", value: "98%", subtext: "1 Risk Detected", progress: 98, status: "warning", trend: "down" },
-    { title: "Hot Jobs", value: "8", subtext: "Urgent Priority", progress: 60, status: "danger", trend: "up" }
+    { title: "Hot Jobs", value: hotJobs.toString(), subtext: "Urgent Priority", progress: 60, status: "danger", trend: "up" }
   ];
 
-  // Mock Data for Urgent Actions
+  // Urgent Actions (Partial Mock / Partial Derived could go here)
   const urgentActions = [
     { id: 0, type: "transition", title: "Phase Transition Imminent", subtitle: "Te Hono Avondale: Foundations > Structure", meta: "Opportunity: Formwork Carpenters" },
     { id: 1, type: "risk", title: "Hawkins Construction", subtitle: "Contract Expired 3 days ago", meta: "Risk: High" },
@@ -36,9 +42,11 @@ export default function PredictiveCommandCenter() {
   ];
 
   const handleMapMarkerClick = (marker) => {
-    const mockClient = enhancedClients[0];
+    // Try to find a client from context matching the marker
+    const client = clients.find(c => c.name === marker.title) || clients[0];
+
     setSelectedProject({
-      ...mockClient,
+      ...client,
       name: marker.title,
       tradeStack: {
         current: [
@@ -139,7 +147,7 @@ export default function PredictiveCommandCenter() {
         /* Main Grid Layout */
         .main-grid {
           display: grid;
-          grid-template-columns: 65fr 35fr; /* 65% - 35% Split */
+          grid-template-columns: 65fr 35fr;
           gap: 1rem;
           flex: 1;
           min-height: 0; /* Prevent overflow */

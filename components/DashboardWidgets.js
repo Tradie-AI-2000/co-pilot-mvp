@@ -5,14 +5,14 @@ import { TrendingUp, AlertTriangle, ArrowRight, Activity } from "lucide-react";
 export default function DashboardWidgets({ projects }) {
     // Calculate stats
     const urgentRoles = projects.reduce((acc, proj) => {
-        const urgent = proj.hiringSignals.filter(s => s.urgency === "Critical" || s.urgency === "High");
+        const urgent = (proj.hiringSignals || []).filter(s => s.urgency === "Critical" || s.urgency === "High");
         return acc + urgent.length;
     }, 0);
 
     const activeProjects = projects.filter(p => p.status === "Active").length;
 
     const upcomingPhases = projects.reduce((acc, proj) => {
-        const nextPhase = proj.phases.find(p => p.status === "Upcoming");
+        const nextPhase = (proj.phases || []).find(p => p.status === "Upcoming");
         return nextPhase ? acc + 1 : acc;
     }, 0);
 

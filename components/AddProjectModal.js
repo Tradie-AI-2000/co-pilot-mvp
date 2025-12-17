@@ -8,6 +8,7 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
     const defaultFormData = {
         // Tab 1: The Core
         name: "",
+        address: "", // Added missing field
         tier: "Tier 1",
         type: "Healthcare",
         value: "",

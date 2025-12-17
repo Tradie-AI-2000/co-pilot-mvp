@@ -2,7 +2,7 @@
 
 import { Users, AlertCircle, Clock, Briefcase, TrendingUp } from "lucide-react";
 
-export default function CandidateDashboard({ candidates = [] }) {
+export default function CandidateDashboard({ candidates = [], onStatusClick }) {
     // 1. Calculate Metrics
     const totalCandidates = candidates.length;
     const availableCandidates = candidates.filter(c => c.status === "Available").length;
@@ -39,7 +39,10 @@ export default function CandidateDashboard({ candidates = [] }) {
     return (
         <div className="dashboard-grid">
             {/* Metric Cards */}
-            <div className="metric-card red-alert">
+            <div
+                className="metric-card red-alert cursor-pointer hover:bg-slate-800/50 transition-colors"
+                onClick={() => onStatusClick && onStatusClick('Available')}
+            >
                 <div className="metric-icon"><AlertCircle size={24} /></div>
                 <div className="metric-content">
                     <span className="metric-label">On The Bench</span>
@@ -48,7 +51,10 @@ export default function CandidateDashboard({ candidates = [] }) {
                 </div>
             </div>
 
-            <div className="metric-card orange-alert">
+            <div
+                className="metric-card orange-alert cursor-pointer hover:bg-slate-800/50 transition-colors"
+                onClick={() => onStatusClick && onStatusClick('Finishing Soon')}
+            >
                 <div className="metric-icon"><Clock size={24} /></div>
                 <div className="metric-content">
                     <span className="metric-label">Finishing Soon</span>
@@ -57,7 +63,10 @@ export default function CandidateDashboard({ candidates = [] }) {
                 </div>
             </div>
 
-            <div className="metric-card blue-info">
+            <div
+                className="metric-card blue-info cursor-pointer hover:bg-slate-800/50 transition-colors"
+                onClick={() => onStatusClick && onStatusClick('Total Pool')}
+            >
                 <div className="metric-icon"><Briefcase size={24} /></div>
                 <div className="metric-content">
                     <span className="metric-label">Total Pool</span>

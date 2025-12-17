@@ -36,9 +36,16 @@ export default function RealMap({ markers = [], onMarkerClick, activeMarkerId, r
     // Default center (Auckland)
     const defaultCenter = [-36.8485, 174.7633];
 
+    // Safe coordinate accessor
+    const getCoords = (m) => {
+        if (m.coordinates && typeof m.coordinates.lat !== 'undefined') return [m.coordinates.lat, m.coordinates.lng];
+        if (typeof m.lat !== 'undefined') return [m.lat, m.lng];
+        return [-36.8485, 174.7633]; // Fallback to Auckland
+    };
+
     // Find active marker to center map
     const activeMarker = markers.find(m => m.id === activeMarkerId);
-    const center = activeMarker ? [activeMarker.coordinates.lat, activeMarker.coordinates.lng] : defaultCenter;
+    const center = activeMarker ? getCoords(activeMarker) : defaultCenter;
 
     return (
         <div className="map-wrapper">
@@ -71,10 +78,11 @@ export default function RealMap({ markers = [], onMarkerClick, activeMarkerId, r
                         icon = getMarkerIcon(marker);
                     }
 
+                    const position = getCoords(marker);
                     return (
                         <Marker
                             key={marker.id}
-                            position={[marker.coordinates.lat, marker.coordinates.lng]}
+                            position={position}
                             icon={icon}
                             eventHandlers={{
                                 click: () => onMarkerClick && onMarkerClick(marker),
@@ -87,8 +95,8 @@ export default function RealMap({ markers = [], onMarkerClick, activeMarkerId, r
                                         <br />
                                         <span className="text-xs text-gray-500">{marker.client}</span>
                                         <br />
-                                        <span className={`status-badge ${marker.status.toLowerCase()}`}>
-                                            {marker.status}
+                                        <span className={`status-badge ${(marker.status || 'Planning').toLowerCase()}`}>
+                                            {marker.status || 'Planning'}
                                         </span>
                                     </div>
                                 )}

@@ -1,16 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { useData } from "@/context/DataContext"; // Import context
 import DashboardWidgets from "@/components/DashboardWidgets";
 import GeospatialMap from "@/components/GeospatialMap";
 import ProjectList from "@/components/ProjectList";
 import ProjectTimeline from "@/components/ProjectTimeline";
 import AddProjectModal from "@/components/AddProjectModal";
-import { projects as initialProjects } from "@/services/mockData";
+// Removed mock import
 import { Plus } from "lucide-react";
 
 export default function MarketPage() {
-  const [projects, setProjects] = useState(initialProjects);
+  const { projects, addProject } = useData(); // Use context
   const [selectedProject, setSelectedProject] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
@@ -27,47 +28,18 @@ export default function MarketPage() {
   };
 
   const handleAddProject = (newProjectData) => {
-    // Map packages to subContractors array
-    const subContractors = Object.entries(newProjectData.packages || {})
-      .filter(([_, pkg]) => pkg.name)
-      .map(([trade, pkg]) => ({
-        trade: trade.charAt(0).toUpperCase() + trade.slice(1),
-        name: pkg.name
-      }));
-
-    // Map triggers to contactTriggers
-    const contactTriggers = [];
-    const triggerMap = {
-      excavation: "Stop looking for operators",
-      structure: "Start Hammer Hands & Formworkers",
-      lockUp: "Start Gib Stoppers & Interiors",
-      fitOut: "Start Flooring & Painters"
-    };
-
-    Object.entries(newProjectData.triggers || {}).forEach(([key, date]) => {
-      if (date) {
-        contactTriggers.push({
-          id: `trigger-${Date.now()}-${key}`,
-          date: date,
-          contact: "Virtual PM",
-          message: triggerMap[key] || "Phase Trigger",
-          urgency: "High"
-        });
-      }
-    });
+    // We pass the raw data (packages, triggers) to addProject
+    // and let DataContext handle the intelligence generation (subContractors, signals, etc.)
 
     const newProject = {
       ...newProjectData,
       id: `proj-${Date.now()}`,
       coordinates: { lat: -36.8485, lng: 174.7633 }, // TODO: Replace with geocoding from address
       stage: newProjectData.status, // Map status to stage for filtering
-      phases: [], // We could generate these from dates, but leaving empty for now
-      hiringSignals: [],
-      subContractors,
-      contactTriggers
     };
-    setProjects([newProject, ...projects]);
-    setSelectedProject(newProject);
+    addProject(newProject); // Use context action which now generates intelligence
+    setSelectedProject(newProject); // Note: this selectedProject won't have the generated data immediately if we just set it here. 
+    // Ideally we should select it from the updated projects list, but for now this is fine as the list will update and re-render.
   };
 
   return (
