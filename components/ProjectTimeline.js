@@ -92,19 +92,31 @@ export default function ProjectTimeline({ project }) {
                         <div key={index} className={`signal-card ${signal.urgency.toLowerCase()}`}>
                             <div className="signal-header">
                                 <span className="role">{signal.role}</span>
-                                <span className="urgency-badge">{signal.urgency}</span>
+                                <span className="urgency-badge">{signal.date}</span>
                             </div>
-                            <div className="signal-details">
-                                <div className="detail">
-                                    <Users size={14} />
-                                    <span>{signal.count} positions</span>
+
+                            <div className="signal-content">
+                                <div className="detail-row">
+                                    <div className="detail">
+                                        <Users size={14} />
+                                        <span>{signal.count} positions</span>
+                                    </div>
+                                    <div className="detail">
+                                        <span className="value-tag">{signal.value || 'N/A'}</span>
+                                    </div>
                                 </div>
-                                <div className="detail">
-                                    <Calendar size={14} />
-                                    <span>Target: {signal.date}</span>
-                                </div>
+
+                                {signal.bidders && (
+                                    <div className="bidders-section">
+                                        <span className="label">Bidders:</span>
+                                        <p className="bidders-list">{signal.bidders}</p>
+                                    </div>
+                                )}
                             </div>
-                            <div className="signal-phase">Phase: {signal.phase}</div>
+
+                            <div className="signal-footer">
+                                <div className="signal-phase">Phase: {signal.phase}</div>
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -387,18 +399,65 @@ export default function ProjectTimeline({ project }) {
                     border: 1px solid var(--border);
                 }
 
-                .signal-details {
+                .signal-content {
                     display: flex;
-                    gap: 1rem;
-                    margin-bottom: 0.5rem;
+                    flex-direction: column;
+                    gap: 0.75rem;
+                    margin-bottom: 0.75rem;
+                }
+
+                .detail-row {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
                 }
 
                 .detail {
                     display: flex;
                     align-items: center;
                     gap: 0.25rem;
-                    font-size: 0.8rem;
+                    font-size: 0.85rem;
+                    color: var(--text-main);
+                    font-weight: 500;
+                }
+                
+                .value-tag {
+                    font-size: 0.75rem;
+                    background: rgba(34, 197, 94, 0.1); /* Green tint */
+                    color: #22c55e;
+                    padding: 0.1rem 0.4rem;
+                    border-radius: 4px;
+                    border: 1px solid rgba(34, 197, 94, 0.2);
+                }
+
+                .bidders-section {
+                    background: rgba(255, 255, 255, 0.03);
+                    padding: 0.5rem;
+                    border-radius: 4px;
+                    border: 1px solid var(--border);
+                }
+
+                .bidders-section .label {
+                    display: block;
+                    font-size: 0.7rem;
                     color: var(--text-muted);
+                    text-transform: uppercase;
+                    margin-bottom: 0.2rem;
+                }
+
+                .bidders-list {
+                    font-size: 0.8rem;
+                    color: var(--text-main);
+                    margin: 0;
+                    line-height: 1.3;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+
+                .signal-footer {
+                    padding-top: 0.5rem;
+                    border-top: 1px solid var(--border);
                 }
 
                 .signal-phase {

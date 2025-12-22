@@ -5,7 +5,15 @@ import { TrendingUp, AlertTriangle, ArrowRight, Activity } from "lucide-react";
 export default function DashboardWidgets({ projects }) {
     // Calculate stats
     const urgentRoles = projects.reduce((acc, proj) => {
-        const urgent = (proj.hiringSignals || []).filter(s => s.urgency === "Critical" || s.urgency === "High");
+        // Find signals where the 'date' is imminent or passed, or urgency is strictly Critical/High from DataContext
+        const urgent = (proj.hiringSignals || []).filter(s => {
+            if (s.urgency === "Critical") return true;
+            // Check if it's a date-based trigger that is "Now" or "Due"
+            if (s.date && (s.date === "ASAP" || s.date.includes("Lead") || new Date(s.date) <= new Date())) {
+                return true;
+            }
+            return false;
+        });
         return acc + urgent.length;
     }, 0);
 

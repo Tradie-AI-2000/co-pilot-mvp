@@ -2,13 +2,16 @@
 
 import { useState } from "react";
 import { X, Save, Building2, Users, Layers, Calendar, Truck, MapPin } from "lucide-react";
+import { PHASE_TEMPLATES } from '@/services/constructionLogic';
 
 export default function AddProjectModal({ isOpen, onClose, onSave, initialData }) {
     const [activeTab, setActiveTab] = useState("core");
     const defaultFormData = {
         // Tab 1: The Core
+        // Tab 1: The Core
         name: "",
-        address: "", // Added missing field
+        projectOwner: "", // Main Contractor / Company Name
+        address: "",
         tier: "Tier 1",
         type: "Healthcare",
         value: "",
@@ -21,30 +24,46 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
         projectDirector: "",
         seniorQS: "",
         siteManager: "",
+        additionalSiteManagers: [], // Array for extra site managers
         safetyOfficer: "",
         gateCode: "",
 
-        // Tab 3: Package Matrix
+        // Tab 3: Package Matrix (Reflecting Master Phase Schema)
         packages: {
-            civil: { name: "", status: "Tendering" },
-            concrete: { name: "", status: "Tendering" },
-            steel: { name: "", status: "Tendering" },
-            roofing: { name: "", status: "Tendering" },
-            facade: { name: "", status: "Tendering" },
-            framing: { name: "", status: "Tendering" },
-            hvac: { name: "", status: "Tendering" },
-            flooring: { name: "", status: "Tendering" }
+            // 01 Civil
+            civilWorks: { name: "", status: "Tendering", phase: "01_civil", label: "Civil & Excavation" },
+            piling: { name: "", status: "Tendering", phase: "01_civil", label: "Piling" },
+
+            // 02 Structure
+            concrete: { name: "", status: "Tendering", phase: "02_structure", label: "Concrete Structure" },
+            steel: { name: "", status: "Tendering", phase: "02_structure", label: "Structural Steel" },
+            framing: { name: "", status: "Tendering", phase: "02_structure", label: "Timber Framing" },
+            crane: { name: "", status: "Tendering", phase: "02_structure", label: "Tower Crane" },
+
+            // 03 Envelope
+            facade: { name: "", status: "Tendering", phase: "03_envelope", label: "Facade & Glazing" },
+            scaffolding: { name: "", status: "Tendering", phase: "03_envelope", label: "Scaffolding" },
+            roofing: { name: "", status: "Tendering", phase: "03_envelope", label: "Roofing" },
+
+            // 04 Services
+            electrical: { name: "", status: "Tendering", phase: "04_services_roughin", label: "Electrical" },
+            hydraulics: { name: "", status: "Tendering", phase: "04_services_roughin", label: "Hydraulics (Plumbing)" },
+            mechanical: { name: "", status: "Tendering", phase: "04_services_roughin", label: "Mechanical (HVAC)" },
+
+            // 05 Fitout
+            interiors: { name: "", status: "Tendering", phase: "05_fitout", label: "Interiors (Walls/Ceilings)" },
+            flooring: { name: "", status: "Tendering", phase: "05_fitout", label: "Flooring" },
+            painting: { name: "", status: "Tendering", phase: "05_fitout", label: "Painting" },
+            joinery: { name: "", status: "Tendering", phase: "05_fitout", label: "Joinery" },
+
+            // 06 Handover
+            cleaning: { name: "", status: "Tendering", phase: "06_handover", label: "Final Clean" }
         },
 
         // Tab 4: Virtual PM
         startDate: "",
         completionDate: "",
-        triggers: {
-            excavation: "",
-            structure: "",
-            lockUp: "",
-            fitOut: ""
-        },
+        triggers: {}, // Populated dynamically by PHASE_TEMPLATES
 
         // Tab 5: Site Logistics
         parking: "On-site",
@@ -118,6 +137,16 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                                         value={formData.name}
                                         onChange={(e) => updateFormData("name", e.target.value)}
                                         placeholder="e.g. Whangarei Hospital - Acute Services Building"
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label>Project Owner (Main Contractor)</label>
+                                    <input
+                                        type="text"
+                                        value={formData.projectOwner}
+                                        onChange={(e) => updateFormData("projectOwner", e.target.value)}
+                                        placeholder="e.g. Naylor Love, MacCrennie"
                                     />
                                 </div>
 
@@ -272,7 +301,7 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                                 </div>
                                 <div className="form-row">
                                     <div className="form-group">
-                                        <label>Site Manager</label>
+                                        <label>Site Manager (Lead)</label>
                                         <input
                                             type="text"
                                             value={formData.siteManager}
@@ -280,6 +309,55 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                                             placeholder="Name / Phone"
                                         />
                                     </div>
+
+                                    {/* Additional Site Managers */}
+                                    {(formData.additionalSiteManagers || []).map((sm, index) => (
+                                        <div className="form-group" key={index}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <label>Site Manager #{index + 2}</label>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const newSMs = formData.additionalSiteManagers.filter((_, i) => i !== index);
+                                                        updateFormData("additionalSiteManagers", newSMs);
+                                                    }}
+                                                    style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.8rem' }}
+                                                >
+                                                    Remove
+                                                </button>
+                                            </div>
+                                            <input
+                                                type="text"
+                                                value={sm}
+                                                onChange={(e) => {
+                                                    const newSMs = [...(formData.additionalSiteManagers || [])];
+                                                    newSMs[index] = e.target.value;
+                                                    updateFormData("additionalSiteManagers", newSMs);
+                                                }}
+                                                placeholder="Name / Phone"
+                                            />
+                                        </div>
+                                    ))}
+
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const newSMs = [...(formData.additionalSiteManagers || []), ""];
+                                            updateFormData("additionalSiteManagers", newSMs);
+                                        }}
+                                        style={{
+                                            background: 'rgba(255,255,255,0.05)',
+                                            border: '1px dashed var(--border)',
+                                            color: 'var(--primary)',
+                                            padding: '0.5rem',
+                                            borderRadius: '4px',
+                                            cursor: 'pointer',
+                                            fontSize: '0.8rem',
+                                            width: '100%'
+                                        }}
+                                    >
+                                        + Add Associate Site Manager
+                                    </button>
                                     <div className="form-group">
                                         <label>Health & Safety Officer</label>
                                         <input
@@ -311,32 +389,94 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                                         <span>Status</span>
                                     </div>
                                     {Object.entries(formData.packages).map(([key, pkg]) => (
-                                        <div key={key} className="package-row">
-                                            <span className="package-name">{key.charAt(0).toUpperCase() + key.slice(1)}</span>
-                                            <input
-                                                type="text"
-                                                value={pkg.name}
-                                                onChange={(e) => {
-                                                    const newPackages = { ...formData.packages };
-                                                    newPackages[key] = { ...pkg, name: e.target.value };
-                                                    updateFormData("packages", newPackages);
-                                                }}
-                                                placeholder="Subcontractor Name"
-                                            />
-                                            <select
-                                                value={pkg.status}
-                                                onChange={(e) => {
-                                                    const newPackages = { ...formData.packages };
-                                                    newPackages[key] = { ...pkg, status: e.target.value };
-                                                    updateFormData("packages", newPackages);
-                                                }}
-                                                className={`status-${pkg.status.toLowerCase()}`}
-                                            >
-                                                <option>Tendering</option>
-                                                <option>Awarded</option>
-                                                <option>On-Site</option>
-                                                <option>Completed</option>
-                                            </select>
+                                        <div key={key} className="package-row-expanded">
+                                            <div className="package-main-row">
+                                                <span className="package-name">{key.charAt(0).toUpperCase() + key.slice(1)}</span>
+                                                <input
+                                                    type="text"
+                                                    value={pkg.name}
+                                                    onChange={(e) => {
+                                                        const newPackages = { ...formData.packages };
+                                                        newPackages[key] = { ...pkg, name: e.target.value };
+                                                        updateFormData("packages", newPackages);
+                                                    }}
+                                                    placeholder="Subcontractor Name"
+                                                />
+                                                <select
+                                                    value={pkg.status}
+                                                    onChange={(e) => {
+                                                        const newPackages = { ...formData.packages };
+                                                        newPackages[key] = { ...pkg, status: e.target.value };
+                                                        updateFormData("packages", newPackages);
+                                                    }}
+                                                    className={`status-${pkg.status.toLowerCase()}`}
+                                                >
+                                                    <option>Tendering</option>
+                                                    <option>Awarded</option>
+                                                    <option>On-Site</option>
+                                                    <option>Completed</option>
+                                                </select>
+                                            </div>
+
+                                            {/* Smart Data Fields */}
+                                            <div className="package-details-row">
+                                                <div className="detail-input">
+                                                    <label>Est. Headcount</label>
+                                                    <input
+                                                        type="number"
+                                                        placeholder="Auto"
+                                                        value={pkg.estimatedHeadcount || ''}
+                                                        onChange={(e) => {
+                                                            const newPackages = { ...formData.packages };
+                                                            newPackages[key] = { ...pkg, estimatedHeadcount: e.target.value };
+                                                            updateFormData("packages", newPackages);
+                                                        }}
+                                                    />
+                                                </div>
+                                                <div className="detail-input">
+                                                    <label>Value ($)</label>
+                                                    <input
+                                                        type="number"
+                                                        placeholder="e.g. 500000"
+                                                        value={pkg.commercialValue || ''}
+                                                        onChange={(e) => {
+                                                            const newPackages = { ...formData.packages };
+                                                            newPackages[key] = { ...pkg, commercialValue: e.target.value };
+                                                            updateFormData("packages", newPackages);
+                                                        }}
+                                                    />
+                                                </div>
+                                                <div className="detail-input">
+                                                    <label>Lead Time (Wks)</label>
+                                                    <input
+                                                        type="number"
+                                                        placeholder="3"
+                                                        value={pkg.leadTimeWeeks || 3}
+                                                        onChange={(e) => {
+                                                            const newPackages = { ...formData.packages };
+                                                            newPackages[key] = { ...pkg, leadTimeWeeks: e.target.value };
+                                                            updateFormData("packages", newPackages);
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Tender Tracker */}
+                                            {pkg.status === "Tendering" && (
+                                                <div className="package-bidders-row">
+                                                    <label>Bidding Subcontractors (Tender Tracker):</label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="e.g. CJM Concrete, Higgins, Dempsey Wood"
+                                                        value={pkg.biddingSubcontractors || ''}
+                                                        onChange={(e) => {
+                                                            const newPackages = { ...formData.packages };
+                                                            newPackages[key] = { ...pkg, biddingSubcontractors: e.target.value };
+                                                            updateFormData("packages", newPackages);
+                                                        }}
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
@@ -368,55 +508,43 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                                     <p>Set dates to trigger recruitment alerts</p>
                                 </div>
 
+                                <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                                    <label>Alert Lead Time (Weeks)</label>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                        <input
+                                            type="range"
+                                            min="1"
+                                            max="8"
+                                            step="1"
+                                            value={formData.triggers.offsetWeeks || 2}
+                                            onChange={(e) => {
+                                                const newTriggers = { ...formData.triggers, offsetWeeks: parseInt(e.target.value) };
+                                                updateFormData("triggers", newTriggers);
+                                            }}
+                                            style={{ flex: 1 }}
+                                        />
+                                        <span style={{ fontWeight: 600, color: 'var(--primary)', minWidth: '80px' }}>
+                                            {formData.triggers.offsetWeeks || 2} Weeks
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-muted">We will alert you this many weeks BEFORE the phase starts.</p>
+                                </div>
+
                                 <div className="triggers-grid">
-                                    <div className="trigger-item">
-                                        <label>Excavation Ends</label>
-                                        <input
-                                            type="date"
-                                            value={formData.triggers.excavation}
-                                            onChange={(e) => {
-                                                const newTriggers = { ...formData.triggers, excavation: e.target.value };
-                                                updateFormData("triggers", newTriggers);
-                                            }}
-                                        />
-                                        <span className="trigger-hint">Stop looking for operators</span>
-                                    </div>
-                                    <div className="trigger-item">
-                                        <label>Structure Starts</label>
-                                        <input
-                                            type="date"
-                                            value={formData.triggers.structure}
-                                            onChange={(e) => {
-                                                const newTriggers = { ...formData.triggers, structure: e.target.value };
-                                                updateFormData("triggers", newTriggers);
-                                            }}
-                                        />
-                                        <span className="trigger-hint">Start Hammer Hands & Formworkers</span>
-                                    </div>
-                                    <div className="trigger-item">
-                                        <label>Lock-up / Watertight</label>
-                                        <input
-                                            type="date"
-                                            value={formData.triggers.lockUp}
-                                            onChange={(e) => {
-                                                const newTriggers = { ...formData.triggers, lockUp: e.target.value };
-                                                updateFormData("triggers", newTriggers);
-                                            }}
-                                        />
-                                        <span className="trigger-hint">Start Gib Stoppers & Interiors</span>
-                                    </div>
-                                    <div className="trigger-item">
-                                        <label>Fit-out Starts</label>
-                                        <input
-                                            type="date"
-                                            value={formData.triggers.fitOut}
-                                            onChange={(e) => {
-                                                const newTriggers = { ...formData.triggers, fitOut: e.target.value };
-                                                updateFormData("triggers", newTriggers);
-                                            }}
-                                        />
-                                        <span className="trigger-hint">Start Flooring & Painters</span>
-                                    </div>
+                                    {PHASE_TEMPLATES.Commercial_Multi_Use.map(phase => (
+                                        <div className="trigger-item" key={phase.phaseId}>
+                                            <label>{phase.name}</label>
+                                            <input
+                                                type="date"
+                                                value={formData.triggers[phase.phaseId] || ''}
+                                                onChange={(e) => {
+                                                    const newTriggers = { ...formData.triggers, [phase.phaseId]: e.target.value };
+                                                    updateFormData("triggers", newTriggers);
+                                                }}
+                                            />
+                                            <span className="trigger-hint">Target: {phase.decisionMaker}</span>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         )}
@@ -650,34 +778,92 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                 .packages-grid {
                     display: flex;
                     flex-direction: column;
+                    gap: 1.5rem;
+                }
+
+                .phase-group {
+                    display: flex;
+                    flex-direction: column;
                     gap: 0.5rem;
                 }
 
-                .package-header {
-                    display: grid;
-                    grid-template-columns: 150px 1fr 150px;
-                    gap: 1rem;
-                    padding: 0.5rem;
-                    font-weight: 600;
-                    color: var(--text-muted);
-                    font-size: 0.85rem;
+                .phase-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 0.5rem 0;
                     border-bottom: 1px solid var(--border);
                 }
 
-                .package-row {
-                    display: grid;
-                    grid-template-columns: 150px 1fr 150px;
-                    gap: 1rem;
-                    align-items: center;
-                    padding: 0.5rem;
+                .phase-header h4 {
+                    font-size: 0.9rem;
+                    font-weight: 600;
+                    color: var(--primary);
+                    margin: 0;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+
+                .phase-badges {
+                    font-size: 0.75rem;
+                    color: var(--text-muted);
+                    background: rgba(255,255,255,0.03);
+                    padding: 0.2rem 0.6rem;
+                    border-radius: 12px;
+                }
+
+                .package-row-expanded {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.75rem;
+                    padding: 1rem;
                     background: var(--background);
                     border-radius: var(--radius-sm);
                     border: 1px solid var(--border);
                 }
 
-                .package-name {
-                    font-weight: 500;
-                    color: var(--text-main);
+                .package-main-row {
+                    display: grid;
+                    grid-template-columns: 150px 1fr 150px;
+                    gap: 1rem;
+                    align-items: center;
+                }
+
+                .package-details-row {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr 1fr;
+                    gap: 1rem;
+                    padding-top: 0.5rem;
+                    border-top: 1px solid rgba(255,255,255,0.05);
+                }
+
+                .detail-input {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.25rem;
+                }
+
+                .detail-input label {
+                    font-size: 0.7rem;
+                    text-transform: uppercase;
+                    color: var(--text-muted);
+                }
+
+                .detail-input input {
+                    padding: 0.4rem;
+                    font-size: 0.85rem;
+                }
+                
+                .package-bidders-row {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.25rem;
+                }
+                
+                .package-bidders-row label {
+                    font-size: 0.7rem;
+                    color: var(--primary);
+                    text-transform: uppercase;
                 }
 
                 .status-tendering { color: #f59e0b; }

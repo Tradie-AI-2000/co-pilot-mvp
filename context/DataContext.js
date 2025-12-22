@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { candidates as initialCandidates } from '@/services/mockData';
 import { enhancedClients, enhancedProjects as initialProjects } from '@/services/enhancedMockData';
+import { PHASE_TEMPLATES, WORKFORCE_MATRIX, getProjectSize } from '@/services/constructionLogic';
 
 const DataContext = createContext();
 
@@ -59,7 +60,7 @@ export function DataProvider({ children }) {
                 name: pkg.name
             }));
 
-        // 2. Generate Contact Triggers
+        // 2. Generate Contact Triggers (Comms Countdown Engine)
         const triggerMap = {
             excavation: "Stop looking for operators",
             structure: "Start Hammer Hands & Formworkers",
@@ -67,46 +68,87 @@ export function DataProvider({ children }) {
             fitOut: "Start Flooring & Painters"
         };
         const generatedTriggers = [];
+
+        // Get the global offset from input or default to 2 weeks
+        const weeksOffset = newProject.triggers?.offsetWeeks || 2;
+        const msPerDay = 86400000;
+        const msOffset = weeksOffset * 7 * msPerDay;
+
         Object.entries(newProject.triggers || {}).forEach(([key, date]) => {
-            if (date) {
+            if (date && key !== 'offsetWeeks') {
+                const phaseDate = new Date(date);
+                const alertDate = new Date(phaseDate.getTime() - msOffset);
+                const formattedAlertDate = alertDate.toISOString().split('T')[0];
+
                 generatedTriggers.push({
                     id: `trigger-${Date.now()}-${key}`,
-                    date: date,
+                    date: formattedAlertDate, // This is now the "Date to Act", not the phase start date
+                    targetDate: date, // The actual phase start date
                     contact: "Virtual PM",
-                    message: triggerMap[key] || "Phase Trigger",
+                    message: `${triggerMap[key] || "Phase Trigger"} (Phase starts in ${weeksOffset} weeks)`,
                     urgency: "High"
                 });
             }
         });
 
-        // 3. Generate Phases (Simple logic based on dates)
+        // 3. Generate Phases (Smart Logic based on dates)
         const generatedPhases = [];
+        const today = new Date();
+
         if (newProject.startDate) {
-            generatedPhases.push({ name: "Excavation", start: newProject.startDate, end: "TBD", status: "Completed", progress: 100 });
+            const start = new Date(newProject.startDate);
+            let status = "Upcoming";
+            let progress = 0;
+            if (start <= today) { status = "Completed"; progress = 100; }
+
+            generatedPhases.push({ name: "Excavation", start: newProject.startDate, end: "TBD", status, progress });
         }
-        // Mocking logic: If we have a structure trigger, assume structure phase is active
+
         if (newProject.triggers?.structure) {
+            const structStart = new Date(newProject.triggers.structure);
+            let status = "Upcoming";
+            let progress = 0;
+
+            // If today is past the start date, it's in progress
+            if (structStart <= today) { status = "In Progress"; progress = 35; }
+
             generatedPhases.push({
                 name: "Structure",
                 start: newProject.triggers.structure,
                 end: "TBD",
-                status: "In Progress",
-                progress: 35
+                status,
+                progress
             });
-        } else {
-            generatedPhases.push({ name: "Structure", start: "TBD", end: "TBD", status: "Upcoming", progress: 0 });
         }
 
-        // 4. Generate Hiring Signals
+        // 4. Generate Hiring Signals (Volume Calculator & Tender Tracker)
         const generatedSignals = [];
         Object.entries(newProject.packages || {}).forEach(([trade, pkg]) => {
             if (pkg.status === "Tendering" || pkg.status === "Open") {
+                // Volume Calculator: If no headcount, use Value / $250k
+                let count = parseInt(pkg.estimatedHeadcount) || 0;
+                if (!count && pkg.commercialValue) {
+                    count = Math.ceil(parseInt(pkg.commercialValue) / 250000);
+                }
+                // Fallback if neither exists
+                if (count === 0) count = Math.floor(Math.random() * 5) + 2;
+
+                // Date Awareness: If lead time exists, calculate target date
+                let targetDate = "ASAP";
+                if (pkg.leadTimeWeeks) {
+                    // Assuming 'now' is the baseline, target is 'leadTimeWeeks' from now? 
+                    // Or ideally, based on phase start. For now, we state the Lead Time.
+                    targetDate = `${pkg.leadTimeWeeks} Wk Lead`;
+                }
+
                 generatedSignals.push({
                     role: trade.charAt(0).toUpperCase() + trade.slice(1),
-                    count: Math.floor(Math.random() * 5) + 2, // Mock estimation
+                    count: count,
                     urgency: "High",
-                    date: "ASAP",
-                    phase: "Tender"
+                    date: targetDate,
+                    phase: "Tender",
+                    bidders: pkg.biddingSubcontractors || "None listed", // Tender Tracker
+                    value: pkg.commercialValue ? `$${parseInt(pkg.commercialValue).toLocaleString()}` : "N/A"
                 });
             }
         });
