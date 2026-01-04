@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '../../../../lib/db/index.js';
-import { placementGroups, placements, candidates } from '../../../../lib/db/schema.js';
+import { placementGroups, placements, candidates } from '../../../../lib/db/schema';
 import { eq } from 'drizzle-orm';
 
 export async function POST(request) {
