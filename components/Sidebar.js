@@ -9,7 +9,10 @@ import {
   Map,
   Settings,
   LogOut,
-  HardHat
+  HardHat,
+  DollarSign,
+  Target,
+  Globe
 } from "lucide-react";
 
 const navItems = [
@@ -17,7 +20,9 @@ const navItems = [
   { name: "Projects", href: "/projects", icon: HardHat },
   { name: "CRM", href: "/crm", icon: Briefcase },
   { name: "Candidates", href: "/candidates", icon: Users },
+  { name: "Business Dev", href: "/bd", icon: Target },
   { name: "Market Intel", href: "/market", icon: Map },
+  { name: "Financials", href: "/financials", icon: DollarSign },
 ];
 
 export default function Sidebar() {
@@ -25,6 +30,7 @@ export default function Sidebar() {
 
   return (
     <aside className="sidebar glass-panel">
+      {/* ... (logo) ... */}
       <div className="logo-container">
         <div className="logo-image-wrapper">
           <img src="/images/logo.png" alt="Stellar Co-Pilot" className="logo-img" />
@@ -49,8 +55,18 @@ export default function Sidebar() {
             </Link>
           );
         })}
+        
+        {/* External Views Section */}
+        <div className="mt-4 pt-4 border-t border-slate-700/50">
+            <p className="px-4 text-xs text-slate-500 font-bold uppercase mb-2">External Views</p>
+            <Link href="/portal" className={`nav-item ${pathname === '/portal' ? 'active' : ''}`}>
+                <Globe size={20} />
+                <span>Client Portal</span>
+            </Link>
+        </div>
       </nav>
 
+      {/* ... (user profile) ... */}
       <div className="user-profile">
         <div className="user-avatar">JW</div>
         <div className="user-info">

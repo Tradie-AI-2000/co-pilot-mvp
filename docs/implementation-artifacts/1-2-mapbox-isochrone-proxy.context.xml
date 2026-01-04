@@ -1,0 +1,89 @@
+<story-context id="_bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1.2</storyId>
+    <title>Mapbox Isochrone Proxy</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-23</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/implementation-artifacts/1-2-mapbox-isochrone-proxy.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>System</asA>
+    <iWant>a secure API route /api/geo/isochrone</iWant>
+    <soThat>I can proxy requests to Mapbox without exposing API keys</soThat>
+    <tasks>
+      - Create app/api/geo/isochrone/route.ts (AC: 1)
+      - Implement GET handler with parameter validation (AC: 1, 5)
+      - Implement Mapbox API fetch logic (AC: 2, 3)
+      - Return GeoJSON response (AC: 4)
+      - Add basic caching (AC: 6)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    - API route /api/geo/isochrone exists and accepts lat, lng, and minutes query parameters.
+    - The route proxies requests to the Mapbox Isochrone API.
+    - The MAPBOX_ACCESS_TOKEN is retrieved from environment variables on the server.
+    - Response is returned as a GeoJSON FeatureCollection.
+    - Basic error handling for missing parameters or Mapbox API failures.
+    - [Optional] Basic caching logic.
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Stellar Co-Pilot - Epic Breakdown</title>
+        <section>Story 1.2: Mapbox Isochrone Proxy</section>
+        <snippet>Secure API route /api/geo/isochrone for proxying Mapbox calls.</snippet>
+      </doc>
+      <doc>
+        <path>docs/project-context.md</path>
+        <title>Project Context for AI Agents</title>
+        <section>Critical Implementation Rules - Map Security</section>
+        <snippet>NEVER call Mapbox APIs directly from the client. All geospatial requests must be proxied via /app/api/geo/isochrone.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>next.config.mjs</path>
+        <kind>config</kind>
+        <reason>Review if any environment variable configuration is needed.</reason>
+      </file>
+    </code>
+    <dependencies>
+      <dependency>
+        <name>next</name>
+        <version>^16.0.8</version>
+      </dependency>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - NEVER call Mapbox APIs directly from the client.
+    - Use MAPBOX_ACCESS_TOKEN environment variable.
+    - Return valid GeoJSON FeatureCollection.
+    - Proxied URL: https://api.mapbox.com/isochrone/v1/mapbox/driving/{lng},{lat}?contours_minutes={minutes}&amp;polygons=true&amp;access_token={token}
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Mapbox Isochrone Proxy</name>
+      <kind>REST API</kind>
+      <signature>GET /api/geo/isochrone?lat={lat}&amp;lng={lng}&amp;minutes={minutes}</signature>
+      <path>app/api/geo/isochrone/route.ts</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Manual testing with cURL or Postman to verify GeoJSON structure.</standards>
+    <locations>app/api/geo/isochrone/route.ts</locations>
+    <ideas>
+      - Test with valid lat, lng, minutes.
+      - Test with missing parameters (expect 400).
+      - Test with Mapbox API error simulation (e.g., invalid token).
+    </ideas>
+  </tests>
+</story-context>

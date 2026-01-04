@@ -1,131 +1,249 @@
 :root {
-  /* Premium Color Palette */
+
+  /* Premium Color Palette - Antigravity Style */
+
   --primary: #0f172a;
+
   /* Deep Midnight Blue */
+
   --primary-light: #1e293b;
-  --secondary: #38bdf8;
-  /* Electric Blue */
+
+  --secondary: #00f2ff;
+
+  /* Cyan / Electric Blue */
+
   --accent: #f59e0b;
-  /* Gold/Amber for Labour Hire/Construction vibe */
+
+  /* Gold/Amber */
+
+
 
   --background: #020617;
+
   /* Almost Black Blue */
+
   --surface: rgba(30, 41, 59, 0.7);
+
   /* Glassy Surface */
-  --surface-highlight: rgba(56, 189, 248, 0.1);
+
+  --surface-highlight: rgba(0, 242, 255, 0.1);
+
+
 
   /* Client Tiers */
+
   --tier-1-gold: #fbbf24;
-  /* Tier 1: Generals (Main Contractors) */
+
   --tier-2-silver: #94a3b8;
-  /* Tier 2: Package Holders (Subbies) */
+
   --tier-3-bronze: #ca8a04;
-  /* Tier 3: Specialists (Gap Fillers) */
+
+
 
   /* Signal System */
+
   --signal-predict: #818cf8;
-  /* Purple */
+
   --signal-risk: #fbbf24;
-  /* Amber */
+
   --signal-urgent: #f43f5e;
-  /* Red */
+
+
 
   --text-main: #f8fafc;
+
   --text-muted: #94a3b8;
 
-  --border: rgba(148, 163, 184, 0.1);
+
+
+  --border: rgba(255, 255, 255, 0.1);
+
+
 
   /* Spacing */
+
   --spacing-xs: 0.5rem;
+
   --spacing-sm: 1rem;
+
   --spacing-md: 1.5rem;
+
   --spacing-lg: 2rem;
+
   --spacing-xl: 3rem;
 
+
+
   /* Radius */
+
   --radius-sm: 0.5rem;
+
   --radius-md: 0.75rem;
+
   --radius-lg: 1rem;
 
+
+
   /* Transitions */
+
   --transition-fast: 0.2s ease;
+
   --transition-smooth: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
 }
+
+
 
 * {
+
   box-sizing: border-box;
+
   padding: 0;
+
   margin: 0;
+
 }
+
+
 
 body {
+
   background-color: var(--background);
+
   color: var(--text-main);
+
   font-family: var(--font-geist-sans), sans-serif;
+
   overflow-x: hidden;
+
   min-height: 100vh;
+
 }
+
+
 
 a {
+
   color: inherit;
+
   text-decoration: none;
+
 }
+
+
 
 /* Utilities */
+
 .glass-panel {
+
   background: var(--surface);
+
   backdrop-filter: blur(12px);
+
   -webkit-backdrop-filter: blur(12px);
+
   border: 1px solid var(--border);
+
   border-radius: var(--radius-md);
+
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+
 }
+
+
 
 .glass-panel:hover {
+
   border-color: var(--secondary);
+
   box-shadow: 0 0 15px var(--surface-highlight);
+
 }
+
+
 
 .container {
+
   max-width: 1400px;
+
   margin: 0 auto;
+
   padding: 0 var(--spacing-md);
+
 }
+
+
 
 .flex-center {
+
   display: flex;
+
   align-items: center;
+
   justify-content: center;
+
 }
+
+
 
 .text-gradient {
+
   background: linear-gradient(to right, var(--secondary), var(--accent));
+
   -webkit-background-clip: text;
+
   -webkit-text-fill-color: transparent;
+
 }
+
+
 
 /* Scrollbar */
+
 ::-webkit-scrollbar {
+
   width: 8px;
+
 }
+
+
 
 ::-webkit-scrollbar-track {
+
   background: var(--primary);
+
 }
+
+
 
 ::-webkit-scrollbar-thumb {
+
   background: var(--primary-light);
+
   border-radius: 4px;
+
 }
+
+
 
 ::-webkit-scrollbar-thumb:hover {
+
   background: var(--secondary);
+
 }
 
+
+
 .main-content {
+
   margin-left: 260px;
+
   /* Sidebar width */
+
   padding: 2rem;
+
   min-height: 100vh;
+
   max-width: 1600px;
+
 }

@@ -1,16 +1,19 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useData } from "@/context/DataContext";
-import { Search, Filter, Plus, Building, MapPin, Calendar, DollarSign, Briefcase } from "lucide-react";
+import { useData } from "../../context/data-context.js";
+import { Search, Filter, Plus, Building, MapPin, Calendar, DollarSign, Briefcase, LayoutGrid, List as ListIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
-import AddProjectModal from "@/components/AddProjectModal";
+import AddProjectModal from "../../components/add-project-modal.js";
+import ProjectIntelligencePanel from "../../components/project-intelligence-panel.js";
 
 function ProjectsContent() {
     const { projects, addProject, updateProject, clients } = useData();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProject, setEditingProject] = useState(null);
+    const [selectedProject, setSelectedProject] = useState(null); // For Read-Only View
+    const [viewMode, setViewMode] = useState("grid"); // "grid" | "list"
     const searchParams = useSearchParams();
 
     useEffect(() => {
@@ -29,7 +32,14 @@ function ProjectsContent() {
         setIsModalOpen(true);
     };
 
-    const handleEditClick = (project) => {
+    // Clicking a card now opens the specific Intelligence Panel
+    const handleCardClick = (project) => {
+        setSelectedProject(project);
+    };
+
+    // "Edit" from the Intelligence Panel opens the Modal
+    const handleEditFromPanel = (project) => {
+        setSelectedProject(null); // Close panel
         setEditingProject(project);
         setIsModalOpen(true);
     };
@@ -52,6 +62,20 @@ function ProjectsContent() {
                     <Building className="text-secondary" /> Projects Database
                 </h1>
                 <div className="header-actions">
+                    <div className="view-toggle">
+                        <button
+                            className={`toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
+                            onClick={() => setViewMode('grid')}
+                        >
+                            <LayoutGrid size={18} />
+                        </button>
+                        <button
+                            className={`toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
+                            onClick={() => setViewMode('list')}
+                        >
+                            <ListIcon size={18} />
+                        </button>
+                    </div>
                     <button className="action-btn primary" onClick={handleAddClick}>
                         <Plus size={18} /> Add Project
                     </button>
@@ -65,56 +89,97 @@ function ProjectsContent() {
                 </div>
             </header>
 
-            <div className="projects-grid">
-                {projects.map(project => (
-                    <div
-                        key={project.id}
-                        className="project-card glass-panel"
-                        onClick={() => handleEditClick(project)}
-                    >
-                        <div className="card-header">
-                            <h3 className="project-name">{project.name}</h3>
-                            <span className={`stage-badge ${project.stage?.toLowerCase() || 'pipeline'}`}>
-                                {project.stage || 'Pipeline'}
-                            </span>
-                        </div>
-
-                        <div className="card-body">
-                            <div className="meta-row">
-                                <div className="meta-item">
-                                    <MapPin size={14} /> {project.location || project.address || 'No Location'}
-                                </div>
-                                <div className="meta-item">
-                                    <DollarSign size={14} /> {project.value || 'TBD'}
+            {viewMode === "grid" ? (
+                <div className="projects-grid">
+                    {projects.map(project => (
+                        <div
+                            key={project.id}
+                            className="project-card glass-panel"
+                            onClick={() => handleCardClick(project)}
+                        >
+                            <div className="card-header">
+                                <h3 className="project-name">{project.name}</h3>
+                                <div className="card-badges">
+                                    <span className={`stage-badge ${project.stage?.toLowerCase() || 'pipeline'}`}>
+                                        {project.stage || 'Pipeline'}
+                                    </span>
+                                    {/* Calculated "Next Phase" Badge could go here */}
                                 </div>
                             </div>
 
-                            <div className="assigned-companies">
-                                <span className="label">Assigned Companies:</span>
-                                <div className="company-badges">
-                                    {project.assignedCompanyIds?.map(id => {
-                                        const company = clients.find(c => c.id === id);
-                                        return company ? (
-                                            <span key={id} className={`company-badge tier-${company.tier}`}>
-                                                {company.name}
-                                            </span>
-                                        ) : null;
-                                    })}
-                                    {(!project.assignedCompanyIds || project.assignedCompanyIds.length === 0) && (
-                                        <span className="text-slate-500 text-xs italic">No companies assigned</span>
-                                    )}
+                            <div className="card-body">
+                                <div className="meta-row">
+                                    <div className="meta-item">
+                                        <MapPin size={14} /> {project.location || project.address || 'No Location'}
+                                    </div>
+                                    <div className="meta-item">
+                                        <DollarSign size={14} /> {project.value || 'TBD'}
+                                    </div>
+                                </div>
+
+                                <div className="assigned-companies">
+                                    <span className="label">Main Contractor:</span>
+                                    <div className="company-badges">
+                                        {project.assignedCompanyIds?.map(id => {
+                                            const company = clients.find(c => c.id === id);
+                                            return company ? (
+                                                <span key={id} className={`company-badge tier-${company.tier}`}>
+                                                    {company.name}
+                                                </span>
+                                            ) : null;
+                                        })}
+                                        {(!project.assignedCompanyIds || project.assignedCompanyIds.length === 0) && (
+                                            <span className="text-slate-500 text-xs italic">{project.client || "Unassigned"}</span>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="site-manager-row">
+                                    <Briefcase size={14} className="text-muted" />
+                                    <span className="text-sm text-slate-300">{project.siteManager || "No Site Manager"}</span>
+                                </div>
+                            </div>
+
+                            <div className="card-footer">
+                                <div className="date-info">
+                                    <Calendar size={14} /> Start: {project.startDate || 'TBD'}
                                 </div>
                             </div>
                         </div>
-
-                        <div className="card-footer">
-                            <div className="date-info">
-                                <Calendar size={14} /> Start: {project.startDate || 'TBD'}
-                            </div>
-                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="projects-list-view">
+                    <div className="list-head">
+                        <div className="col name">Project Name</div>
+                        <div className="col contractor">Main Contractor</div>
+                        <div className="col value">Value</div>
+                        <div className="col stage">Stage</div>
+                        <div className="col manager">Site Manager</div>
                     </div>
-                ))}
-            </div>
+                    {projects.map(project => {
+                        const contractor = clients.find(c => c.id === project.assignedCompanyIds?.[0])?.name || project.client || "-";
+                        return (
+                            <div key={project.id} className="list-row" onClick={() => handleCardClick(project)}>
+                                <div className="col name font-bold">{project.name}</div>
+                                <div className="col contractor">{contractor}</div>
+                                <div className="col value">{project.value || "-"}</div>
+                                <div className="col stage">
+                                    <span className={`stage-badge ${project.stage?.toLowerCase()}`}>{project.stage}</span>
+                                </div>
+                                <div className="col manager">{project.siteManager || "-"}</div>
+                            </div>
+                        )
+                    })}
+                </div>
+            )}
+
+            {selectedProject && (
+                <ProjectIntelligencePanel
+                    project={selectedProject}
+                    onClose={() => setSelectedProject(null)}
+                    onEdit={handleEditFromPanel}
+                />
+            )}
 
             {isModalOpen && (
                 <AddProjectModal
@@ -298,6 +363,72 @@ function ProjectsContent() {
                     align-items: center;
                     gap: 0.5rem;
                 }
+
+                /* View Toggle */
+                .view-toggle {
+                    display: flex;
+                    background: var(--surface);
+                    border: 1px solid var(--border);
+                    border-radius: var(--radius-md);
+                    overflow: hidden;
+                    margin-right: 0.5rem;
+                }
+                .toggle-btn {
+                    padding: 0.4rem 0.6rem;
+                    background: none;
+                    border: none;
+                    color: var(--text-muted);
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.2s;
+                }
+                .toggle-btn:hover { background: rgba(255,255,255,0.05); }
+                .toggle-btn.active {
+                    background: var(--secondary);
+                    color: #0f172a;
+                }
+
+                /* List View */
+                .projects-list-view {
+                    display: flex;
+                    flex-direction: column;
+                    background: var(--surface);
+                    border: 1px solid var(--border);
+                    border-radius: var(--radius-md);
+                    overflow-x: auto;
+                }
+                .list-head, .list-row {
+                    display: grid;
+                    grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr;
+                    padding: 0.75rem 1rem;
+                    align-items: center;
+                    gap: 1rem;
+                    min-width: 800px; /* Ensure table doesn't collapse too much */
+                }
+                .list-head {
+                    background: rgba(0,0,0,0.2);
+                    border-bottom: 1px solid var(--border);
+                    font-weight: 600;
+                    color: var(--text-muted);
+                    font-size: 0.85rem;
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+                }
+                .list-row {
+                    border-bottom: 1px solid rgba(255,255,255,0.05);
+                    cursor: pointer;
+                    transition: background 0.2s;
+                    font-size: 0.9rem;
+                    color: var(--text-muted);
+                }
+                .list-row:last-child { border-bottom: none; }
+                .list-row:hover { background: rgba(255,255,255,0.05); }
+                
+                .col { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+                .col.name { color: white; font-weight: 500; }
+                .col.value { font-family: monospace; }
             `}</style>
         </div>
     );

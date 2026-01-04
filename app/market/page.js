@@ -1,29 +1,52 @@
 "use client";
 
 import { useState } from "react";
-import { useData } from "@/context/DataContext"; // Import context
-import DashboardWidgets from "@/components/DashboardWidgets";
-import GeospatialMap from "@/components/GeospatialMap";
-import ProjectList from "@/components/ProjectList";
-import ProjectTimeline from "@/components/ProjectTimeline";
-import AddProjectModal from "@/components/AddProjectModal";
+import { useData } from "../../context/data-context.js"; // Import context
+import DashboardWidgets from "../../components/dashboard-widgets.js";
+import GeospatialMap from "../../components/geospatial-map.js";
+import ProjectList from "../../components/project-list.js";
+import ProjectTimeline from "../../components/project-timeline.js";
+import AddProjectModal from "../../components/add-project-modal.js";
 // Removed mock import
 import { Plus } from "lucide-react";
+
 
 export default function MarketPage() {
   const { projects, addProject } = useData(); // Use context
   const [selectedProject, setSelectedProject] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isochroneData, setIsochroneData] = useState(null);
+  const [isCommuteLoading, setIsCommuteLoading] = useState(false);
 
   const handleProjectSelect = (project) => {
     setSelectedProject(project);
+    fetchIsochrone(project);
+  };
+
+  const fetchIsochrone = async (project) => {
+    if (!project || (!project.coordinates && !project.lat)) return;
+
+    setIsCommuteLoading(true);
+    try {
+      const lat = project.coordinates?.lat || project.lat;
+      const lng = project.coordinates?.lng || project.lng;
+      const res = await fetch(`/api/geo/isochrone?lat=${lat}&lng=${lng}&minutes=20`);
+      if (res.ok) {
+        const data = await res.json();
+        setIsochroneData(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch isochrone:", err);
+    } finally {
+      setIsCommuteLoading(false);
+    }
   };
 
   const handleMarkerClick = (marker) => {
     // Find the full project data based on the marker id
-    const project = projects.find(p => p.id === marker.id);
+    const project = projects.find(p => p.id === marker.id || p.name === marker.name);
     if (project) {
-      setSelectedProject(project);
+      handleProjectSelect(project);
     }
   };
 
@@ -43,58 +66,67 @@ export default function MarketPage() {
   };
 
   return (
-    <div className="market-page">
-      <div className="page-header">
-        <div>
-          <h1>Market Intelligence</h1>
-          <p>Real-time construction project tracking and hiring signals</p>
-        </div>
-        <button className="btn-primary" onClick={() => setIsAddModalOpen(true)}>
-          <Plus size={16} />
-          New Project
-        </button>
-      </div>
-
-      <div className="dashboard-section">
-        <DashboardWidgets projects={projects} />
-      </div>
-
-      <div className="main-content">
-        <div className="sidebar">
-          <ProjectList
-            projects={projects}
-            onSelectProject={handleProjectSelect}
-            selectedProjectId={selectedProject?.id}
-          />
+    <>
+      <div className="market-page">
+        <div className="page-header">
+          <div>
+            <h1>Market Intelligence</h1>
+            <p>Real-time construction project tracking and hiring signals</p>
+          </div>
+          <button className="btn-primary" onClick={() => setIsAddModalOpen(true)}>
+            <Plus size={16} />
+            New Project
+          </button>
         </div>
 
-        <div className="center-panel">
-          <div className="map-container">
-            <GeospatialMap
-              markers={projects}
-              onMarkerClick={handleMarkerClick}
-              activeMarkerId={selectedProject?.id}
+        <div className="dashboard-section">
+          <DashboardWidgets projects={projects} />
+        </div>
+
+        <div className="main-content">
+          <div className="sidebar">
+            <ProjectList
+              projects={projects}
+              onSelectProject={handleProjectSelect}
+              selectedProjectId={selectedProject?.id}
             />
           </div>
-          <div className="timeline-container-wrapper">
-            {selectedProject ? (
-              <ProjectTimeline project={selectedProject} />
-            ) : (
-              <div className="empty-selection">
-                <p>Select a project to view details and timeline</p>
-              </div>
-            )}
+
+          <div className="center-panel">
+            <div className="map-container">
+              <GeospatialMap
+                markers={projects.map(p => ({
+                  id: p.id,
+                  name: p.name,
+                  coordinates: p.coordinates || { lat: p.lat, lng: p.lng },
+                  type: 'project',
+                  color: 'blue',
+                  status: p.status
+                }))}
+                polygonData={isochroneData}
+                onMarkerClick={handleMarkerClick}
+                activeMarkerId={selectedProject?.id}
+              />
+            </div>
+            <div className="timeline-container-wrapper">
+              {selectedProject ? (
+                <ProjectTimeline project={selectedProject} />
+              ) : (
+                <div className="empty-selection">
+                  <p>Select a project to view details and timeline</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
-      <AddProjectModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onSave={handleAddProject}
-      />
+        <AddProjectModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          onSave={handleAddProject}
+        />
 
-      <style jsx>{`
+        <style jsx>{`
                 .market-page {
                     min-height: 100vh; /* Ensure page is at least viewport height */
                     display: flex;
@@ -190,6 +222,7 @@ export default function MarketPage() {
                     color: var(--text-muted);
                 }
             `}</style>
-    </div>
+      </div>
+    </>
   );
 }

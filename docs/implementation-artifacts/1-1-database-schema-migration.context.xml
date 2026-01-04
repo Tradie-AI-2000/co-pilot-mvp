@@ -1,0 +1,104 @@
+<story-context id="_bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1.1</storyId>
+    <title>Database Schema Migration</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-23</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/implementation-artifacts/1-1-database-schema-migration.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>Backend Developer</asA>
+    <iWant>to create the crew_templates and placement_groups tables</iWant>
+    <soThat>we can persist the "Split Crew" data model</soThat>
+    <tasks>
+      - Define placement_status and candidate_status enums (AC: 3)
+      - Implement crew_templates and crew_template_members tables (AC: 1, 2, 4)
+      - Implement placement_groups and placements tables (AC: 1, 2, 4)
+      - Create @/types/db.ts and export inferred Drizzle types (AC: 5)
+      - Visual verification of the generated schema.
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    - crew_templates, crew_template_members, placement_groups, and placements tables are defined in lib/db/schema.ts.
+    - Tables use snake_case naming conventions for database fields.
+    - Enums placement_status and candidate_status are correctly initialized.
+    - Foreign keys correctly reference candidates and projects tables.
+    - Inferred types from the Drizzle schema are exported from @/types/db.ts.
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Stellar Co-Pilot - Epic Breakdown</title>
+        <section>Story 1.1: Database Schema Migration</section>
+        <snippet>Establish the underlying data model and persistence for Crews and Project Phases.</snippet>
+      </doc>
+      <doc>
+        <path>docs/implementation-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic Technical Specification: Operational Foundations</title>
+        <section>Detailed Design - Data Models</section>
+        <snippet>Includes Drizzle schema snippets for crew_templates, placement_groups, etc.</snippet>
+      </doc>
+      <doc>
+        <path>docs/project-context.md</path>
+        <title>Project Context for AI Agents</title>
+        <section>Critical Implementation Rules</section>
+        <snippet>Database: MUST use snake_case. Type Safety: Export all Drizzle inferred types from @/types/db.ts.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>package.json</path>
+        <kind>manifest</kind>
+        <reason>Dependency management for Drizzle and Supabase.</reason>
+      </file>
+    </code>
+    <dependencies>
+      <dependency>
+        <name>drizzle-orm</name>
+        <version>latest</version>
+      </dependency>
+      <dependency>
+        <name>drizzle-kit</name>
+        <version>latest</version>
+      </dependency>
+      <dependency>
+        <name>postgres</name>
+        <version>latest</version>
+      </dependency>
+      <dependency>
+        <name>swr</name>
+        <version>latest</version>
+      </dependency>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Database: MUST use snake_case (e.g., crew_templates, placement_group_id).
+    - Code: Variables/Functions use camelCase. Components use PascalCase.
+    - Files: Components use kebab-case.tsx. Logic files use camelCase.ts.
+    - Type Safety: Export all Drizzle inferred types from @/types/db.ts. Do not import database schemas directly into UI components.
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>Database Types</name>
+      <kind>TypeScript Types</kind>
+      <signature>Inferred from Drizzle schema</signature>
+      <path>types/db.ts</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>Visual verification of Drizzle migration output and TypeScript type inferences.</standards>
+    <locations>lib/db/schema.ts, types/db.ts</locations>
+    <ideas>
+      - Verify table definitions against tech spec.
+      - Check FK constraints against existing candidates/projects tables.
+      - Ensure snake_case compliance.
+    </ideas>
+  </tests>
+</story-context>

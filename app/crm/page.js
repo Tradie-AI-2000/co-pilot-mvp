@@ -1,15 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useData } from "@/context/DataContext";
-import EnhancedClientDetailsModal from "@/components/EnhancedClientDetailsModal";
-import ClientCard from "@/components/ClientCard";
-import AddClientModal from "@/components/AddClientModal";
+import { useData } from "../../context/data-context.js";
+import EnhancedClientDetailsModal from "../../components/enhanced-client-details-modal.js";
+import ClientCard from "../../components/client-card.js";
+import AddClientModal from "../../components/add-client-modal.js";
+import ClientActionBoard from "../../components/client-action-board.js";
+import PlacementTicketModal from "../../components/placement-ticket-modal.js";
 import { Search, Filter, Plus, Users, Upload, Download } from "lucide-react";
 
 export default function CRMPage() {
-  const { clients, addClient, updateClient } = useData();
+  const { clients, addClient, updateClient, placements } = useData();
   const [selectedClient, setSelectedClient] = useState(null);
+  const [selectedPlacement, setSelectedPlacement] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const handleClientClick = (client) => {
@@ -24,6 +27,11 @@ export default function CRMPage() {
   const handleAddClient = (newClient) => {
     addClient(newClient);
     setIsAddModalOpen(false);
+  };
+
+  const handleViewDeal = (placementId) => {
+    const placement = placements.find(p => p.id === placementId);
+    if (placement) setSelectedPlacement(placement);
   };
 
   return (
@@ -52,6 +60,14 @@ export default function CRMPage() {
         </div>
       </header>
 
+      {/* Virtual Assistant / Client Action Board */}
+      <ClientActionBoard onViewDeal={handleViewDeal} />
+
+      <div className="section-divider">
+        <h2 className="text-lg font-bold text-white uppercase tracking-wider">Client Directory</h2>
+        <div className="h-px bg-slate-800 flex-1 ml-4"></div>
+      </div>
+
       <div className="clients-grid">
         {clients.map(client => (
           <ClientCard
@@ -67,6 +83,13 @@ export default function CRMPage() {
           client={selectedClient}
           onClose={() => setSelectedClient(null)}
           onUpdate={handleUpdateClient}
+        />
+      )}
+
+      {selectedPlacement && (
+        <PlacementTicketModal
+          placement={selectedPlacement}
+          onClose={() => setSelectedPlacement(null)}
         />
       )}
 

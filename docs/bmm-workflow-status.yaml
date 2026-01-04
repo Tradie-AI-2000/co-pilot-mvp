@@ -15,26 +15,25 @@
 #   - {file-path}: File created/found (e.g., "docs/product-brief.md")
 #   - skipped: Optional/conditional workflow that was skipped
 
-generated: "2025-11-21"
+generated: "2025-12-23"
 project: "Stellar Co-Pilot"
-project_type: "{{project_type}}"
-selected_track: "quick-flow"
+project_type: "brownfield"
+selected_track: "bmad-method"
 brainstorm_requested: true
-research_requested: false
-product_brief_requested: false
+research_requested: true
+product_brief_requested: true
 field_type: "brownfield"
 user_description: "i have a current project in co-pilot - this is a brownfield project. please analyse and then make a plan so we can enhance?"
-workflow_path: "/Users/joeward/BMAD Projects/Co-Pilot/.bmad/bmm/workflows/workflow-status/paths/quick-flow-brownfield.yaml"
+workflow_path: "/Users/joeward/Antigravity Projects/Co-Pilot/_bmad/bmm/workflows/workflow-status/paths/method-brownfield.yaml"
 workflow_status:
-  - id: "document-project"
-    status: "required"
-    agent: "analyst"
-  - id: "brainstorm-project"
-    status: "required"
-    agent: "analyst"
-  - id: "tech-spec"
-    status: "required"
-    agent: "pm"
-  - id: "sprint-planning"
-    status: "required"
-    agent: "sm"
+  document-project: "docs/index.md"
+  brainstorm-project: "docs/analysis/brainstorming-session-2025-12-23.md"
+  research: skipped
+  product-brief: skipped
+  prd: "docs/prd.md"
+  create-design: "docs/ux-design-specification.md"
+  create-architecture: "docs/architecture.md"
+  create-epics-and-stories: "docs/epics.md"
+  test-design: recommended
+  implementation-readiness: required
+  sprint-planning: required

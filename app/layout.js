@@ -1,5 +1,4 @@
 import { Geist, Geist_Mono } from "next/font/google";
-import { DataProvider } from "@/context/DataContext";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -17,20 +16,21 @@ export const metadata = {
   description: "Intelligent recruitment assistant for labour hire and trade roles.",
 };
 
-import Sidebar from "@/components/Sidebar";
+import Sidebar from "../components/sidebar.js";
+import ClientProviders from "../components/client-providers.js";
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning={true}>
-        <DataProvider>
+        <ClientProviders>
           <div className="app-container">
             <Sidebar />
             <main className="main-content">
               {children}
             </main>
           </div>
-        </DataProvider>
+        </ClientProviders>
       </body>
     </html>
   );

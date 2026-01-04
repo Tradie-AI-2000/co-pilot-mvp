@@ -1,0 +1,191 @@
+"use client";
+
+import { User, ChevronRight, CheckCircle, Clock, AlertCircle } from "lucide-react";
+
+export default function PlacementsPipeline() {
+    // Mock data - in real app this comes from props/context
+    const stages = [
+        { id: 1, name: "New Applications", count: 12, color: "blue", candidates: Array(12).fill({ name: "John Doe", role: "Laborer" }) },
+        { id: 2, name: "Phone Screening", count: 8, color: "purple", candidates: Array(8).fill({ name: "Jane Smith", role: "Carpenter" }) },
+        { id: 3, name: "Inductions Pending", count: 5, color: "yellow", candidates: Array(5).fill({ name: "Mike Ross", role: "Operator" }) },
+        { id: 4, name: "Ready for Deployment", count: 15, color: "green", candidates: Array(15).fill({ name: "Harvey S.", role: "Foreman" }) },
+    ];
+
+    return (
+        <div className="pipeline-container">
+            <div className="pipeline-header">
+                <h3>Candidate Pipeline</h3>
+                <span className="total-badge">40 Active</span>
+            </div>
+
+            <div className="pipeline-scroll-area">
+                {stages.map((stage) => (
+                    <div key={stage.id} className="pipeline-stage">
+                        <div className="stage-header">
+                            <div className="stage-info">
+                                <span className={`status-dot ${stage.color}`}></span>
+                                <span className="stage-name">{stage.name}</span>
+                            </div>
+                            <span className="stage-count">{stage.count}</span>
+                        </div>
+
+                        {/* Visual Bar representation of volume */}
+                        <div className="volume-bar-track">
+                            <div
+                                className={`volume-bar-fill ${stage.color}`}
+                                style={{ width: `${Math.min(100, (stage.count / 20) * 100)}%` }}
+                            ></div>
+                        </div>
+
+                        <div className="candidate-preview-list">
+                            {/* Show top 3 candidates per stage as preview */}
+                            {stage.candidates.slice(0, 3).map((c, i) => (
+                                <div key={i} className="mini-candidate-row">
+                                    <User size={12} className="text-muted" />
+                                    <span className="text-xs">{c.name}</span>
+                                    <span className="text-xs text-muted ml-auto">{c.role}</span>
+                                </div>
+                            ))}
+                            {stage.count > 3 && (
+                                <div className="more-row">
+                                    +{stage.count - 3} more...
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            <style jsx>{`
+        .pipeline-container {
+          display: flex;
+          flex-direction: column;
+          height: 100%; /* Fills the parent column */
+          overflow: hidden; /* Prevents container from stretching */
+        }
+
+        .pipeline-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 1rem;
+          flex-shrink: 0;
+        }
+
+        .pipeline-header h3 {
+          font-size: 0.9rem;
+          font-weight: 600;
+          color: var(--text-muted);
+          text-transform: uppercase;
+        }
+
+        .total-badge {
+          font-size: 0.75rem;
+          background: rgba(255,255,255,0.1);
+          padding: 2px 8px;
+          border-radius: 12px;
+          color: var(--text-main);
+        }
+
+        .pipeline-scroll-area {
+          overflow-y: auto; /* INDEPENDENT SCROLLING HERE */
+          flex: 1; /* Take remaining height */
+          padding-right: 0.5rem; /* Space for scrollbar */
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+        }
+
+        /* Scrollbar Styling */
+        .pipeline-scroll-area::-webkit-scrollbar {
+          width: 4px;
+        }
+        .pipeline-scroll-area::-webkit-scrollbar-thumb {
+          background-color: rgba(255,255,255,0.1);
+          border-radius: 4px;
+        }
+
+        .pipeline-stage {
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(255,255,255,0.05);
+          border-radius: 8px;
+          padding: 0.75rem;
+        }
+
+        .stage-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 0.5rem;
+        }
+
+        .stage-info {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
+        .stage-name {
+          font-size: 0.85rem;
+          font-weight: 500;
+          color: var(--text-main);
+        }
+
+        .stage-count {
+          font-size: 0.8rem;
+          font-weight: 700;
+          color: var(--text-muted);
+        }
+
+        .status-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+        }
+        .status-dot.blue { background: #3b82f6; box-shadow: 0 0 8px rgba(59,130,246,0.5); }
+        .status-dot.purple { background: #a855f7; box-shadow: 0 0 8px rgba(168,85,247,0.5); }
+        .status-dot.yellow { background: #eab308; box-shadow: 0 0 8px rgba(234,179,8,0.5); }
+        .status-dot.green { background: #22c55e; box-shadow: 0 0 8px rgba(34,197,94,0.5); }
+
+        .volume-bar-track {
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            margin-bottom: 0.75rem;
+            overflow: hidden;
+        }
+
+        .volume-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+        }
+        .volume-bar-fill.blue { background: #3b82f6; }
+        .volume-bar-fill.purple { background: #a855f7; }
+        .volume-bar-fill.yellow { background: #eab308; }
+        .volume-bar-fill.green { background: #22c55e; }
+
+        .candidate-preview-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .mini-candidate-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-muted);
+            padding: 2px 0;
+        }
+
+        .more-row {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-align: center;
+            padding-top: 4px;
+            font-style: italic;
+        }
+      `}</style>
+        </div>
+    );
+}
