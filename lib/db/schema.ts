@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, pgEnum, integer, doublePrecision, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, timestamp, pgEnum, integer, doublePrecision, jsonb, boolean } from 'drizzle-orm/pg-core';
 
 // Enums
 export const placementStatusEnum = pgEnum('placement_status', ['draft', 'active', 'completed', 'cancelled']);
@@ -6,8 +6,23 @@ export const candidateStatusEnum = pgEnum('candidate_status', ['available', 'on_
 export const projectStageEnum = pgEnum('project_stage', ['Won', 'Tender', 'Pipeline', 'Construction', 'Underway', 'Planning']);
 export const projectStatusEnum = pgEnum('project_status', ['Active', 'Planning', 'Tender', 'At Risk']);
 export const tierEnum = pgEnum('tier', ['1', '2', '3']);
+export const nudgeTypeEnum = pgEnum('nudge_type', [
+    'PRE_EMPTIVE_STRIKE', // New Project
+    'CHURN_INTERCEPTOR',  // Retention Risk
+    'ZOMBIE_HUNTER',      // Dormant Candidate
+    'CLIENT_STALKER',     // CRM Decay
+    'RAINMAKER'           // Weather Event
+]);
+export const nudgePriorityEnum = pgEnum('nudge_priority', ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']);
 
 // Existing Tables (defined for Foreign Key references)
+
+export const users = pgTable('users', {
+    id: uuid('id').primaryKey().defaultRandom(),
+    name: text('name').notNull(),
+    email: text('email').notNull().unique(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
 
 export const clients = pgTable('clients', {
     id: uuid('id').primaryKey().defaultRandom(),
@@ -85,5 +100,42 @@ export const placements = pgTable('placements', {
     groupId: uuid('group_id').references(() => placementGroups.id, { onDelete: 'cascade' }).notNull(),
     candidateId: uuid('candidate_id').references(() => candidates.id, { onDelete: 'cascade' }).notNull(),
     status: placementStatusEnum('status').default('draft').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const nudges = pgTable('nudges', {
+    id: uuid('id').primaryKey().defaultRandom(),
+    type: nudgeTypeEnum('type').notNull(),
+    priority: nudgePriorityEnum('priority').notNull(),
+    
+    // The "Why"
+    title: text('title').notNull(),
+    description: text('description').notNull(),
+    
+    // The "Action" Payload (JSON for flexibility)
+    actionPayload: jsonb('action_payload').notNull(),
+    
+    // Ownership Logic
+    consultantId: uuid('consultant_id').references(() => users.id), // NULL = Open Bounty
+    
+    // Links
+    relatedProjectId: uuid('related_project_id').references(() => projects.id),
+    relatedClientId: uuid('related_client_id').references(() => clients.id),
+    relatedCandidateId: uuid('related_candidate_id').references(() => candidates.id),
+    
+    // State
+    isSeen: boolean('is_seen').default(false),
+    isActioned: boolean('is_actioned').default(false),
+    snoozedUntil: timestamp('snoozed_until', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const searchLogs = pgTable('search_logs', {
+    id: uuid('id').primaryKey().defaultRandom(),
+    consultantId: uuid('consultant_id').references(() => users.id).notNull(),
+    location: text('location'), // e.g., "Manukau"
+    lat: doublePrecision('lat'),
+    lng: doublePrecision('lng'),
+    filters: jsonb('filters'), // Role, keywords, etc.
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });

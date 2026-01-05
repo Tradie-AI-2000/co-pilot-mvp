@@ -16,6 +16,8 @@ import RedeploymentRadar from "../components/redeployment-radar.js";
 import ClientSidePanel from "../components/client-side-panel.js";
 import PlacementsPipeline from "../components/placements-pipeline.js";
 import ActivePlacementsModal from "../components/active-placements-modal.js";
+import ActionDrawer from "../components/action-drawer.js";
+import ActiveBenchModal from "../components/active-bench-modal.js";
 
 export default function PredictiveCommandCenter() {
   return (
@@ -24,7 +26,7 @@ export default function PredictiveCommandCenter() {
 }
 
 function DashboardContent() {
-  const { candidates, projects, clients, selectedProject, setSelectedProject, updateProject, addProject, moneyMoves } = useData();
+  const { candidates, projects, clients, selectedProject, setSelectedProject, updateProject, addProject, moneyMoves, weeklyRevenue, revenueAtRisk } = useData();
   const [watchlist, setWatchlist] = useState([]);
   const [isochroneData, setIsochroneData] = useState(null);
   const [isCommuteLoading, setIsCommuteLoading] = useState(false);
@@ -33,8 +35,10 @@ function DashboardContent() {
   // Edit Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [viewActivePlacements, setViewActivePlacements] = useState(false);
+  const [viewBenchList, setViewBenchList] = useState(false); // New State
   const [editingProject, setEditingProject] = useState(null);
   const [selectedClient, setSelectedClient] = useState(null);
+  const [selectedNudge, setSelectedNudge] = useState(null); // New State for Nudges
 
   useEffect(() => {
     setWatchlist(projects.filter(p => p.status === 'Active' || p.status === 'Planning').slice(0, 5));
@@ -83,36 +87,41 @@ function DashboardContent() {
   };
 
   const handleFocusCardClick = (item) => {
-    if (item.projectId) {
-      const project = projects.find(p => p.id === item.projectId);
-      if (project) setSelectedProject(project);
-    } else if (item.clientId) {
-      const client = clients.find(c => c.id === item.clientId);
-      if (client) setSelectedClient(client);
-    }
+      setSelectedNudge(item);
   };
 
   // --- LIVE METRICS ---
-  const activePlacements = candidates.filter(c => c.status === "On Job").length;
-  const weeklyBillings = activePlacements * 600;
+  const activePlacements = candidates.filter(c => c.status === "On Job");
 
-  const revenueAtRisk = moneyMoves.reduce((acc, item) => {
-    if (item.urgency === 'Critical' || item.urgency === 'High') return acc + 600;
-    return acc;
-  }, 0);
-
-  const hotJobs = projects.filter(p => p.status === "Active").length;
   const totalOpenRoles = moneyMoves.filter(m => m.type === 'signal').length;
-  const fillRate = totalOpenRoles + activePlacements > 0
-    ? Math.round((activePlacements / (activePlacements + totalOpenRoles)) * 100)
+  const fillRate = totalOpenRoles + activePlacements.length > 0
+    ? Math.round((activePlacements.length / (activePlacements.length + totalOpenRoles)) * 100)
     : 100;
 
   const stats = [
-    { title: "Est. Weekly Billings", value: `$${(weeklyBillings / 1000).toFixed(1)}k`, subtext: "Live Estimate", progress: Math.min(100, (weeklyBillings / 50000) * 100), status: "success", trend: "up" },
-    { title: "Revenue at Risk", value: `$${(revenueAtRisk / 1000).toFixed(1)}k`, subtext: "Unfilled Roles", progress: Math.min(100, (revenueAtRisk / 10000) * 100), status: "danger", trend: "down" },
+    { 
+        title: "Est. Weekly Billings", 
+        value: `$${(weeklyRevenue / 1000).toFixed(1)}k`, 
+        subtext: "Live Estimate", 
+        progress: Math.min(100, (weeklyRevenue / 50000) * 100), 
+        status: "success", 
+        trend: "up",
+        onClick: () => console.log("Open Financials View"), // Future: Link to Financials Page
+        cursor: "pointer"
+    },
+    { 
+        title: "Revenue at Risk", 
+        value: `$${(revenueAtRisk / 1000).toFixed(1)}k`, 
+        subtext: "Unfilled Roles", 
+        progress: Math.min(100, (revenueAtRisk / 10000) * 100), 
+        status: "danger", 
+        trend: "down",
+        onClick: () => console.log("Open Risk View"), // Future: Filter MoneyMoves by Risk
+        cursor: "pointer"
+    },
     { 
         title: "Active Placements", 
-        value: activePlacements.toString(), 
+        value: activePlacements.length.toString(), 
         subtext: "On Site Now", 
         progress: 100, 
         status: "neutral", 
@@ -120,8 +129,7 @@ function DashboardContent() {
         onClick: () => setViewActivePlacements(true),
         cursor: "pointer"
     },
-    { title: "Fill Rate", value: `${fillRate}%`, subtext: "Demand vs Supply", progress: fillRate, status: fillRate > 80 ? "success" : "warning", trend: fillRate > 80 ? "up" : "down" },
-    { title: "Hot Jobs", value: hotJobs.toString(), subtext: "Active Sites", progress: 60, status: "purple", trend: "up" }
+    { title: "Fill Rate", value: `${fillRate}%`, subtext: "Demand vs Supply", progress: fillRate, status: fillRate > 80 ? "success" : "warning", trend: fillRate > 80 ? "up" : "down" }
   ];
 
   const handleMapMarkerClick = (marker) => {
@@ -166,7 +174,10 @@ function DashboardContent() {
 
         {/* Zone 1.5: Risk Control Center */}
         <section className="risk-control">
-          <BenchLiabilityWidget candidates={candidates} />
+          <BenchLiabilityWidget 
+            candidates={candidates} 
+            onViewBench={() => setViewBenchList(true)} // Pass handler
+          />
           <RedeploymentRadar candidates={candidates} />
         </section>
 
@@ -180,12 +191,13 @@ function DashboardContent() {
             <div className="control-panel">
               {/* Section A: Placements Pipeline */}
               <div className="panel-column">
+                <h3 className="column-title">Deal Flow (Draft Placements)</h3>
                 <PlacementsPipeline />
               </div>
 
               {/* Section B: Urgent Actions */}
               <div className="panel-column">
-                <h3 className="column-title">Urgent Actions</h3>
+                <h3 className="column-title">Nudge Engine (Priority Actions)</h3>
                 <div className="urgent-list">
                   {moneyMoves.map((action) => {
                     let cardType = action.type;
@@ -270,6 +282,19 @@ function DashboardContent() {
         {viewActivePlacements && (
             <ActivePlacementsModal onClose={() => setViewActivePlacements(false)} />
         )}
+        
+        {viewBenchList && (
+            <ActiveBenchModal 
+                candidates={candidates.filter(c => c.status === "Available")} 
+                onClose={() => setViewBenchList(false)} 
+            />
+        )}
+
+        <ActionDrawer 
+            isOpen={!!selectedNudge} 
+            nudge={selectedNudge} 
+            onClose={() => setSelectedNudge(null)} 
+        />
 
         {isModalOpen && (
           <AddProjectModal

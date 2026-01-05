@@ -8,28 +8,14 @@ import FinancialForecastWidget from "../../components/financial-forecast-widget.
 import { DollarSign, TrendingUp, TrendingDown, AlertCircle, PieChart, ArrowRight } from "lucide-react";
 
 export default function FinancialsPage() {
-    const { candidates, placements } = useData();
+    const { candidates, placements, weeklyRevenue, weeklyPayroll, benchLiability, weeklyGrossProfit, revenueAtRisk } = useData();
     const [selectedCandidate, setSelectedCandidate] = useState(null);
     const [selectedPlacement, setSelectedPlacement] = useState(null);
     const [isFloatModalOpen, setIsFloatModalOpen] = useState(false);
 
-    // --- Financial Engine ---
-    const BURDEN_MULTIPLIER = 1.20; // 20% burden for ACC, Holiday Pay, Kiwisaver
-    const WORK_WEEK_HOURS = 40;
-
-    // 1. Calculate Revenue (Active Placements)
+    const BURDEN_MULTIPLIER = 1.20; 
     const activeCandidates = candidates.filter(c => c.status === "On Job");
-    const weeklyRevenue = activeCandidates.reduce((sum, c) => sum + ((c.chargeRate || 0) * WORK_WEEK_HOURS), 0);
-
-    // 2. Calculate Payroll (Active + Bench Liability)
-    const activePayroll = activeCandidates.reduce((sum, c) => sum + ((c.payRate || 0) * BURDEN_MULTIPLIER * WORK_WEEK_HOURS), 0);
-    
-    // Bench Liability: Candidates "Available" with Guaranteed Hours
     const benchCandidates = candidates.filter(c => c.status === "Available" && c.guaranteedHours > 0);
-    const benchLiability = benchCandidates.reduce((sum, c) => sum + ((c.payRate || 0) * BURDEN_MULTIPLIER * (c.guaranteedHours || 30)), 0);
-
-    const totalPayroll = activePayroll + benchLiability;
-    const weeklyGrossProfit = weeklyRevenue - totalPayroll;
     const grossMarginPercent = weeklyRevenue > 0 ? ((weeklyGrossProfit / weeklyRevenue) * 100).toFixed(1) : "0.0";
 
     const handleFloatClick = (candidate) => {
@@ -68,7 +54,7 @@ export default function FinancialsPage() {
 
                 <div className="ledger-card payroll">
                     <div className="card-label">Weekly Payroll (Est)</div>
-                    <div className="card-value">${totalPayroll.toLocaleString()}</div>
+                    <div className="card-value">${weeklyPayroll.toLocaleString()}</div>
                     <div className="card-sub text-slate-400 flex items-center gap-1">
                         Includes 20% Burden
                     </div>
@@ -81,6 +67,14 @@ export default function FinancialsPage() {
                     </div>
                     <div className="card-sub text-emerald-400 flex items-center gap-1">
                         {grossMarginPercent}% Margin
+                    </div>
+                </div>
+
+                <div className={`ledger-card risk ${revenueAtRisk > 0 ? 'alert' : ''}`}>
+                    <div className="card-label">Revenue at Risk</div>
+                    <div className="card-value text-rose-500">${revenueAtRisk.toLocaleString()}</div>
+                    <div className="card-sub text-rose-400 flex items-center gap-1">
+                        <AlertCircle size={14} /> Unfilled / Expiring
                     </div>
                 </div>
 
@@ -221,7 +215,7 @@ export default function FinancialsPage() {
                 /* Ledger Grid */
                 .ledger-grid {
                     display: grid;
-                    grid-template-columns: repeat(4, 1fr);
+                    grid-template-columns: repeat(5, 1fr);
                     gap: 1.5rem;
                 }
 

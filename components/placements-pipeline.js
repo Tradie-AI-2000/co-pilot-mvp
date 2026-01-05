@@ -1,21 +1,61 @@
 "use client";
 
 import { User, ChevronRight, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { useData } from "../context/data-context.js";
 
 export default function PlacementsPipeline() {
-    // Mock data - in real app this comes from props/context
+    const { placements, candidates } = useData();
+
+    // Map real data to stages
     const stages = [
-        { id: 1, name: "New Applications", count: 12, color: "blue", candidates: Array(12).fill({ name: "John Doe", role: "Laborer" }) },
-        { id: 2, name: "Phone Screening", count: 8, color: "purple", candidates: Array(8).fill({ name: "Jane Smith", role: "Carpenter" }) },
-        { id: 3, name: "Inductions Pending", count: 5, color: "yellow", candidates: Array(5).fill({ name: "Mike Ross", role: "Operator" }) },
-        { id: 4, name: "Ready for Deployment", count: 15, color: "green", candidates: Array(15).fill({ name: "Harvey S.", role: "Foreman" }) },
+        { 
+            id: 1, 
+            name: "Floated / Spec CV", 
+            color: "blue", 
+            candidates: placements
+                .filter(p => p.status === 'Floated')
+                .map(p => {
+                    const c = candidates.find(cand => cand.id === p.candidateId);
+                    return { name: c ? `${c.firstName} ${c.lastName[0]}.` : "Unknown", role: c?.role || "Laborer" };
+                })
+        },
+        { 
+            id: 2, 
+            name: "Client Review", 
+            color: "purple", 
+            candidates: [] // Placeholder for future status
+        },
+        { 
+            id: 3, 
+            name: "Bookings (Pending)", 
+            color: "yellow", 
+            candidates: placements
+                .filter(p => p.status === 'Unconfirmed')
+                .map(p => {
+                    const c = candidates.find(cand => cand.id === p.candidateId);
+                    return { name: c ? `${c.firstName} ${c.lastName[0]}.` : "Unknown", role: c?.role || "Laborer" };
+                })
+        },
+        { 
+            id: 4, 
+            name: "Deployed (Active)", 
+            color: "green", 
+            candidates: placements
+                .filter(p => p.status === 'Deployed')
+                .map(p => {
+                    const c = candidates.find(cand => cand.id === p.candidateId);
+                    return { name: c ? `${c.firstName} ${c.lastName[0]}.` : "Unknown", role: c?.role || "Laborer" };
+                })
+        },
     ];
+
+    const totalActive = stages.reduce((sum, s) => sum + s.candidates.length, 0);
 
     return (
         <div className="pipeline-container">
             <div className="pipeline-header">
-                <h3>Candidate Pipeline</h3>
-                <span className="total-badge">40 Active</span>
+                <h3>Deal Flow</h3>
+                <span className="total-badge">{totalActive} Active</span>
             </div>
 
             <div className="pipeline-scroll-area">
@@ -26,19 +66,18 @@ export default function PlacementsPipeline() {
                                 <span className={`status-dot ${stage.color}`}></span>
                                 <span className="stage-name">{stage.name}</span>
                             </div>
-                            <span className="stage-count">{stage.count}</span>
+                            <span className="stage-count">{stage.candidates.length}</span>
                         </div>
 
                         {/* Visual Bar representation of volume */}
                         <div className="volume-bar-track">
                             <div
                                 className={`volume-bar-fill ${stage.color}`}
-                                style={{ width: `${Math.min(100, (stage.count / 20) * 100)}%` }}
+                                style={{ width: `${Math.min(100, (stage.candidates.length / 10) * 100)}%` }}
                             ></div>
                         </div>
 
                         <div className="candidate-preview-list">
-                            {/* Show top 3 candidates per stage as preview */}
                             {stage.candidates.slice(0, 3).map((c, i) => (
                                 <div key={i} className="mini-candidate-row">
                                     <User size={12} className="text-muted" />
@@ -46,10 +85,13 @@ export default function PlacementsPipeline() {
                                     <span className="text-xs text-muted ml-auto">{c.role}</span>
                                 </div>
                             ))}
-                            {stage.count > 3 && (
+                            {stage.candidates.length > 3 && (
                                 <div className="more-row">
-                                    +{stage.count - 3} more...
+                                    +{stage.candidates.length - 3} more...
                                 </div>
+                            )}
+                            {stage.candidates.length === 0 && (
+                                <div className="text-[10px] text-slate-600 italic">No active deals</div>
                             )}
                         </div>
                     </div>

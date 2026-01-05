@@ -84,6 +84,35 @@ export function DataProvider({ children }) {
 
     // --- Unified Action Engine (formerly moneyMoves) ---
     const [moneyMoves, setMoneyMoves] = useState([]);
+    const [serverNudges, setServerNudges] = useState([]);
+
+    // Fetch Server Nudges on Mount
+    useEffect(() => {
+        fetch('/api/nudges')
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) {
+                    // Map to moneyMoves format
+                    const mapped = data.map(n => ({
+                        id: n.id,
+                        type: n.type === 'PRE_EMPTIVE_STRIKE' ? 'lead' : 
+                              n.type === 'CHURN_INTERCEPTOR' ? 'risk' : 
+                              n.type === 'RAINMAKER' ? 'urgent' : 'task',
+                        title: n.title,
+                        description: n.description,
+                        urgency: n.priority === 'CRITICAL' ? 'Critical' : 
+                                 n.priority === 'HIGH' ? 'High' : 
+                                 n.priority === 'MEDIUM' ? 'Medium' : 'Low',
+                        date: 'ASAP',
+                        rawDate: n.createdAt,
+                        financialImpact: n.actionPayload?.impact || 800,
+                        isServer: true // Flag to distinguish
+                    }));
+                    setServerNudges(mapped);
+                }
+            })
+            .catch(err => console.error('Failed to fetch nudges:', err));
+    }, []);
 
     useEffect(() => {
         const triggers = [];
@@ -109,12 +138,33 @@ export function DataProvider({ children }) {
                     if (isSoon) { urgency = "Critical"; title = `CRITICAL: ${gap}x ${signal.role} unassigned for ${project.name}`; }
                     else if (supply < gap) { urgency = "High"; title = `RISK: Need ${gap} ${signal.role}. Only ${supply} available!`; }
                     else { urgency = "Medium"; title = `MATCH: ${gap} ${signal.role} needed. ${supply} Available to deploy.`; }
-                    triggers.push({ id: `signal-${project.id}-${signal.role}`, projectId: project.id, projectName: project.name, type: 'signal', title, description, urgency, date: signal.date || 'ASAP', rawDate: project.startDate });
+                    
+                    // Impact: $800 margin per role required
+                    const impact = gap * 800;
+
+                    triggers.push({ 
+                        id: `signal-${project.id}-${signal.role}`, 
+                        projectId: project.id, 
+                        projectName: project.name, 
+                        type: 'signal', 
+                        title, 
+                        description, 
+                        urgency, 
+                        date: signal.date || 'ASAP', 
+                        rawDate: project.startDate,
+                        financialImpact: impact
+                    });
                 });
             }
             // Aggregate Contact Triggers - Existing Logic
             if (project.contactTriggers) {
-                project.contactTriggers.forEach(trigger => triggers.push({ ...trigger, projectId: project.id, projectName: project.name, type: 'trigger' }));
+                project.contactTriggers.forEach(trigger => triggers.push({ 
+                    ...trigger, 
+                    projectId: project.id, 
+                    projectName: project.name, 
+                    type: 'trigger',
+                    financialImpact: 0 // Relationship calls don't have direct immediate margin impact
+                }));
             }
 
             // Client "Buying Signals" - NEW LOGIC
@@ -128,14 +178,19 @@ export function DataProvider({ children }) {
                         const phaseInfo = PHASE_MAP[phaseId];
                         if (phaseInfo) {
                             // Predict roles based on project size and WORKFORCE_MATRIX
-                            const projectSize = getProjectSize(project.value); // Assuming getProjectSize exists and works
+                            const projectSize = getProjectSize(project.value); 
                             const predictedRoles = WORKFORCE_MATRIX[phaseId];
                             let rolesNeeded = [];
+                            let totalPotentialMargin = 0;
                             if (predictedRoles) {
                                 for (const role in predictedRoles) {
                                     const countRange = predictedRoles[role][projectSize];
                                     if (countRange) {
                                         rolesNeeded.push(`${role} (${countRange})`);
+                                        // Use average of range for impact
+                                        const parts = countRange.split('-');
+                                        const avgCount = parts.length > 1 ? (parseInt(parts[0]) + parseInt(parts[1])) / 2 : parseInt(parts[0]);
+                                        totalPotentialMargin += avgCount * 800;
                                     }
                                 }
                             }
@@ -148,9 +203,10 @@ export function DataProvider({ children }) {
                                 type: 'buying_signal',
                                 title: `Buying Signal: ${phaseInfo.label} Phase Approaching`,
                                 description: `${project.name} enters '${phaseInfo.label}' in ${diffDays} days. ${rolesText}`,
-                                urgency: "Upcoming", // Specific urgency for Buying Signals
+                                urgency: "Upcoming", 
                                 date: settings.startDate,
-                                rawDate: settings.startDate
+                                rawDate: settings.startDate,
+                                financialImpact: totalPotentialMargin
                             });
                         }
                     }
@@ -166,42 +222,108 @@ export function DataProvider({ children }) {
                         const dueDate = new Date(task.dueDate);
                         const diffDays = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
                         let urgency = diffDays <= 1 ? "Critical" : diffDays <= 3 ? "High" : "Medium";
-                        triggers.push({ id: `task-${client.id}-${task.id}`, clientId: client.id, type: 'task', title: `Task: ${client.name}`, description: task.text, urgency, date: task.dueDate, rawDate: task.dueDate });
+                        triggers.push({ 
+                            id: `task-${client.id}-${task.id}`, 
+                            clientId: client.id, 
+                            type: 'task', 
+                            title: `Task: ${client.name}`, 
+                            description: task.text, 
+                            urgency, 
+                            date: task.dueDate, 
+                            rawDate: task.dueDate,
+                            financialImpact: 0 
+                        });
                     }
                 });
             }
             if (client.lastContact && client.lastContact.match(/^\d{4}-\d{2}-\d{2}$/)) {
                 const diffDays = Math.ceil((today - new Date(client.lastContact)) / (1000 * 60 * 60 * 24));
                 if (diffDays > 30) {
-                    triggers.push({ id: `ghost-${client.id}`, clientId: client.id, type: 'risk', title: `Ghost Risk: ${client.name}`, description: `No contact for ${diffDays} days. Call immediately.`, urgency: "High", date: "ASAP", rawDate: today.toISOString() });
+                    triggers.push({ 
+                        id: `ghost-${client.id}`, 
+                        clientId: client.id, 
+                        type: 'risk', 
+                        title: `Ghost Risk: ${client.name}`, 
+                        description: `No contact for ${diffDays} days. Call immediately.`, 
+                        urgency: "High", 
+                        date: "ASAP", 
+                        rawDate: today.toISOString(),
+                        financialImpact: 0 // Risk of churn is hard to quantify without active placements
+                    });
                 }
             }
         });
 
         // 3. Candidate Actions (Compliance, Visa, Retention) - Existing Logic
         candidates.forEach(candidate => {
+            // Helper to get candidate margin
+            const getMargin = (c) => {
+                const margin = (c.chargeRate || 50) - (c.payRate || 30);
+                return margin * 40;
+            };
+
             if (candidate.siteSafeExpiry) {
                 const diffDays = Math.ceil((new Date(candidate.siteSafeExpiry) - today) / (1000 * 60 * 60 * 24));
-                if (diffDays < 0) triggers.push({ id: `compliance-${candidate.id}`, candidateId: candidate.id, type: 'compliance', title: `Compliance Expired: ${candidate.firstName}`, description: `Site Safe EXPIRED on ${candidate.siteSafeExpiry}.`, urgency: "Critical", date: "IMMEDIATE", rawDate: today.toISOString() });
-                else if (diffDays <= 14) triggers.push({ id: `compliance-${candidate.id}`, candidateId: candidate.id, type: 'compliance', title: `Compliance Warning: ${candidate.firstName}`, description: `Site Safe expires in ${diffDays} days.`, urgency: "High", date: candidate.siteSafeExpiry, rawDate: candidate.siteSafeExpiry });
+                if (diffDays <= 14) {
+                    let urgency = diffDays < 0 ? "Critical" : "High";
+                    triggers.push({ 
+                        id: `compliance-${candidate.id}`, 
+                        candidateId: candidate.id, 
+                        type: 'compliance', 
+                        title: diffDays < 0 ? `Compliance Expired: ${candidate.firstName}` : `Compliance Warning: ${candidate.firstName}`, 
+                        description: diffDays < 0 ? `Site Safe EXPIRED on ${candidate.siteSafeExpiry}.` : `Site Safe expires in ${diffDays} days.`, 
+                        urgency, 
+                        date: candidate.siteSafeExpiry, 
+                        rawDate: candidate.siteSafeExpiry,
+                        financialImpact: candidate.status === "On Job" ? getMargin(candidate) : 0
+                    });
+                }
             }
             if (candidate.visaExpiry && candidate.residency === "Work Visa") {
                 const diffDays = Math.ceil((new Date(candidate.visaExpiry) - today) / (1000 * 60 * 60 * 24));
-                if (diffDays <= 30) triggers.push({ id: `visa-${candidate.id}`, candidateId: candidate.id, type: 'risk', title: `Visa Expiry: ${candidate.firstName}`, description: `Work Visa expires in ${diffDays} days.`, urgency: diffDays < 14 ? "Critical" : "High", date: candidate.visaExpiry, rawDate: candidate.visaExpiry });
+                if (diffDays <= 30) {
+                    triggers.push({ 
+                        id: `visa-${candidate.id}`, 
+                        candidateId: candidate.id, 
+                        type: 'risk', 
+                        title: `Visa Expiry: ${candidate.firstName}`, 
+                        description: `Work Visa expires in ${diffDays} days.`, 
+                        urgency: diffDays < 14 ? "Critical" : "High", 
+                        date: candidate.visaExpiry, 
+                        rawDate: candidate.visaExpiry,
+                        financialImpact: candidate.status === "On Job" ? getMargin(candidate) : 0
+                    });
+                }
             }
             if (candidate.satisfactionRating && candidate.satisfactionRating <= 2) {
-                triggers.push({ id: `retention-${candidate.id}`, candidateId: candidate.id, type: 'retention', title: `Flight Risk: ${candidate.firstName}`, description: `Low satisfaction (Rating: ${candidate.satisfactionRating}).`, urgency: "High", date: "ASAP", rawDate: today.toISOString() });
+                triggers.push({ 
+                    id: `retention-${candidate.id}`, 
+                    candidateId: candidate.id, 
+                    type: 'retention', 
+                    title: `Flight Risk: ${candidate.firstName}`, 
+                    description: `Low satisfaction (Rating: ${candidate.satisfactionRating}).`, 
+                    urgency: "High", 
+                    date: "ASAP", 
+                    rawDate: today.toISOString(),
+                    financialImpact: candidate.status === "On Job" ? getMargin(candidate) : 0
+                });
             }
         });
 
         // 4. Placement Actions (Flight Risk from Check-ins & Stalled Floats) - NEW LOGIC
         placements.forEach(placement => {
+            const candidate = candidates.find(c => c.id === placement.candidateId);
+            const getMargin = (c) => {
+                if (!c) return 800;
+                const margin = (c.chargeRate || 50) - (c.payRate || 30);
+                return margin * 40;
+            };
+
             // A. Flight Risk (Deployed)
             if (placement.status === 'Deployed' && placement.weeklyCheckins && placement.weeklyCheckins.length >= 2) {
                 const lastTwoCheckins = placement.weeklyCheckins.slice(-2);
                 const [last, secondLast] = lastTwoCheckins;
                 if (last.candidateMood === 'down' && secondLast.candidateMood === 'down') {
-                    const candidate = candidates.find(c => c.id === placement.candidateId);
                     const project = projects.find(p => p.id === placement.projectId);
                     if (candidate && project) {
                         triggers.push({
@@ -212,9 +334,10 @@ export function DataProvider({ children }) {
                             type: 'retention',
                             title: `FLIGHT RISK: ${candidate.firstName} (Check-in)`,
                             description: `${candidate.firstName} at ${project.name} shows 2 consecutive 'down' moods.`,
-                            urgency: "Critical", // More critical than just low satisfaction
+                            urgency: "Critical", 
                             date: today.toISOString(),
-                            rawDate: today.toISOString()
+                            rawDate: today.toISOString(),
+                            financialImpact: getMargin(candidate)
                         });
                     }
                 }
@@ -225,7 +348,6 @@ export function DataProvider({ children }) {
                 const floatedDate = new Date(placement.floatedDate);
                 const diffDays = Math.ceil((today - floatedDate) / (1000 * 60 * 60 * 24));
                 if (diffDays > 3) {
-                     const candidate = candidates.find(c => c.id === placement.candidateId);
                      const project = projects.find(p => p.id === placement.projectId);
                      if (candidate && project) {
                         triggers.push({
@@ -236,7 +358,8 @@ export function DataProvider({ children }) {
                             description: `Floated to ${project.name} ${diffDays} days ago. No response.`,
                             urgency: diffDays > 5 ? "High" : "Medium",
                             date: placement.floatedDate,
-                            rawDate: placement.floatedDate
+                            rawDate: placement.floatedDate,
+                            financialImpact: getMargin(candidate)
                         });
                      }
                 }
@@ -244,26 +367,50 @@ export function DataProvider({ children }) {
 
             // C. Portal Bookings (Unconfirmed) - NEW
             if (placement.status === 'Unconfirmed') {
-                const candidate = candidates.find(c => c.id === placement.candidateId);
                 const project = projects.find(p => p.id === placement.projectId);
                 if (candidate && project) {
                     triggers.push({
                         id: `portal-confirm-${placement.id}`,
                         placementId: placement.id,
-                        type: 'task', // Will show in Today's Actions
+                        type: 'task', 
                         title: `Portal Booking: ${candidate.firstName}`,
                         description: `Client booked for ${project.name}. Confirm availability?`,
                         urgency: "Critical",
                         date: "IMMEDIATE",
-                        rawDate: today.toISOString()
+                        rawDate: today.toISOString(),
+                        financialImpact: getMargin(candidate)
                     });
                 }
             }
         });
 
+        // Merge Server Nudges
+        const allMoves = [...triggers, ...serverNudges];
+
         const priorityScore = { 'Critical': 4, 'High': 3, 'Medium': 2, 'Low': 1, 'Upcoming': 0.5 };
-        setMoneyMoves(triggers.sort((a, b) => (priorityScore[b.urgency] || 0) - (priorityScore[a.urgency] || 0) || new Date(a.rawDate || 0) - new Date(b.rawDate || 0)));
-    }, [projects, candidates, clients, placements]);
+        setMoneyMoves(allMoves.sort((a, b) => (priorityScore[b.urgency] || 0) - (priorityScore[a.urgency] || 0) || new Date(a.rawDate || 0) - new Date(b.rawDate || 0)));
+    }, [projects, candidates, clients, placements, serverNudges]);
+
+    // --- Financial Engine ---
+    const BURDEN_MULTIPLIER = 1.20;
+    const WORK_WEEK_HOURS = 40;
+
+    const activeCandidates = candidates.filter(c => c.status === "On Job");
+    const weeklyRevenue = activeCandidates.reduce((sum, c) => sum + ((c.chargeRate || 0) * WORK_WEEK_HOURS), 0);
+    const activePayroll = activeCandidates.reduce((sum, c) => sum + ((c.payRate || 0) * BURDEN_MULTIPLIER * WORK_WEEK_HOURS), 0);
+    
+    const benchCandidates = candidates.filter(c => c.status === "Available" && c.guaranteedHours > 0);
+    const benchLiability = benchCandidates.reduce((sum, c) => sum + ((c.payRate || 0) * BURDEN_MULTIPLIER * (c.guaranteedHours || 30)), 0);
+
+    const weeklyPayroll = activePayroll + benchLiability;
+    const weeklyGrossProfit = weeklyRevenue - weeklyPayroll;
+
+    const revenueAtRisk = moneyMoves.reduce((acc, item) => {
+        if (item.urgency === 'Critical' || item.urgency === 'High') {
+            return acc + (item.financialImpact || 0);
+        }
+        return acc;
+    }, 0);
 
     // --- Actions ---
 
@@ -337,6 +484,7 @@ export function DataProvider({ children }) {
 
     const value = {
         candidates, clients, projects, selectedProject, setSelectedProject, moneyMoves, availableRoles, placements,
+        weeklyRevenue, weeklyPayroll, benchLiability, weeklyGrossProfit, revenueAtRisk,
         addCandidate, updateCandidate, addClient, updateClient, addProject, updateProject, addRole, floatCandidate, updatePlacementStatus, logCheckin, submitPortalBooking,
         setCandidates, setClients, setProjects
     };

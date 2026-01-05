@@ -2,7 +2,7 @@
 
 import { AlertOctagon, DollarSign, Users } from "lucide-react";
 
-export default function BenchLiabilityWidget({ candidates }) {
+export default function BenchLiabilityWidget({ candidates, onViewBench }) {
     // 1. Filter for 'Bench' candidates (Available)
     // In a real scenario, we might have a specific 'Guaranteed Hours' flag.
     // For now, we assume ALL 'Available' candidates are costing us money.
@@ -41,7 +41,7 @@ export default function BenchLiabilityWidget({ candidates }) {
             </div>
 
             <div className="card-footer">
-                <button className="action-btn">
+                <button className="action-btn" onClick={onViewBench}>
                     <Users size={14} /> View Bench List
                 </button>
             </div>
