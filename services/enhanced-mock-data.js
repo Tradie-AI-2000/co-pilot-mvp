@@ -304,6 +304,36 @@ export const enhancedProjects = [
         packages: {},
         phaseSettings: {},
         assignedCompanyIds: [] // No client yet
+    },
+    // --- Hunter Test: Matchmaker Target ---
+    {
+        id: "P099",
+        name: "Westfield Albany - Fit Out",
+        description: "Major retail fit-out for new mall extension.",
+        assetOwner: "Scentre Group",
+        address: "Don McKinnon Drive, Albany",
+        type: "Commercial",
+        funding: "Private",
+        value: "$15M",
+        status: "Construction",
+        stage: "Fitout",
+        startDate: "2026-01-22", // HUNTER TEST: Starts in 10 Days
+        projectDirector: "Test Director",
+        seniorQS: "Test QS",
+        siteManager: "Test Site Manager",
+        safetyOfficer: "TBD",
+        incumbentAgency: "None",
+        parking: "On-site",
+        publicTransport: "Yes",
+        ppe: ["Hard Hat", "Steel Caps", "Hi-Vis"],
+        induction: "Standard",
+        coordinates: { lat: -36.733, lng: 174.708 }, // Albany
+        labourPrediction: [],
+        packages: {},
+        phaseSettings: {
+            "05_interiors": { startDate: "2026-01-22", offsetWeeks: 4, skipped: false } // Trigger Matchmaker
+        },
+        assignedCompanyIds: [99] // Alpha Auckland
     }
 ];
 
@@ -580,6 +610,28 @@ export const enhancedClients = [
         keyContacts: [],
         siteLogistics: {},
         financials: {},
+        notes: [],
+        tasks: []
+    },
+    // --- Hunter Test: Relationship Decay ---
+    {
+        id: 99,
+        name: "Alpha Auckland",
+        industry: "Construction",
+        region: "Auckland",
+        activeJobs: 2,
+        status: "Active",
+        lastContact: "2025-12-23", // HUNTER TEST: 20 Days ago (Tier 1 Risk)
+        pipelineStage: "Active",
+        tier: "1", 
+        contractStatus: "Preferred Supplier",
+        projectIds: ["P099"],
+        network: [],
+        actionAlerts: [],
+        hiringInsights: { avgTimeToHire: "10 days", mostHiredRole: "Carpenter" },
+        keyContacts: [{ name: "John Alpha", role: "Director", phone: "021 999 888", influence: "Champion" }],
+        siteLogistics: {},
+        financials: { ytdRevenue: "$500,000", avgFee: "$15,000", lastActivity: "2025-12-20" },
         notes: [],
         tasks: []
     }

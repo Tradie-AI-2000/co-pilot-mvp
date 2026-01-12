@@ -106,10 +106,11 @@ export const candidates = [
         state: "Auckland",
         residency: "Work Visa",
         status: "On Job",
-        role: "Formworker",
+        role: "Carpenter", // HUNTER TEST: Matches Westfield Fitout
         payRate: 34.00,
         chargeRate: 58.00,
-        guaranteedHours: 30,
+        guaranteedHours: 40,
+        finishDate: "2026-01-15", // HUNTER TEST: The Bleed (3 Days)
         visaExpiry: "2025-06-05", // EXPIRING SOON (Urgent)
         siteSafeExpiry: "2026-01-10",
         satisfactionRating: 4,

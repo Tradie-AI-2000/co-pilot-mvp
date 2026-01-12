@@ -91,6 +91,24 @@ export function DataProvider({ children }) {
 
     // --- Enrichment Logic (Flat Sheet -> Complex Object) ---
 
+    // Helper for NZ Date Formats (DD/MM/YYYY)
+    const parseFlexibleDate = (dateStr) => {
+        if (!dateStr) return "";
+        if (typeof dateStr === 'string') {
+            // Handle DD-MM-YYYY or DD/MM/YYYY
+            const match = dateStr.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+            if (match) {
+                const [_, day, month, year] = match;
+                // Pad with zeros if needed
+                const fmtDay = day.padStart(2, '0');
+                const fmtMonth = month.padStart(2, '0');
+                return `${year}-${fmtMonth}-${fmtDay}`;
+            }
+        }
+        const d = new Date(dateStr);
+        return isNaN(d.getTime()) ? "" : d.toISOString().split('T')[0];
+    };
+
     const enrichCandidateData = (candidate) => {
         // Clean Numerics
         const cleanNumber = (val) => {
@@ -99,46 +117,72 @@ export function DataProvider({ children }) {
             return 0;
         };
 
-        const chargeRate = cleanNumber(candidate.chargeRate || candidate['Charge Rate']);
-        const payRate = cleanNumber(candidate.payRate || candidate['Pay Rate']);
-        const guaranteedHours = cleanNumber(candidate.guaranteedHours || candidate['Guaranteed Hours']);
+        // --- HARD-WIRED MAPPING (Columns AA-AC, V, AW, P, R) ---
+        // V: Role
+        // AA: Pay Rate
+        // AB: Charge Rate
+        // AC: Guaranteed Hours
+        // AW: Finish Date
+        // P: Residency
+        // R: Visa Expiry
 
-        // Normalize Country/Nationality for Visa Check
-        let country = candidate.country || candidate.Country || candidate.Nationality || candidate.nationality || "NZ";
-        if (country.match(/phil/i) || country.match(/pin/i)) country = "Philippines";
+        // Check Title Case (Sheet Standard) OR camelCase (Code Standard)
+        const payRate = cleanNumber(candidate['Pay Rate'] || candidate.payRate); 
+        const chargeRate = cleanNumber(candidate['Charge Rate'] || candidate.chargeRate); 
+        const guaranteedHours = cleanNumber(candidate['Guaranteed Hours'] || candidate.guaranteedHours); 
+        
+        const role = candidate['Role'] || candidate.role || "Candidate";
+        const finishDate = parseFlexibleDate(candidate['Finish Date'] || candidate.finishDate);
+        const residency = candidate['Residency'] || candidate.residency || "Unknown";
+        const visaExpiry = parseFlexibleDate(candidate['Visa Expiry'] || candidate.visaExpiry);
+        
+        // --- MOBILITY LOGIC ---
+        // If residency indicates Visa/Filipino, mark as Mobile Crew
+        const isMobile = residency.toLowerCase().includes('work visa') || 
+                         residency.toLowerCase().includes('filipino') ||
+                         residency.toLowerCase().includes('mobile');
 
-        // Date Normalization
-        const visaExpiry = candidate.visaExpiry || candidate['Visa Expiry'] || "";
-        const siteSafeExpiry = candidate.siteSafeExpiry || candidate['Site Safe Expiry'] || "";
-        const startDate = candidate.startDate || candidate['Start Date'] || "";
-        const finishDate = candidate.finishDate || candidate['Finish Date'] || "";
+        // Normalize Country (keep existing logic but sync with new residency check)
+        let country = candidate.country || candidate.Country || "NZ";
+        if (residency.includes('Filipino')) country = "Philippines";
 
         return {
             ...candidate,
+            role,
             chargeRate,
             payRate,
             guaranteedHours,
-            country,
+            finishDate,
+            residency,
             visaExpiry,
-            siteSafeExpiry,
-            startDate,
-            finishDate
+            country,
+            isMobile, // NEW: Mobility Flag
+            // Keep other fields
+            siteSafeExpiry: parseFlexibleDate(candidate['Site Safe Expiry'] || candidate.siteSafeExpiry),
+            startDate: parseFlexibleDate(candidate['Start Date'] || candidate.startDate)
         };
     };
 
     const enrichClientData = (client) => {
-        // Map Spreadsheet Columns to UI Schema
-        // Real Sheet Headers: "Head Office Address", "Main Phone", "Main Email", "Website"
-        
-        let region = client.region || client.Region || client.Location || client.location || "National";
-        let industry = client.industry || client.Industry || client.Trade || client.trade || "Construction";
-        
-        // Normalize Tier (e.g., "Tier 1" -> "1")
-        let tier = client.tier || client.Tier || "3";
-        if (typeof tier === 'string') {
-            tier = tier.replace(/tier\s?/i, '').trim();
-        }
+        // --- HARD-WIRED MAPPING (Columns D, F, W, X) ---
+        // D: Tier
+        // F: Last Contact
+        // W: Location (Region)
+        // X: Account Manager
 
+        let region = client['Location'] || client.Location || client.region || "National"; // Column W
+        let tier = client['Tier'] || client.tier || "3"; // Column D
+        if (typeof tier === 'string') tier = tier.replace(/tier\s?/i, '').trim();
+        
+        // Safe Date Parsing
+        let lastContact = parseFlexibleDate(client['Last Contact'] || client.lastContact); // Column F
+        
+        let accountManager = client['Account Manager'] || client.accountManager || "Unassigned"; // Column X
+
+        // Basic fields
+        let industry = client.industry || client.Industry || "Construction";
+        
+        // ... (Keep existing JSON parsing for complex fields if they exist in other columns) ...
         // Parse Project IDs (Handle JSON string or comma-separated)
         let projectIds = client.projectIds || client.ProjectIds || [];
         if (typeof projectIds === 'string') {
@@ -148,171 +192,84 @@ export function DataProvider({ children }) {
                 } else {
                     projectIds = projectIds.split(',').map(id => id.trim()).filter(Boolean);
                 }
-            } catch (e) {
-                console.warn('Failed to parse projectIds:', projectIds);
-                projectIds = [];
-            }
+            } catch (e) { projectIds = []; }
         }
         if (!Array.isArray(projectIds)) projectIds = [];
 
-        // Parse Key Contacts (JSON)
+        // Parse Key Contacts
         let keyContacts = client.keyContacts || client.KeyContacts || [];
         if (typeof keyContacts === 'string') {
-            try {
-                if (keyContacts.trim().startsWith('[')) {
-                    keyContacts = JSON.parse(keyContacts);
-                } else {
-                    keyContacts = [];
-                }
-            } catch (e) {
-                keyContacts = [];
-            }
+            try { if (keyContacts.trim().startsWith('[')) keyContacts = JSON.parse(keyContacts); else keyContacts = []; } catch (e) { keyContacts = []; }
         }
         if (!Array.isArray(keyContacts)) keyContacts = [];
 
-        // Parse Site Logistics (JSON)
+        // Parse Site Logistics
         let siteLogistics = client.siteLogistics || client.SiteLogistics || {};
         if (typeof siteLogistics === 'string') {
-            try {
-                if (siteLogistics.trim().startsWith('{')) {
-                    siteLogistics = JSON.parse(siteLogistics);
-                } else {
-                    siteLogistics = {};
-                }
-            } catch (e) {
-                siteLogistics = {};
-            }
+            try { if (siteLogistics.trim().startsWith('{')) siteLogistics = JSON.parse(siteLogistics); else siteLogistics = {}; } catch (e) { siteLogistics = {}; }
         }
 
-        // Parse Action Alerts (JSON or generate from dates)
+        // Parse Action Alerts
         let actionAlerts = client.actionAlerts || client.ActionAlerts || [];
         if (typeof actionAlerts === 'string') {
-            try {
-                if (actionAlerts.trim().startsWith('[')) {
-                    actionAlerts = JSON.parse(actionAlerts);
-                } else {
-                    actionAlerts = [];
-                }
-            } catch (e) {
-                actionAlerts = [];
-            }
+            try { if (actionAlerts.trim().startsWith('[')) actionAlerts = JSON.parse(actionAlerts); else actionAlerts = []; } catch (e) { actionAlerts = []; }
         }
         if (!Array.isArray(actionAlerts)) actionAlerts = [];
 
-        const contractExpiry = client.contractExpiry || client['Contract Expiry'] || client['Contract Expiry Date'];
-        
-        if (contractExpiry) {
-            const expiryDate = new Date(contractExpiry);
-            const today = new Date();
-            if (!isNaN(expiryDate)) {
-                const diffDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
-                if (diffDays > 0 && diffDays <= 30) {
-                    actionAlerts.push({ type: "warning", message: `Contract Expires in ${diffDays} days` });
-                } else if (diffDays <= 0) {
-                    actionAlerts.push({ type: "critical", message: `Contract EXPIRED on ${contractExpiry}` });
-                }
-            }
-        }
-
-        // Parse Tasks (JSON or pipe-separated)
+        // Parse Tasks
         let tasks = client.tasks || client.Tasks || [];
         if (typeof tasks === 'string') {
-            try {
-                if (tasks.trim().startsWith('[')) {
-                    tasks = JSON.parse(tasks);
-                } else if (tasks.includes('|')) {
-                    tasks = tasks.split('|').map((t, i) => ({ id: i, text: t.trim(), completed: false, dueDate: new Date().toISOString() }));
-                } else {
-                    tasks = [];
-                }
-            } catch (e) {
-                tasks = [];
-            }
+            try { if (tasks.trim().startsWith('[')) tasks = JSON.parse(tasks); else tasks = []; } catch (e) { tasks = []; }
         }
         if (!Array.isArray(tasks)) tasks = [];
 
-        // Parse Notes (JSON or String)
+        // Parse Notes
         let notes = client.notes || client.Notes || [];
         if (typeof notes === 'string') {
-            try {
-                if (notes.trim().startsWith('[')) {
-                    notes = JSON.parse(notes);
-                } else if (notes.includes('|')) {
-                    notes = notes.split('|').map((n, i) => ({
-                        id: `note-${i}`,
-                        text: n.trim(),
-                        date: new Date().toISOString().split('T')[0],
-                        author: "System"
-                    }));
-                } else if (notes.trim()) {
-                    notes = [{
-                        id: `note-0`,
-                        text: notes.trim(),
-                        date: new Date().toISOString().split('T')[0],
-                        author: "System"
-                    }];
-                } else {
-                    notes = [];
-                }
-            } catch (e) {
-                console.warn('Failed to parse notes:', notes);
-                notes = [];
-            }
+            try { if (notes.trim().startsWith('[')) notes = JSON.parse(notes); else if (notes.trim()) notes = [{ id: 'n1', text: notes, date: '', author: 'System' }]; else notes = []; } catch (e) { notes = []; }
         }
         if (!Array.isArray(notes)) notes = [];
 
         return {
             ...client,
-            region,
+            region, // Mapped from W
+            tier,   // Mapped from D
+            lastContact, // Mapped from F
+            accountManager, // Mapped from X
             industry,
-            tier,
             projectIds,
             keyContacts,
             siteLogistics,
             actionAlerts,
             tasks,
             notes,
-            lastContact: client.lastContact || client['Last Contact'] || "",
-            // New Company Info Fields (Mapped from Real Sheet Headers)
-            address: client.address || client['Head Office Address'] || client.Address || "",
-            phone: client.phone || client['Main Phone'] || client.Phone || client.Mobile || "",
-            email: client.email || client['Main Email'] || client.Email || "",
+            // Header mappings for generic fields
+            address: client.address || client['Head Office Address'] || "",
+            phone: client.phone || client['Main Phone'] || "",
+            email: client.email || client['Main Email'] || "",
             website: client.website || client.Website || ""
         };
     };
 
     const enrichProjectData = (project) => {
-        // 1. Construct Phase Settings from Flat Columns
+        // 1. Construct Phase Settings from Hard-Wired Columns (AF, AG, AH)
         let phaseSettings = project.phaseSettings || {};
         
-        // If phaseSettings is missing or empty, try to build it from "Phase X Start" columns
-        if (Object.keys(phaseSettings).length === 0) {
-            const phaseKeys = Object.keys(PHASE_MAP);
-            phaseKeys.forEach(key => {
-                // Look for "Phase_01_civil_Start" or "Civil Start"
-                const label = PHASE_MAP[key].label; // e.g. "Civil & Excavation"
-                const shortLabel = label.split(' ')[0]; // "Civil"
-                
-                const startVal = project[`Phase_${key}_Start`] || project[`${shortLabel} Start`] || project[`${key} Start`];
-                
-                if (startVal) {
-                    phaseSettings[key] = {
-                        startDate: startVal,
-                        offsetWeeks: 2,
-                        skipped: false
-                    };
-                }
-            });
-        }
+        // Map: Civil (AF), Structure (AG), Fitout (AH)
+        const civilStart = parseFlexibleDate(project['Civil Start'] || project.civilStart);
+        const structureStart = parseFlexibleDate(project['Structure Start'] || project.structureStart);
+        const fitoutStart = parseFlexibleDate(project['Fitout Start'] || project.fitoutStart);
+
+        if (civilStart) phaseSettings['01_civil'] = { startDate: civilStart, offsetWeeks: 2, skipped: false };
+        if (structureStart) phaseSettings['02a_concrete'] = { startDate: structureStart, offsetWeeks: 2, skipped: false }; 
+        if (fitoutStart) phaseSettings['05a_linings_stopping'] = { startDate: fitoutStart, offsetWeeks: 2, skipped: false }; 
 
         // 2. Map Site Manager Phone
         const siteManagerPhone = project.siteManagerPhone || project['Site Manager Phone'] || project['Site Manager Mobile'] || "";
 
-        // 3. Generate 'phases' array for UI visualization
-        let phases = project.phases || [];
-        // 4. Derive 'hiringSignals' from packages
+        // 3. Generate 'phases' array for UI
+        let phases = [];
         let hiringSignals = [];
-        // 5. Derive 'contactTriggers' (Alerts)
         let contactTriggers = [];
 
         if (Object.keys(phaseSettings).length > 0) {
@@ -328,17 +285,13 @@ export function DataProvider({ children }) {
                     if (settings.startDate) {
                         const start = new Date(settings.startDate);
                         const end = new Date(start);
-                        end.setDate(end.getDate() + 28); // Default 4 weeks
+                        end.setDate(end.getDate() + 28); 
 
                         const today = new Date();
-                        if (today > end) {
-                            status = "Completed";
-                            progress = 100;
-                        } else if (today >= start) {
-                            status = "In Progress";
-                            const totald = (end - start);
-                            const elapsd = (today - start);
-                            progress = Math.min(100, Math.round((elapsd / totald) * 100));
+                        if (today > end) { status = "Completed"; progress = 100; } 
+                        else if (today >= start) { 
+                            status = "In Progress"; 
+                            progress = Math.min(100, Math.round(((today - start) / (end - start)) * 100)); 
                         }
 
                         const daysUntil = Math.ceil((start - today) / (1000 * 60 * 60 * 24));
@@ -349,36 +302,28 @@ export function DataProvider({ children }) {
                                 id: `alert-${project.id}-${phaseId}`,
                                 urgency: daysUntil <= 7 ? "Critical" : "High",
                                 date: settings.startDate,
-                                message: `Phase '${phaseInfo.label}' starts in ${daysUntil} days. Confirm workforce.`,
+                                message: `Phase '${phaseInfo.label}' starts in ${daysUntil} days.`,
                                 contact: settings.siteManager || project.siteManager || "Site Manager"
                             });
                         }
                     }
 
-                    return {
-                        name: phaseInfo.label,
-                        id: phaseId,
-                        status: status,
-                        start: settings.startDate || "TBD",
-                        end: "TBD",
-                        progress: progress
-                    };
+                    return { name: phaseInfo.label, id: phaseId, status, start: settings.startDate, progress };
                 })
                 .filter(Boolean)
                 .sort((a, b) => a.id.localeCompare(b.id));
         }
 
-        // ... (Existing Package Logic kept simple for now)
-
         return {
             ...project,
             assignedCompanyIds: Array.isArray(project.assignedCompanyIds) ? project.assignedCompanyIds : [],
             phases,
-            phaseSettings, // Return the constructed object
+            phaseSettings,
             hiringSignals,
             subContractors: [],
             contactTriggers,
-            siteManagerPhone
+            siteManagerPhone,
+            region: project.Region || project.Location || project.region // Ensure region is passed for Matchmaker
         };
     };
 
