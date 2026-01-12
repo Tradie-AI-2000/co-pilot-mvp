@@ -31,6 +31,40 @@ export default function BusinessDevPage() {
     // Sort: Highest Score First
     const sortedMoves = [...moneyMoves].sort((a, b) => getPriorityScore(b) - getPriorityScore(a));
 
+    // Grouping Logic
+    const groupedMoves = {
+        starting: [],
+        buying: [],
+        compliance: [],
+        retention: [],
+        tasks: []
+    };
+
+    sortedMoves.forEach(move => {
+        const title = move.title?.toLowerCase() || "";
+        const type = move.type;
+
+        if (title.includes("starting") || title.includes("started")) {
+            groupedMoves.starting.push(move);
+        } else if (type === 'buying_signal' || type === 'signal' || type === 'lead') {
+            groupedMoves.buying.push(move);
+        } else if (type === 'compliance' || type === 'risk' || title.includes("visa") || title.includes("expiry")) {
+            groupedMoves.compliance.push(move);
+        } else if (type === 'retention' || type === 'deal_risk') {
+            groupedMoves.retention.push(move);
+        } else {
+            groupedMoves.tasks.push(move);
+        }
+    });
+
+    const categories = [
+        { id: 'starting', label: 'Starting Soon / Onboarding', icon: Zap, color: '#3b82f6' }, // Blue
+        { id: 'buying', label: 'Buying Signals & Gaps', icon: Target, color: '#10b981' }, // Green
+        { id: 'compliance', label: 'Compliance & Expiries', icon: FileText, color: '#f43f5e' }, // Red
+        { id: 'retention', label: 'Flight Risks & Stalled Deals', icon: Crosshair, color: '#f97316' }, // Orange
+        { id: 'tasks', label: 'General Tasks', icon: List, color: '#8b5cf6' } // Purple
+    ];
+
     return (
         <div className="bd-container">
             <header className="page-header">
@@ -69,29 +103,45 @@ export default function BusinessDevPage() {
                 {activeMode === 'feed' && (
                     <div className="nudge-feed-container">
                         <div className="feed-header">
-                            <h2>Priority Actions</h2>
-                            <span className="badge">{sortedMoves.length} Active</span>
+                            <h2>Action Board</h2>
+                            <span className="badge">{sortedMoves.length} Total</span>
                         </div>
-                        <div className="feed-grid">
-                            {sortedMoves.map((action) => {
-                                let cardType = action.type;
-                                if (action.type === 'signal') {
-                                    if (action.urgency === 'Critical') cardType = 'risk';
-                                    else if (action.urgency === 'High') cardType = 'urgent';
-                                    else cardType = 'lead';
-                                }
-                                
+                        
+                        <div className="feed-groups">
+                            {categories.map(cat => {
+                                const moves = groupedMoves[cat.id];
+                                if (moves.length === 0) return null;
+
                                 return (
-                                    <FocusFeedCard
-                                        key={action.id}
-                                        type={cardType}
-                                        title={action.title}
-                                        subtitle={action.description}
-                                        meta={action.projectName || (action.candidateId ? "Candidate Alert" : "Client Alert")}
-                                        onAction={() => setSelectedNudge(action)}
-                                    />
+                                    <div key={cat.id} className="feed-section">
+                                        <div className="section-header" style={{ borderColor: cat.color }}>
+                                            <cat.icon size={18} style={{ color: cat.color }} />
+                                            <h3>{cat.label}</h3>
+                                            <span className="count-pill">{moves.length}</span>
+                                        </div>
+                                        <div className="feed-grid">
+                                            {moves.map((action) => {
+                                                let cardType = action.type;
+                                                // Map specific types for styling
+                                                if (cat.id === 'compliance') cardType = 'risk';
+                                                if (cat.id === 'starting') cardType = 'task';
+                                                
+                                                return (
+                                                    <FocusFeedCard
+                                                        key={action.id}
+                                                        type={cardType}
+                                                        title={action.title}
+                                                        subtitle={action.description}
+                                                        meta={action.projectName || (action.candidateId ? "Candidate Alert" : "Client Alert")}
+                                                        onAction={() => setSelectedNudge(action)}
+                                                    />
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
                                 );
                             })}
+
                             {sortedMoves.length === 0 && (
                                 <div className="empty-state">
                                     <Zap size={48} className="text-slate-600 mb-4" />
@@ -193,6 +243,7 @@ export default function BusinessDevPage() {
                     display: flex;
                     align-items: center;
                     gap: 1rem;
+                    margin-bottom: 1rem;
                 }
                 
                 .feed-header h2 {
@@ -209,9 +260,47 @@ export default function BusinessDevPage() {
                     color: var(--secondary);
                 }
 
+                .feed-groups {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 3rem;
+                }
+
+                .feed-section {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 1rem;
+                }
+
+                .section-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.75rem;
+                    padding-bottom: 0.5rem;
+                    border-bottom: 2px solid; /* Color set inline */
+                }
+
+                .section-header h3 {
+                    font-size: 1rem;
+                    font-weight: 700;
+                    color: white;
+                    margin: 0;
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+                }
+
+                .count-pill {
+                    background: rgba(255,255,255,0.1);
+                    padding: 2px 8px;
+                    border-radius: 12px;
+                    font-size: 0.7rem;
+                    color: var(--text-muted);
+                    font-weight: 600;
+                }
+
                 .feed-grid {
                     display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+                    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
                     gap: 1rem;
                 }
 

@@ -128,6 +128,38 @@ export default function ClientDetailsModal({ client, onClose, onUpdate }) {
                     {activeTab === 'summary' && (
                         <div className="grid grid-cols-2 gap-6">
                             <div className="card-section">
+                                <h3 className="section-title"><Users size={18} /> Internal Team</h3>
+                                <div className="grid grid-cols-2 gap-3 mb-4">
+                                    <div className="p-2 bg-slate-800/50 rounded border border-slate-700">
+                                        <div className="text-xs text-slate-400 uppercase font-bold tracking-wider">Client Owner</div>
+                                        <input
+                                            type="text"
+                                            className="w-full bg-transparent text-white font-medium focus:outline-none"
+                                            value={localClient.clientOwner || ""}
+                                            onChange={(e) => {
+                                                const updated = { ...localClient, clientOwner: e.target.value };
+                                                setLocalClient(updated);
+                                                onUpdate(updated);
+                                            }}
+                                            placeholder="Assign..."
+                                        />
+                                    </div>
+                                    <div className="p-2 bg-slate-800/50 rounded border border-slate-700">
+                                        <div className="text-xs text-slate-400 uppercase font-bold tracking-wider">Account Manager</div>
+                                        <input
+                                            type="text"
+                                            className="w-full bg-transparent text-white font-medium focus:outline-none"
+                                            value={localClient.accountManager || ""}
+                                            onChange={(e) => {
+                                                const updated = { ...localClient, accountManager: e.target.value };
+                                                setLocalClient(updated);
+                                                onUpdate(updated);
+                                            }}
+                                            placeholder="Assign..."
+                                        />
+                                    </div>
+                                </div>
+
                                 <h3 className="section-title"><Users size={18} /> Key Contacts</h3>
                                 <div className="space-y-3">
                                     {localClient.keyContacts?.map((contact, idx) => (

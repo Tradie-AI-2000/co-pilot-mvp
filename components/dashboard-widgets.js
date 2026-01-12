@@ -2,7 +2,7 @@
 
 import { TrendingUp, AlertTriangle, ArrowRight, Activity } from "lucide-react";
 
-export default function DashboardWidgets({ projects }) {
+export default function DashboardWidgets({ projects, onWidgetClick }) {
     // Calculate stats
     const urgentRoles = projects.reduce((acc, proj) => {
         // Find signals where the 'date' is imminent or passed, or urgency is strictly Critical/High from DataContext
@@ -31,7 +31,7 @@ export default function DashboardWidgets({ projects }) {
 
     return (
         <div className="widgets-grid">
-            <div className="widget-card highlight">
+            <div className="widget-card highlight" onClick={() => onWidgetClick && onWidgetClick('urgent')}>
                 <div className="widget-icon red">
                     <AlertTriangle size={20} />
                 </div>
@@ -42,7 +42,7 @@ export default function DashboardWidgets({ projects }) {
                 </div>
             </div>
 
-            <div className="widget-card">
+            <div className="widget-card" onClick={() => onWidgetClick && onWidgetClick('phases')}>
                 <div className="widget-icon blue">
                     <Activity size={20} />
                 </div>
@@ -53,7 +53,7 @@ export default function DashboardWidgets({ projects }) {
                 </div>
             </div>
 
-            <div className="widget-card">
+            <div className="widget-card" onClick={() => onWidgetClick && onWidgetClick('revenue')}>
                 <div className="widget-icon green">
                     <TrendingUp size={20} />
                 </div>
@@ -81,10 +81,12 @@ export default function DashboardWidgets({ projects }) {
                     align-items: center;
                     gap: 1rem;
                     transition: transform 0.2s;
+                    cursor: pointer;
                 }
 
                 .widget-card:hover {
                     transform: translateY(-2px);
+                    background: var(--surface-hover, rgba(255,255,255,0.03));
                 }
 
                 .widget-icon {

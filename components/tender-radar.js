@@ -3,55 +3,46 @@
 import { useState } from "react";
 import { useData } from "../context/data-context.js";
 import { FileText, ArrowRight, CheckCircle, Users, AlertTriangle, FileUp, Loader2 } from "lucide-react";
+import { mockTenders } from "../services/enhanced-mock-data.js";
+
+// Helper to simulate the AI Agent extracting roles from a tender description
+const simulateAgentExtraction = (tender) => {
+    // Deterministic "AI" logic for demo purposes
+    if (tender.title.includes("Airport")) {
+        return [
+            { role: "Steel Fixer", count: 15 },
+            { role: "Formworker", count: 10 },
+            { role: "Site Manager", count: 3 }
+        ];
+    }
+    if (tender.title.includes("Housing") || tender.title.includes("Apartments")) {
+        return [
+            { role: "Carpenter", count: 25 },
+            { role: "Hammerhand", count: 12 },
+            { role: "Laborer", count: 8 }
+        ];
+    }
+    // Default Commercial
+    return [
+        { role: "Carpenter", count: 8 },
+        { role: "Electrician", count: 4 },
+        { role: "HVAC Tech", count: 3 }
+    ];
+};
 
 export default function TenderRadar() {
     const { candidates } = useData();
     const [analyzingId, setAnalyzingId] = useState(null);
     const [generatedId, setGeneratedId] = useState(null);
 
-    // Mock Tender Feed
-    const tenders = [
-        {
-            id: "T-101",
-            title: "Waitemata District Health Board - Elective Surgery Centre",
-            agency: "Ministry of Health",
-            value: "$250M",
-            closeDate: "2026-02-15",
-            startDate: "2026-04-01",
-            rolesRequired: [
-                { role: "Carpenter", count: 12 },
-                { role: "Hammerhand", count: 8 },
-                { role: "Site Manager", count: 2 }
-            ],
-            status: "Open"
-        },
-        {
-            id: "T-102",
-            title: "Auckland Harbour Bridge - Structural Maintenance",
-            agency: "NZ Transport Agency",
-            value: "$45M",
-            closeDate: "2026-01-30",
-            startDate: "2026-03-01",
-            rolesRequired: [
-                { role: "Welder", count: 5 },
-                { role: "Rigger", count: 3 }
-            ],
-            status: "Open"
-        },
-        {
-            id: "T-103",
-            title: "Kainga Ora - Avondale Housing Development",
-            agency: "Kainga Ora",
-            value: "$80M",
-            closeDate: "2026-02-28",
-            startDate: "2026-05-01",
-            rolesRequired: [
-                { role: "Carpenter", count: 20 },
-                { role: "Labourer", count: 10 }
-            ],
-            status: "Forecast"
-        }
-    ];
+    // Map the mockTenders to the UI format
+    const tenders = mockTenders.map(t => ({
+        ...t,
+        startDate: t.closingDate, // Just using closing date as proxy for start for now
+        agency: t.client,
+        rolesRequired: simulateAgentExtraction(t),
+        status: t.isPursuing ? "Pursuing" : "Open"
+    }));
 
     const getBenchMatch = (roles) => {
         // Simple logic: check how many candidates we have with matching roles
@@ -62,16 +53,16 @@ export default function TenderRadar() {
         roles.forEach(req => {
             totalRequired += req.count;
             const supply = candidates.filter(c => c.role === req.role && (c.status === 'Available' || (c.finishDate && new Date(c.finishDate) < new Date('2026-04-01')))).length;
-            
+
             // Cap match at required count
             const match = Math.min(supply, req.count);
             matchScore += match;
-            
-            details.push({ 
-                role: req.role, 
-                required: req.count, 
+
+            details.push({
+                role: req.role,
+                required: req.count,
                 supply: supply,
-                gap: req.count - supply 
+                gap: req.count - supply
             });
         });
 
@@ -93,16 +84,16 @@ export default function TenderRadar() {
                 {tenders.map(tender => {
                     const matchData = getBenchMatch(tender.rolesRequired);
                     const isWinning = matchData.percent > 70;
-                    
+
                     return (
                         <div key={tender.id} className="tender-card">
                             <div className="card-header">
                                 <div className="agency-badge">{tender.agency}</div>
                                 <span className="value-badge">{tender.value}</span>
                             </div>
-                            
+
                             <h3 className="tender-title">{tender.title}</h3>
-                            
+
                             <div className="timeline-row">
                                 <div className="time-item">
                                     <span className="label">Closes</span>
@@ -120,7 +111,7 @@ export default function TenderRadar() {
                                     <span className={`score ${isWinning ? 'high' : 'low'}`}>{matchData.percent}%</span>
                                 </div>
                                 <div className="match-bar-track">
-                                    <div 
+                                    <div
                                         className={`match-bar-fill ${isWinning ? 'high' : 'low'}`}
                                         style={{ width: `${matchData.percent}%` }}
                                     ></div>
@@ -146,7 +137,7 @@ export default function TenderRadar() {
                                         <CheckCircle size={16} /> Bid Pack Ready
                                     </button>
                                 ) : (
-                                    <button 
+                                    <button
                                         className={`action-btn ${analyzingId === tender.id ? 'loading' : 'primary'} w-full`}
                                         onClick={() => handleGenerateBidPack(tender.id)}
                                         disabled={analyzingId === tender.id}

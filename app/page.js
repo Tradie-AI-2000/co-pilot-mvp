@@ -262,8 +262,6 @@ function DashboardContent() {
           </section>
         </div>
 
-        <CrewBuilderPanel />
-
         {selectedProject && (
           <ProjectIntelligencePanel
             project={selectedProject}

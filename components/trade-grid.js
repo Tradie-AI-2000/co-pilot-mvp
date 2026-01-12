@@ -1,135 +1,153 @@
-import { Hammer, Users, ChevronRight, Wrench, HardHat, Zap, PaintBucket, Truck } from "lucide-react";
+"use client";
 
-export default function TradeGrid({ candidates, onTradeClick, regionName }) {
-    // Group candidates by role (Trade)
-    const trades = candidates.reduce((acc, candidate) => {
-        const trade = candidate.role || "General Labour";
-        if (!acc[trade]) {
-            acc[trade] = { name: trade, count: 0 };
-        }
-        acc[trade].count++;
-        return acc;
-    }, {});
+import { Hammer, HardHat, Shield, Box, PenTool, Truck, Home, Grid, Scissors, PaintBucket } from "lucide-react";
 
-    const tradeList = Object.values(trades).sort((a, b) => b.count - a.count);
+export default function TradeGrid({ clients, candidates, region, onSelectTrade, onTradeClick, regionName }) {
+    // Industries requested by user
+    const industries = [
+        { name: "Builder", icon: Hammer },
+        { name: "Formwork", icon: Grid },
+        { name: "Glazier", icon: Box },
+        { name: "Flooring", icon: Grid },
+        { name: "Interior", icon: PaintBucket },
+        { name: "Door & Windows", icon: Box },
+        { name: "Landscaping", icon: Home },
+        { name: "Passive Fire", icon: Shield },
+        { name: "Gib Installation", icon: HardHat },
+        { name: "Demolition", icon: Scissors },
+        { name: "Civil", icon: Truck },
+        { name: "Carpenter", icon: Hammer }, // Common candidate role
+        { name: "Electrician", icon: ZapIcon }, // Common candidate role
+        { name: "Plumber", icon: WrenchIcon } // Common candidate role
+    ];
 
-    const getTradeIcon = (tradeName) => {
-        const lower = tradeName.toLowerCase();
-        if (lower.includes('electr')) return <Zap size={24} className="text-yellow-400" />;
-        if (lower.includes('plumb')) return <Wrench size={24} className="text-blue-400" />;
-        if (lower.includes('paint')) return <PaintBucket size={24} className="text-pink-400" />;
-        if (lower.includes('driver') || lower.includes('operator')) return <Truck size={24} className="text-green-400" />;
-        if (lower.includes('labour')) return <HardHat size={24} className="text-orange-400" />;
-        return <Hammer size={24} className="text-secondary" />;
+    // Helper icons for dynamic roles
+    function ZapIcon(props) { return <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>; }
+    function WrenchIcon(props) { return <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>; }
+
+    // Normalize Props
+    const data = clients || candidates || [];
+    const isClients = !!clients;
+    const activeRegion = region || regionName || "National";
+    const clickHandler = onSelectTrade || onTradeClick;
+
+    // Filter by Region
+    const regionItems = activeRegion === "National" 
+        ? data 
+        : data.filter(item => {
+            const itemRegion = isClients ? item.region : item.state;
+            return itemRegion === activeRegion;
+        });
+
+    const getStats = (industryName) => {
+        const relevant = regionItems.filter(item => {
+            const itemTrade = isClients ? item.industry : item.role;
+            // Flexible matching
+            return itemTrade === industryName || (itemTrade && itemTrade.includes(industryName));
+        });
+        return { count: relevant.length };
     };
+
+    // For candidates, we discover roles that actually exist in the data
+    const activeDataRoles = Array.from(new Set(
+        regionItems
+            .map(item => (isClients ? item.industry : item.role))
+            .filter(role => role && typeof role === 'string' && role.trim() !== "")
+    ));
+
+    const allOptions = isClients 
+        ? industries 
+        : [
+            ...industries,
+            ...activeDataRoles
+                .filter(role => !industries.some(ind => ind.name.toLowerCase() === role.toLowerCase()))
+                .map(role => ({ name: role, icon: HardHat }))
+        ];
+
+    // Ensure absolute uniqueness by name (case-insensitive)
+    const displayedIndustries = allOptions.filter((v, i, a) => 
+        a.findIndex(t => t.name.toLowerCase() === v.name.toLowerCase()) === i
+    );
 
     return (
         <div className="trade-grid">
-            {tradeList.map((trade) => (
-                <div
-                    key={trade.name}
-                    onClick={() => onTradeClick(trade.name)}
-                    className="trade-card"
-                >
-                    <div className="icon-wrapper">
-                        {getTradeIcon(trade.name)}
-                    </div>
+            {displayedIndustries.map(ind => {
+                const stats = getStats(ind.name);
+                const Icon = ind.icon;
+                const isActive = stats.count > 0;
 
-                    <h3 className="trade-title">{trade.name}</h3>
-                    <p className="trade-count">{trade.count} Available</p>
+                // Hide empty cards if showing candidates (cleaner view)
+                if (!isClients && !isActive) return null;
 
-                    <div className="card-footer">
-                        <span>View Candidates</span>
-                        <ChevronRight size={14} className="arrow-icon" />
+                return (
+                    <div 
+                        key={ind.name}
+                        className={`trade-card ${isActive ? 'active' : 'inactive'}`}
+                        onClick={() => isActive && clickHandler && clickHandler(ind.name)}
+                    >
+                        <div className="icon-wrapper">
+                            <Icon size={24} />
+                        </div>
+                        <div className="content">
+                            <h3 className="trade-name">{ind.name}</h3>
+                            <span className="client-count">{stats.count} {isClients ? 'Clients' : 'Workers'}</span>
+                        </div>
                     </div>
-                </div>
-            ))}
-            <style jsx>{`
-                .trade-card {
-                    background: var(--surface);
-                    border: 1px solid var(--border);
-                    border-radius: var(--radius-md);
-                    padding: 1.5rem;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    text-align: center;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                    position: relative;
-                    overflow: hidden;
+                );
+            })}
+
+             <style jsx>{`
+                .trade-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                    gap: 1rem;
                 }
 
-                .trade-card:hover {
+                .trade-card {
+                    background: rgba(30, 41, 59, 0.4);
+                    border: 1px solid rgba(255, 255, 255, 0.05);
+                    border-radius: 12px;
+                    padding: 1.25rem;
+                    display: flex;
+                    align-items: center;
+                    gap: 1rem;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+
+                .trade-card.active:hover {
+                    background: rgba(30, 41, 59, 0.8);
                     border-color: var(--secondary);
-                    transform: translateY(-2px);
-                    box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+                    transform: translateX(4px);
+                }
+
+                .trade-card.inactive {
+                    opacity: 0.4;
+                    cursor: not-allowed;
+                    background: rgba(15, 23, 42, 0.4);
                 }
 
                 .icon-wrapper {
-                    width: 64px;
-                    height: 64px;
-                    border-radius: 50%;
-                    background: rgba(255, 255, 255, 0.03);
-                    border: 1px solid var(--border);
+                    width: 48px;
+                    height: 48px;
+                    border-radius: 10px;
+                    background: rgba(255, 255, 255, 0.05);
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    margin-bottom: 1rem;
-                    transition: transform 0.2s;
+                    color: var(--secondary);
                 }
 
-                .trade-card:hover .icon-wrapper {
-                    transform: scale(1.1);
-                    border-color: var(--secondary);
-                }
-
-                .trade-title {
-                    font-size: 1.1rem;
+                .trade-name {
                     font-weight: 700;
                     color: white;
-                    margin-bottom: 0.25rem;
+                    font-size: 0.95rem;
+                    margin-bottom: 0.1rem;
                 }
 
-                .trade-count {
-                    font-size: 0.875rem;
-                    color: var(--text-muted);
-                    margin-bottom: 1.5rem;
-                }
-
-                .card-footer {
-                    margin-top: auto;
-                    width: 100%;
-                    padding-top: 1rem;
-                    border-top: 1px solid var(--border);
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
+                .client-count {
                     font-size: 0.75rem;
-                    font-weight: 600;
                     color: var(--text-muted);
-                    text-transform: uppercase;
-                    letter-spacing: 0.05em;
-                }
-
-                .trade-grid {
-                    display: grid;
-                    grid-template-columns: 1fr;
-                    gap: 2.5rem; /* gap-10 approx */
-                    width: 100%;
-                }
-
-                @media (min-width: 768px) {
-                    .trade-grid { grid-template-columns: repeat(2, 1fr); }
-                }
-
-                @media (min-width: 1024px) {
-                    .trade-grid { grid-template-columns: repeat(3, 1fr); }
-                }
-
-                .trade-card:hover .card-footer,
-                .trade-card:hover .arrow-icon {
-                    color: var(--secondary);
                 }
             `}</style>
         </div>

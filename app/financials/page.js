@@ -5,6 +5,7 @@ import { useData } from "../../context/data-context.js";
 import FloatCandidateModal from "../../components/float-candidate-modal.js";
 import PlacementTicketModal from "../../components/placement-ticket-modal.js";
 import FinancialForecastWidget from "../../components/financial-forecast-widget.js";
+import CommissionDashboard from "../../components/commission-dashboard.js";
 import { DollarSign, TrendingUp, TrendingDown, AlertCircle, PieChart, ArrowRight } from "lucide-react";
 
 export default function FinancialsPage() {
@@ -129,49 +130,8 @@ export default function FinancialsPage() {
                     </div>
                 </div>
 
-                {/* Zone 3: Margin Optimizer */}
-                <div className="panel margin-panel">
-                    <div className="panel-header">
-                        <h3 className="text-amber-400 flex items-center gap-2">
-                            <PieChart size={18} /> Margin Optimizer
-                        </h3>
-                        <span className="badge amber">Low Margin Focus</span>
-                    </div>
-                    <div className="margin-list">
-                        {activeCandidates
-                            .map(c => {
-                                const margin = c.chargeRate ? ((c.chargeRate - (c.payRate * BURDEN_MULTIPLIER)) / c.chargeRate * 100) : 0;
-                                return { ...c, margin };
-                            })
-                            .sort((a, b) => a.margin - b.margin) // Lowest margin first
-                            .slice(0, 5) // Top 5 worst margins
-                            .map(c => (
-                                <div 
-                                    key={c.id} 
-                                    className="margin-row cursor-pointer hover:bg-slate-700/50 transition-colors"
-                                    onClick={() => handleViewPlacement(c.id)}
-                                    title="View Placement Details"
-                                >
-                                    <div className="flex justify-between items-center mb-1">
-                                        <span className="font-medium text-white">{c.firstName} {c.lastName}</span>
-                                        <span className={`text-xs font-bold px-2 py-0.5 rounded ${c.margin < 20 ? 'bg-rose-500/20 text-rose-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
-                                            {c.margin.toFixed(1)}%
-                                        </span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-xs text-muted">
-                                        <span>{c.currentEmployer}</span>
-                                        <span>Pay ${c.payRate} / Chg ${c.chargeRate}</span>
-                                    </div>
-                                    <div className="margin-bar-track mt-2">
-                                        <div 
-                                            className={`margin-bar-fill ${c.margin < 20 ? 'low' : 'ok'}`}
-                                            style={{ width: `${Math.min(c.margin, 100)}%` }}
-                                        ></div>
-                                    </div>
-                                </div>
-                            ))}
-                    </div>
-                </div>
+                {/* Zone 3: Commission Dashboard */}
+                <CommissionDashboard />
             </div>
 
             {/* Zone 4: Forecasting */}

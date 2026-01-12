@@ -12,8 +12,12 @@ import {
   HardHat,
   DollarSign,
   Target,
-  Globe
+  Globe,
+  RefreshCw,
+  CheckCircle2,
+  AlertCircle
 } from "lucide-react";
+import { useData } from "../context/data-context";
 
 const navItems = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -27,6 +31,7 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { isSyncing, syncFromSheets } = useData();
 
   return (
     <aside className="sidebar glass-panel">
@@ -40,7 +45,6 @@ export default function Sidebar() {
 
       <nav className="nav-menu">
         {navItems.map((item) => {
-          const Icon = item.icon;
           const isActive = pathname === item.href;
 
           return (
@@ -49,22 +53,45 @@ export default function Sidebar() {
               href={item.href}
               className={`nav-item ${isActive ? "active" : ""}`}
             >
-              <Icon size={20} />
               <span>{item.name}</span>
               {isActive && <div className="active-indicator" />}
             </Link>
           );
         })}
-        
+
         {/* External Views Section */}
         <div className="mt-4 pt-4 border-t border-slate-700/50">
-            <p className="px-4 text-xs text-slate-500 font-bold uppercase mb-2">External Views</p>
-            <Link href="/portal" className={`nav-item ${pathname === '/portal' ? 'active' : ''}`}>
-                <Globe size={20} />
-                <span>Client Portal</span>
-            </Link>
+          <p className="px-4 text-xs text-slate-500 font-bold uppercase mb-2">External Views</p>
+          <Link href="/portal" className={`nav-item ${pathname === '/portal' ? 'active' : ''}`}>
+            <span>Client Portal</span>
+          </Link>
         </div>
       </nav>
+
+      {/* Sync Status Section */}
+      <div className="sync-status">
+        <div className="sync-info">
+          {isSyncing ? (
+            <div className="sync-pill syncing">
+              <RefreshCw size={12} className="animate-spin" />
+              <span>Syncing...</span>
+            </div>
+          ) : (
+            <div className="sync-pill connected">
+              <CheckCircle2 size={12} />
+              <span>Live</span>
+            </div>
+          )}
+        </div>
+        <button
+          onClick={syncFromSheets}
+          disabled={isSyncing}
+          className="sync-btn"
+          title="Manual Sync with Google Sheets"
+        >
+          <RefreshCw size={14} className={isSyncing ? 'animate-spin' : ''} />
+        </button>
+      </div>
 
       {/* ... (user profile) ... */}
       <div className="user-profile">
@@ -220,6 +247,63 @@ export default function Sidebar() {
         .logout-btn:hover {
           color: #ef4444;
           background: rgba(239, 68, 68, 0.1);
+        }
+
+        .sync-status {
+          margin-top: auto;
+          padding: 1rem;
+          background: rgba(0, 0, 0, 0.2);
+          border: 1px solid var(--border);
+          border-radius: var(--radius-md);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 1rem;
+        }
+
+        .sync-pill {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-size: 0.7rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          padding: 0.25rem 0.6rem;
+          border-radius: 100px;
+        }
+
+        .sync-pill.syncing {
+          color: var(--secondary);
+          background: rgba(0, 243, 255, 0.1);
+        }
+
+        .sync-pill.connected {
+          color: #4ade80;
+          background: rgba(74, 222, 128, 0.1);
+        }
+
+        .sync-btn {
+          background: none;
+          border: none;
+          color: var(--text-muted);
+          cursor: pointer;
+          padding: 0.4rem;
+          border-radius: var(--radius-sm);
+          transition: all 0.2s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .sync-btn:hover:not(:disabled) {
+          color: var(--secondary);
+          background: rgba(255, 255, 255, 0.05);
+        }
+
+        .sync-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
         }
       `}</style>
     </aside>

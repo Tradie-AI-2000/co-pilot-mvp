@@ -7,13 +7,20 @@ import ClientCard from "../../components/client-card.js";
 import AddClientModal from "../../components/add-client-modal.js";
 import ClientActionBoard from "../../components/client-action-board.js";
 import PlacementTicketModal from "../../components/placement-ticket-modal.js";
-import { Search, Filter, Plus, Users, Upload, Download } from "lucide-react";
+import RegionGrid from "../../components/region-grid.js";
+import TradeGrid from "../../components/trade-grid.js";
+import ClientTierBoard from "../../components/client-tier-board.js";
+import { Search, Filter, Plus, Users, Upload, Download, ChevronRight, Home } from "lucide-react";
 
 export default function CRMPage() {
   const { clients, addClient, updateClient, placements } = useData();
   const [selectedClient, setSelectedClient] = useState(null);
   const [selectedPlacement, setSelectedPlacement] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  // Navigation State
+  const [viewState, setViewState] = useState('regions'); // regions | types | clients
+  const [filters, setFilters] = useState({ region: null, industry: null });
 
   const handleClientClick = (client) => {
     setSelectedClient(client);
@@ -32,6 +39,27 @@ export default function CRMPage() {
   const handleViewDeal = (placementId) => {
     const placement = placements.find(p => p.id === placementId);
     if (placement) setSelectedPlacement(placement);
+  };
+
+  // Navigation Handlers
+  const selectRegion = (region) => {
+    setFilters(prev => ({ ...prev, region }));
+    setViewState('trades');
+  };
+
+  const selectTrade = (industry) => {
+    setFilters(prev => ({ ...prev, industry }));
+    setViewState('clients');
+  };
+
+  const resetToRegions = () => {
+    setFilters({ region: null, industry: null });
+    setViewState('regions');
+  };
+
+  const resetToTrades = () => {
+    setFilters(prev => ({ ...prev, industry: null }));
+    setViewState('trades');
   };
 
   return (
@@ -64,18 +92,47 @@ export default function CRMPage() {
       <ClientActionBoard onViewDeal={handleViewDeal} />
 
       <div className="section-divider">
-        <h2 className="text-lg font-bold text-white uppercase tracking-wider">Client Directory</h2>
+        <div className="flex items-center gap-2">
+            <button onClick={resetToRegions} className={`breadcrumb-item ${viewState === 'regions' ? 'active' : ''}`}>
+                <Home size={16} /> Directory
+            </button>
+            {filters.region && (
+                <>
+                    <ChevronRight size={16} className="text-slate-600" />
+                    <button onClick={resetToTrades} className={`breadcrumb-item ${viewState === 'trades' ? 'active' : ''}`}>
+                        {filters.region}
+                    </button>
+                </>
+            )}
+            {filters.industry && (
+                <>
+                    <ChevronRight size={16} className="text-slate-600" />
+                    <span className="breadcrumb-item active text-secondary">
+                        {filters.industry}
+                    </span>
+                </>
+            )}
+        </div>
         <div className="h-px bg-slate-800 flex-1 ml-4"></div>
       </div>
 
-      <div className="clients-grid">
-        {clients.map(client => (
-          <ClientCard
-            key={client.id}
-            client={client}
-            onClick={() => handleClientClick(client)}
-          />
-        ))}
+      <div className="content-area">
+        {viewState === 'regions' && (
+            <RegionGrid clients={clients} onSelectRegion={selectRegion} />
+        )}
+
+        {viewState === 'trades' && (
+            <TradeGrid clients={clients} region={filters.region} onSelectTrade={selectTrade} />
+        )}
+
+        {viewState === 'clients' && (
+            <ClientTierBoard 
+                clients={clients} 
+                region={filters.region} 
+                industry={filters.industry} 
+                onClientClick={handleClientClick}
+            />
+        )}
       </div>
 
       {selectedClient && (
@@ -168,11 +225,34 @@ export default function CRMPage() {
                     cursor: pointer;
                 }
 
-                .clients-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-                    gap: 1.5rem;
+                .breadcrumb-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    background: none;
+                    border: none;
+                    color: var(--text-muted);
+                    font-weight: 600;
+                    cursor: pointer;
+                    font-size: 0.9rem;
+                    padding: 0.25rem 0.5rem;
+                    border-radius: 6px;
+                    transition: all 0.2s;
+                }
+
+                .breadcrumb-item:hover {
+                    color: white;
+                    background: rgba(255, 255, 255, 0.05);
+                }
+
+                .breadcrumb-item.active {
+                    color: white;
+                }
+
+                .content-area {
+                    flex: 1;
                     overflow-y: auto;
+                    min-height: 0;
                     padding-bottom: 2rem;
                 }
 

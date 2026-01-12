@@ -1,11 +1,11 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { useData } from "../context/data-context.js";
-import { Phone, CheckCircle, XCircle, Clock, Zap, Calendar, MessageSquare, ArrowRight, Trophy } from "lucide-react";
+import { Phone, CheckCircle, XCircle, Clock, Zap, Calendar, MessageSquare, ArrowRight, Trophy, Flame, History } from "lucide-react";
+import { mockLeads } from "../services/enhanced-mock-data.js";
+import { getGoldenHourTargets, generateCallScript } from "../services/growth-logic.js";
 
 export default function GoldenHourMode() {
-    const { clients, moneyMoves } = useData();
+    const { enhancedClients } = useData(); // Use enhancedClients for dormant check
     const [queue, setQueue] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [callState, setCallState] = useState("idle"); // idle, calling, logged
@@ -13,26 +13,12 @@ export default function GoldenHourMode() {
     const [sessionScore, setSessionScore] = useState(0);
     const [timer, setTimer] = useState(3600); // 60 mins in seconds
 
-    // 1. Build the "Hit List"
+    // 1. Build the "Hit List" using Growth Engine
     useEffect(() => {
-        // Filter clients with Urgent Tasks or Risk triggers
-        const priorityIds = moneyMoves
-            .filter(m => (m.type === 'risk' || m.type === 'task') && (m.urgency === 'High' || m.urgency === 'Critical'))
-            .map(m => m.clientId)
-            .filter(Boolean); // Remove undefined
-
-        const hitList = clients.filter(c => priorityIds.includes(c.id) || c.status === 'Key Account');
-        
-        // Mock data enhancement for the queue
-        const enhancedQueue = hitList.map(c => ({
-            ...c,
-            reason: moneyMoves.find(m => m.clientId === c.id)?.title || "Scheduled Follow-up",
-            contactName: c.keyContacts?.[0]?.name || "Primary Contact",
-            contactRole: c.keyContacts?.[0]?.role || "Manager"
-        }));
-
-        setQueue(enhancedQueue.slice(0, 10)); // Focus on top 10
-    }, [clients, moneyMoves]);
+        // Get prioritized targets from the Logic Layer
+        const targets = getGoldenHourTargets(enhancedClients || [], mockLeads);
+        setQueue(targets);
+    }, [enhancedClients]);
 
     // Timer Logic
     useEffect(() => {
@@ -48,7 +34,11 @@ export default function GoldenHourMode() {
         return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
     };
 
-    const currentLead = queue[currentIndex];
+    // Current Target Wrapper
+    const currentTarget = queue[currentIndex];
+    // Normalize data for UI (Lead or Client)
+    const entity = currentTarget?.data;
+    const isClient = currentTarget?.type === 'CLIENT';
 
     const handleCallStart = () => {
         setCallState("calling");
@@ -56,7 +46,7 @@ export default function GoldenHourMode() {
 
     const handleOutcome = (outcome) => {
         setCallState("logged");
-        
+
         // Gamification Logic
         if (outcome === 'meeting' || outcome === 'deal') {
             setStreak(s => s + 1);
@@ -77,7 +67,7 @@ export default function GoldenHourMode() {
         }, 1500);
     };
 
-    if (!currentLead && callState !== "finished") return <div className="p-10 text-center text-muted">Building your hit list...</div>;
+    if (!currentTarget && callState !== "finished") return <div className="p-10 text-center text-muted">Scanning market for targets...</div>;
 
     if (callState === "finished") {
         return (
@@ -99,6 +89,9 @@ export default function GoldenHourMode() {
         );
     }
 
+    // Generate Script Dynamicallly
+    const script = callState === 'calling' ? generateCallScript(entity, currentTarget.intent) : '';
+
     return (
         <div className="golden-hour-container">
             {/* Top HUD */}
@@ -115,7 +108,7 @@ export default function GoldenHourMode() {
                     <div className="score">Score: {sessionScore}</div>
                 </div>
                 <div className="progress">
-                    Lead {currentIndex + 1} / {queue.length}
+                    Target {currentIndex + 1} / {queue.length}
                 </div>
             </div>
 
@@ -124,14 +117,28 @@ export default function GoldenHourMode() {
                 <div className="lead-card">
                     <div className="lead-header">
                         <div className="company-info">
-                            <h1>{currentLead.name}</h1>
-                            <span className="reason-badge">{currentLead.reason}</span>
+                            <div className="flex items-center gap-3">
+                                <h1>{isClient ? entity.name : entity.companyName}</h1>
+                                {currentTarget.type === 'LEAD' ? (
+                                    <span className="bg-orange-500/20 text-orange-400 px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
+                                        <Flame size={12} /> HOT LEAD
+                                    </span>
+                                ) : (
+                                    <span className="bg-blue-500/20 text-blue-400 px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
+                                        <History size={12} /> REACTIVATE
+                                    </span>
+                                )}
+                            </div>
+                            {/* Only show reason badge for Clients (contains context like "High Value Dormant"), for Leads it's redundant */}
+                            {currentTarget.type === 'CLIENT' && (
+                                <span className="reason-badge">{currentTarget.reason}</span>
+                            )}
                         </div>
                         <div className="contact-info">
-                            <div className="avatar">{currentLead.contactName[0]}</div>
+                            <div className="avatar">{(isClient ? entity.keyContacts?.[0]?.name : entity.contactName)?.[0]}</div>
                             <div>
-                                <div className="name">{currentLead.contactName}</div>
-                                <div className="role">{currentLead.contactRole}</div>
+                                <div className="name">{isClient ? entity.keyContacts?.[0]?.name : entity.contactName}</div>
+                                <div className="role">{isClient ? entity.keyContacts?.[0]?.role : entity.contactRole}</div>
                             </div>
                         </div>
                     </div>
@@ -140,13 +147,18 @@ export default function GoldenHourMode() {
                         {callState === "calling" ? (
                             <div className="in-call-ui">
                                 <div className="avatar-ring">
-                                    <div className="avatar-large">{currentLead.contactName[0]}</div>
+                                    <div className="avatar-large">{(isClient ? entity.keyContacts?.[0]?.name : entity.contactName)?.[0]}</div>
                                     <div className="ripple"></div>
                                 </div>
-                                <div className="timer-text">Calling...</div>
-                                <div className="script-box">
-                                    <strong>Opening Line:</strong>
-                                    <p>"Hi {currentLead.contactName.split(' ')[0]}, it's Joe from Stellar. Seeing a lot of movement on the {currentLead.projectIds?.[0] || 'market'} project, wanted to ensure you're covered for the next phase..."</p>
+                                <div className="script-container">
+                                    <div className="script-header">
+                                        <span className="text-xs font-bold text-secondary uppercase tracking-widest">Ai Script Generator</span>
+                                    </div>
+                                    <div className="script-box">
+                                        <div className="whitespace-pre-wrap text-left font-medium text-lg leading-relaxed text-slate-200">
+                                            {script}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         ) : callState === "logged" ? (
@@ -160,20 +172,20 @@ export default function GoldenHourMode() {
                                 <div className="intel-grid">
                                     <div className="intel-item">
                                         <label>Last Contact</label>
-                                        <span>{currentLead.lastContact || 'Never'}</span>
+                                        <span>{isClient ? entity.lastContact : (entity.lastContacted || 'Never')}</span>
                                     </div>
                                     <div className="intel-item">
-                                        <label>Active Jobs</label>
-                                        <span>{currentLead.activeJobs}</span>
+                                        <label>Value</label>
+                                        <span>{isClient ? entity.activeJobs + ' Jobs' : entity.estimatedValue}</span>
                                     </div>
                                     <div className="intel-item">
                                         <label>Influence</label>
-                                        <span className="text-emerald-400">Champion</span>
+                                        <span className="text-emerald-400">{isClient ? entity.keyContacts?.[0]?.influence : 'Decision Maker'}</span>
                                     </div>
                                 </div>
                                 <div className="notes-preview">
                                     <label>Last Note:</label>
-                                    <p>"{currentLead.notes?.[0]?.text || "No recent notes."}"</p>
+                                    <p>"{isClient ? (entity.notes?.[0]?.text || "No recent notes.") : (entity.notes || "No notes.")}"</p>
                                 </div>
                             </div>
                         )}

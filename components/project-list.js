@@ -9,8 +9,8 @@ export default function ProjectList({ projects, onSelectProject, selectedProject
     const [filterTier, setFilterTier] = useState("All");
 
     const filteredProjects = projects.filter(project => {
-        const matchesSearch = (project.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (project.client || '').toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesSearch = String(project.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            String(project.client || '').toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStage = filterStage === "All" || (project.stage || project.status || 'Planning') === filterStage;
         const matchesTier = filterTier === "All" || (project.tier || 'Tier 3') === filterTier;
         return matchesSearch && matchesStage && matchesTier;
@@ -61,8 +61,8 @@ export default function ProjectList({ projects, onSelectProject, selectedProject
                         <div className="card-header">
                             <h3>{project.name}</h3>
                             <div className="badges">
-                                <span className={`tier-badge ${(project.tier || 'Tier 3').toLowerCase().replace(' ', '-')}`}>{project.tier || 'Tier 3'}</span>
-                                <span className={`status-badge ${(project.status || 'Planning').toLowerCase()}`}>{project.status || 'Planning'}</span>
+                                <span className={`tier-badge ${String(project.tier || 'Tier 3').toLowerCase().replace(' ', '-')}`}>{project.tier || 'Tier 3'}</span>
+                                <span className={`status-badge ${String(project.status || 'Planning').toLowerCase()}`}>{project.status || 'Planning'}</span>
                             </div>
                         </div>
                         <div className="card-details">

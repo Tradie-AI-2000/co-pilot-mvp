@@ -107,22 +107,22 @@ export const nudges = pgTable('nudges', {
     id: uuid('id').primaryKey().defaultRandom(),
     type: nudgeTypeEnum('type').notNull(),
     priority: nudgePriorityEnum('priority').notNull(),
-    
+
     // The "Why"
     title: text('title').notNull(),
     description: text('description').notNull(),
-    
+
     // The "Action" Payload (JSON for flexibility)
     actionPayload: jsonb('action_payload').notNull(),
-    
+
     // Ownership Logic
     consultantId: uuid('consultant_id').references(() => users.id), // NULL = Open Bounty
-    
+
     // Links
     relatedProjectId: uuid('related_project_id').references(() => projects.id),
     relatedClientId: uuid('related_client_id').references(() => clients.id),
     relatedCandidateId: uuid('related_candidate_id').references(() => candidates.id),
-    
+
     // State
     isSeen: boolean('is_seen').default(false),
     isActioned: boolean('is_actioned').default(false),
@@ -137,5 +137,48 @@ export const searchLogs = pgTable('search_logs', {
     lat: doublePrecision('lat'),
     lng: doublePrecision('lng'),
     filters: jsonb('filters'), // Role, keywords, etc.
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// --- Growth Engine Tables (Wolf of Wall Street) ---
+
+export const leadStatusEnum = pgEnum('lead_status', ['Cold', 'Warm', 'Hot', 'Converted', 'Dead']);
+export const leadSourceEnum = pgEnum('lead_source', ['Manual', 'BCI_Central', 'Referral', 'LinkedIn', 'Event']);
+
+export const leads = pgTable('leads', {
+    id: uuid('id').primaryKey().defaultRandom(),
+    companyName: text('company_name').notNull(),
+    contactName: text('contact_name'),
+    contactRole: text('contact_role'),
+    email: text('email'),
+    phone: text('phone'),
+    source: leadSourceEnum('source').default('Manual'),
+    status: leadStatusEnum('status').default('Cold'),
+    estimatedValue: text('estimated_value'), // e.g. "$50k/yr"
+    lastContacted: timestamp('last_contacted', { withTimezone: true }),
+    notes: text('notes'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const marketTenders = pgTable('market_tenders', {
+    id: uuid('id').primaryKey().defaultRandom(),
+    title: text('title').notNull(),
+    description: text('description'),
+    client: text('client'), // The entity issuing the tender
+    location: text('location'),
+    value: text('value'),
+    closingDate: timestamp('closing_date', { withTimezone: true }),
+    sourceUrl: text('source_url'),
+    isPursuing: boolean('is_pursuing').default(false),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const callScripts = pgTable('call_scripts', {
+    id: uuid('id').primaryKey().defaultRandom(),
+    targetId: uuid('target_id').notNull(), // Can be Lead ID or Client ID
+    targetType: text('target_type').notNull(), // 'LEAD' or 'CLIENT'
+    tone: text('tone').default('Consultative'), // 'Aggressive', 'Consultative', 'Friendly'
+    scriptContent: text('script_content').notNull(),
+    generatedBy: text('generated_by').default('agent_rainmaker'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });

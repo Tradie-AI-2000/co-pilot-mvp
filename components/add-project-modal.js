@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { EyeOff, Trash2, Plus, Calendar, Layers, Truck, Users, MapPin, Building2, Save, ChevronDown, ChevronUp, Clock, Info, AlertCircle, X, RotateCcw } from 'lucide-react';
 import { PHASE_TEMPLATES, WORKFORCE_MATRIX, RELATED_ROLES, PHASE_MAP } from '../services/construction-logic.js';
 import { useData } from "../context/data-context.js";
+import CandidateModal from "./candidate-modal.js";
 
 // --- Micro-Component: Labor Requirement Builder ---
 const LaborRequirementBuilder = ({ requirements = [], phaseId, onChange, candidates, projectId, availableRoles = [], onAddRole }) => {
@@ -121,7 +122,9 @@ const LaborRequirementBuilder = ({ requirements = [], phaseId, onChange, candida
                     </select>
                 )}
                 <input type="number" value={newCount} onChange={(e) => setNewCount(e.target.value)} className="input-sm input-count" placeholder="Qty" />
-                <button type="button" onClick={handleAdd} disabled={!newTrade || !newCount} className="btn-add-sm"><Plus size={16} /></button>
+                <button type="button" onClick={handleAdd} disabled={!newTrade || !newCount} className="btn-add-sm">
+                    <Plus size={16} /> Check Availability
+                </button>
             </div>
         </div>
     );
@@ -130,6 +133,8 @@ const LaborRequirementBuilder = ({ requirements = [], phaseId, onChange, candida
 export default function AddProjectModal({ isOpen, onClose, onSave, initialData }) {
     const { clients, candidates, availableRoles, addRole } = useData();
     const [activeTab, setActiveTab] = useState("core");
+    const [selectedCandidateId, setSelectedCandidateId] = useState(null);
+    const [tempId] = useState(() => `new-${Date.now()}`);
 
     // Safety check for templates
     const defaultPhase = PHASE_TEMPLATES?.Commercial_Multi_Use?.[0]?.phaseId || "01_civil";
@@ -142,20 +147,20 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
         packages: {
             civilWorks: { name: "", status: "Tendering", phase: "01_civil", label: "Civil & Excavation" },
             piling: { name: "", status: "Tendering", phase: "01_civil", label: "Piling" },
-            concrete: { name: "", status: "Tendering", phase: "02_structure", label: "Concrete Structure" },
-            steel: { name: "", status: "Tendering", phase: "02_structure", label: "Structural Steel" },
-            framing: { name: "", status: "Tendering", phase: "02_structure", label: "Timber Framing" },
-            crane: { name: "", status: "Tendering", phase: "02_structure", label: "Tower Crane" },
-            facade: { name: "", status: "Tendering", phase: "03_envelope", label: "Facade & Glazing" },
-            scaffolding: { name: "", status: "Tendering", phase: "03_envelope", label: "Scaffolding" },
-            roofing: { name: "", status: "Tendering", phase: "03_envelope", label: "Roofing" },
-            electrical: { name: "", status: "Tendering", phase: "04_services_roughin", label: "Electrical" },
-            hydraulics: { name: "", status: "Tendering", phase: "04_services_roughin", label: "Hydraulics (Plumbing)" },
-            mechanical: { name: "", status: "Tendering", phase: "04_services_roughin", label: "Mechanical (HVAC)" },
-            interiors: { name: "", status: "Tendering", phase: "05_fitout", label: "Interiors (Walls/Ceilings)" },
-            flooring: { name: "", status: "Tendering", phase: "05_fitout", label: "Flooring" },
-            painting: { name: "", status: "Tendering", phase: "05_fitout", label: "Painting" },
-            joinery: { name: "", status: "Tendering", phase: "05_fitout", label: "Joinery" },
+            concrete: { name: "", status: "Tendering", phase: "02a_concrete", label: "Concrete Structure" },
+            steel: { name: "", status: "Tendering", phase: "02b_steel", label: "Structural Steel" },
+            framing: { name: "", status: "Tendering", phase: "02c_framing", label: "Timber Framing" },
+            crane: { name: "", status: "Tendering", phase: "02b_steel", label: "Tower Crane" },
+            facade: { name: "", status: "Tendering", phase: "03b_facade", label: "Facade & Glazing" },
+            scaffolding: { name: "", status: "Tendering", phase: "03c_scaffolding", label: "Scaffolding" },
+            roofing: { name: "", status: "Tendering", phase: "03a_roofing", label: "Roofing" },
+            electrical: { name: "", status: "Tendering", phase: "04a_electrical_rough", label: "Electrical" },
+            hydraulics: { name: "", status: "Tendering", phase: "04b_plumbing_rough", label: "Hydraulics (Plumbing)" },
+            mechanical: { name: "", status: "Tendering", phase: "04c_hvac", label: "Mechanical (HVAC)" },
+            interiors: { name: "", status: "Tendering", phase: "05a_linings_stopping", label: "Interiors (Walls/Ceilings)" },
+            flooring: { name: "", status: "Tendering", phase: "05c_flooring", label: "Flooring" },
+            painting: { name: "", status: "Tendering", phase: "05d_painting", label: "Painting" },
+            joinery: { name: "", status: "Tendering", phase: "05b_carpentry_trim", label: "Joinery" },
             cleaning: { name: "", status: "Tendering", phase: "06_handover", label: "Final Clean" }
         },
         parking: "On-site", publicTransport: "Yes", drugTesting: "Pre-employment only", induction: "", ppe: []
@@ -168,6 +173,9 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
         phaseSettings: { ...defaultFormData.phaseSettings, ...(initialData?.phaseSettings || {}) },
         ppe: initialData?.ppe || defaultFormData.ppe
     });
+
+    // Use existing ID or stable temp ID
+    const effectiveProjectId = initialData?.id || formData.id || tempId;
 
     if (!isOpen) return null;
 
@@ -188,6 +196,7 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
         { id: "core", label: "The Core", icon: Building2 },
         { id: "contacts", label: "Key Contacts", icon: Users },
         { id: "packages", label: "Workforce Strategy", icon: Layers },
+        { id: "candidates", label: "Candidates", icon: Users },
         { id: "logistics", label: "Site Logistics", icon: Truck },
     ];
 
@@ -195,7 +204,7 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
         const pkgs = Object.values(formData.packages).filter(p => p.phase === phaseId);
         let totalReq = 0;
         let totalAssigned = 0;
-        
+
         pkgs.forEach(pkg => {
             (pkg.laborRequirements || []).forEach(req => {
                 totalReq += req.requiredCount || 0;
@@ -205,8 +214,8 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
 
         if (totalReq === 0) return { score: 100, status: 'secure' };
         const score = Math.round((totalAssigned / totalReq) * 100);
-        return { 
-            score, 
+        return {
+            score,
             status: score === 100 ? 'secure' : score > 50 ? 'warning' : 'critical'
         };
     };
@@ -255,16 +264,16 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                             <div className="tab-pane">
                                 <div className="form-group">
                                     <label>Project Name</label>
-                                    <input type="text" required value={formData.name} onChange={(e) => updateFormData("name", e.target.value)} placeholder="e.g. Whangarei Hospital" />
+                                    <input type="text" required value={formData.name || ""} onChange={(e) => updateFormData("name", e.target.value)} placeholder="e.g. Whangarei Hospital" />
                                 </div>
                                 <div className="form-group">
                                     <label>Project Description</label>
-                                    <textarea value={formData.description} onChange={(e) => updateFormData("description", e.target.value)} placeholder="Brief overview..." rows={3} />
+                                    <textarea value={formData.description || ""} onChange={(e) => updateFormData("description", e.target.value)} placeholder="Brief overview..." rows={3} />
                                 </div>
                                 <div className="form-row">
                                     <div className="form-group">
                                         <label>Project Owner (Asset)</label>
-                                        <input type="text" value={formData.assetOwner} onChange={(e) => updateFormData("assetOwner", e.target.value)} placeholder="e.g. MoE" />
+                                        <input type="text" value={formData.assetOwner || ""} onChange={(e) => updateFormData("assetOwner", e.target.value)} placeholder="e.g. MoE" />
                                     </div>
                                     <div className="form-group">
                                         <label>Main Contractor</label>
@@ -272,9 +281,21 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                                             className="appearance-none"
                                             value={formData.assignedCompanyIds?.[0] || ""}
                                             onChange={(e) => {
-                                                const id = parseInt(e.target.value);
-                                                const client = clients.find(c => c.id === id);
-                                                setFormData(prev => ({ ...prev, assignedCompanyIds: [id], client: client ? client.name : "" }));
+                                                const val = e.target.value;
+                                                if (!val) {
+                                                    setFormData(prev => ({ ...prev, assignedCompanyIds: [], client: "" }));
+                                                    return;
+                                                }
+                                                // Handle ID matching safely (String vs Number)
+                                                const client = clients.find(c => String(c.id) === String(val));
+                                                // Use the client's actual ID type (string/number) to maintain consistency
+                                                const idToSave = client ? client.id : val;
+                                                
+                                                setFormData(prev => ({ 
+                                                    ...prev, 
+                                                    assignedCompanyIds: [idToSave], 
+                                                    client: client ? client.name : "" 
+                                                }));
                                             }}
                                         >
                                             <option value="">Select Contractor...</option>
@@ -285,7 +306,7 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                                 <div className="form-group">
                                     <label>Project Address</label>
                                     <div className="address-input-group">
-                                        <input type="text" value={formData.address} onChange={(e) => updateFormData("address", e.target.value)} placeholder="e.g. 123 Queen Street" />
+                                        <input type="text" value={formData.address || ""} onChange={(e) => updateFormData("address", e.target.value)} placeholder="e.g. 123 Queen Street" />
                                         <button type="button" className="btn-find" onClick={() => alert('Mock Geocode')}>
                                             <MapPin size={16} /> Find
                                         </button>
@@ -300,7 +321,7 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                                     </div>
                                     <div className="form-group">
                                         <label>Est. Value</label>
-                                        <input type="text" value={formData.value} onChange={(e) => updateFormData("value", e.target.value)} placeholder="e.g. $150M" />
+                                        <input type="text" value={formData.value || ""} onChange={(e) => updateFormData("value", e.target.value)} placeholder="e.g. $150M" />
                                     </div>
                                 </div>
                                 <div className="form-row">
@@ -325,21 +346,21 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                                 <div className="form-row">
                                     <div className="form-group">
                                         <label>Project Director</label>
-                                        <input type="text" value={formData.projectDirector} onChange={(e) => updateFormData("projectDirector", e.target.value)} placeholder="Name / Phone" />
+                                        <input type="text" value={formData.projectDirector || ""} onChange={(e) => updateFormData("projectDirector", e.target.value)} placeholder="Name / Phone" />
                                     </div>
                                     <div className="form-group">
                                         <label>Senior QS</label>
-                                        <input type="text" value={formData.seniorQS} onChange={(e) => updateFormData("seniorQS", e.target.value)} placeholder="Name / Phone" />
+                                        <input type="text" value={formData.seniorQS || ""} onChange={(e) => updateFormData("seniorQS", e.target.value)} placeholder="Name / Phone" />
                                     </div>
                                 </div>
                                 <div className="form-row">
                                     <div className="form-group">
                                         <label>Site Manager (Lead)</label>
-                                        <input type="text" value={formData.siteManager} onChange={(e) => updateFormData("siteManager", e.target.value)} placeholder="Name / Phone" />
+                                        <input type="text" value={formData.siteManager || ""} onChange={(e) => updateFormData("siteManager", e.target.value)} placeholder="Name / Phone" />
                                     </div>
                                     <div className="form-group">
                                         <label>Health & Safety Officer</label>
-                                        <input type="text" value={formData.safetyOfficer} onChange={(e) => updateFormData("safetyOfficer", e.target.value)} placeholder="Name / Phone" />
+                                        <input type="text" value={formData.safetyOfficer || ""} onChange={(e) => updateFormData("safetyOfficer", e.target.value)} placeholder="Name / Phone" />
                                     </div>
                                 </div>
                                 {(formData.additionalSiteManagers || []).map((sm, index) => (
@@ -469,21 +490,24 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                                                 {phasePkgs.length === 0 ? (
                                                     <div className="skipped-placeholder">
                                                         <Info size={48} className="text-secondary opacity-20" />
+                                                        <p className="text-sm font-bold text-slate-500">No Packages Defined for this Phase</p>
                                                         <button
                                                             type="button"
                                                             className="btn-dashed"
                                                             onClick={() => {
-                                                                const defaults = defaultFormData.packages;
-                                                                updateFormData("packages", (prev) => {
-                                                                    const next = { ...prev };
-                                                                    Object.keys(defaults).forEach(k => {
-                                                                        if (defaults[k].phase === selectedPhaseId) next[k] = defaults[k];
-                                                                    });
-                                                                    return next;
-                                                                });
+                                                                updateFormData("packages", (prev) => ({
+                                                                    ...prev,
+                                                                    [`pkg-${Date.now()}`]: {
+                                                                        name: "New Work Package",
+                                                                        status: "Tendering",
+                                                                        phase: selectedPhaseId,
+                                                                        label: PHASE_MAP[selectedPhaseId]?.label || "Custom Package",
+                                                                        laborRequirements: []
+                                                                    }
+                                                                }));
                                                             }}
                                                         >
-                                                            Restore Defaults
+                                                            <Plus size={16} /> Create Work Package
                                                         </button>
                                                     </div>
                                                 ) : (
@@ -510,7 +534,7 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                                                                     <label>Subcontractor</label>
                                                                     <input
                                                                         type="text"
-                                                                        value={pkg.name}
+                                                                        value={pkg.name || ""}
                                                                         onChange={(e) => {
                                                                             const val = e.target.value;
                                                                             updateFormData("packages", (prev) => ({
@@ -541,7 +565,7 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                                                                     requirements={pkg.laborRequirements || []}
                                                                     phaseId={pkg.phase}
                                                                     candidates={candidates}
-                                                                    projectId={formData.id || `new-${Date.now()}`}
+                                                                    projectId={effectiveProjectId}
                                                                     availableRoles={availableRoles}
                                                                     onAddRole={addRole}
                                                                     onChange={(reqs) => {
@@ -555,6 +579,51 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                                                         </div>
                                                     ))
                                                 )}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === "candidates" && (
+                            <div className="tab-pane">
+                                <div className="candidates-list">
+                                    <div className="list-header">
+                                        <h3>Assigned Workforce</h3>
+                                        <span className="badge-count">
+                                            {candidates.filter(c => c.projectId === formData.id).length} Active
+                                        </span>
+                                    </div>
+                                    
+                                    <div className="candidates-grid">
+                                        {candidates.filter(c => c.projectId === formData.id).map(c => (
+                                            <div key={c.id} className="candidate-card" onClick={() => setSelectedCandidateId(c.id)}>
+                                                <div className="c-avatar">{c.firstName?.[0]}{c.lastName?.[0]}</div>
+                                                <div className="c-info">
+                                                    <div className="c-name">{c.firstName} {c.lastName}</div>
+                                                    <div className="c-role">{c.role}</div>
+                                                </div>
+                                                <div className="c-dates">
+                                                    <div className="date-row">
+                                                        <span className="label">Start:</span>
+                                                        <span className="value">{c.startDate || 'TBD'}</span>
+                                                    </div>
+                                                    <div className="date-row">
+                                                        <span className="label">End:</span>
+                                                        <span className="value">{c.finishDate || 'Open'}</span>
+                                                    </div>
+                                                </div>
+                                                <div className={`c-status ${c.status.toLowerCase().replace(' ', '-')}`}>
+                                                    {c.status}
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {candidates.filter(c => c.projectId === formData.id).length === 0 && (
+                                            <div className="empty-state">
+                                                <Users size={48} />
+                                                <p>No candidates currently assigned to this project.</p>
+                                                <small>Allocate candidates via the Workforce Strategy tab or Float modal.</small>
                                             </div>
                                         )}
                                     </div>
@@ -607,7 +676,60 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                 </form>
             </div>
 
+            {selectedCandidateId && (
+                <CandidateModal
+                    candidate={candidates.find(c => c.id === selectedCandidateId)}
+                    squads={[]}
+                    projects={[]}
+                    onClose={() => setSelectedCandidateId(null)}
+                    onSave={() => setSelectedCandidateId(null)}
+                />
+            )}
+
             <style jsx>{`
+                .candidates-list { display: flex; flex-direction: column; gap: 1.5rem; width: 100%; }
+                .list-header { display: flex; align-items: center; gap: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
+                .list-header h3 { margin: 0; color: white; font-size: 1.1rem; }
+                .badge-count { background: var(--secondary); color: #0f172a; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 800; }
+                
+                .candidates-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+                
+                .candidate-card {
+                    background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border);
+                    border-radius: var(--radius-md); padding: 1rem;
+                    display: flex; align-items: center; gap: 1rem;
+                    cursor: pointer; transition: all 0.2s;
+                }
+                .candidate-card:hover { background: rgba(255, 255, 255, 0.05); border-color: var(--secondary); transform: translateY(-2px); }
+                
+                .c-avatar {
+                    width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.1);
+                    display: flex; align-items: center; justify-content: center;
+                    font-weight: 700; color: var(--secondary); border: 1px solid var(--border);
+                }
+                .c-info { flex: 1; min-width: 0; }
+                .c-name { font-weight: 700; color: white; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                .c-role { font-size: 0.75rem; color: var(--text-muted); }
+                
+                .c-dates { display: flex; flex-direction: column; gap: 2px; font-size: 0.7rem; color: var(--text-muted); margin-right: 1rem; }
+                .date-row { display: flex; gap: 6px; }
+                .date-row .label { color: var(--text-muted); width: 35px; }
+                .date-row .value { color: white; font-weight: 600; }
+                
+                .c-status {
+                    font-size: 0.65rem; font-weight: 800; text-transform: uppercase;
+                    padding: 2px 6px; border-radius: 4px; border: 1px solid transparent;
+                }
+                .c-status.on-job { background: rgba(59, 130, 246, 0.2); color: #3b82f6; border-color: rgba(59, 130, 246, 0.3); }
+                .c-status.available { background: rgba(239, 68, 68, 0.2); color: #ef4444; border-color: rgba(239, 68, 68, 0.3); }
+                
+                .empty-state {
+                    grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+                    padding: 3rem; background: rgba(255,255,255,0.02); border: 1px dashed var(--border);
+                    border-radius: var(--radius-lg); color: var(--text-muted); text-align: center;
+                }
+                .empty-state p { font-weight: 600; margin: 1rem 0 0.5rem 0; font-size: 0.95rem; }
+
                 .modal-overlay {
                     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
                     background: rgba(2, 6, 23, 0.85); display: flex;
@@ -800,8 +922,8 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                 .btn-assign-sm:hover { transform: scale(1.05); box-shadow: 0 0 15px rgba(0, 242, 255, 0.3); }
                 
                 .add-interface { display: flex; gap: 0.75rem; padding-top: 0.75rem; }
-                .input-sm { padding: 8px 12px; background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 6px; color: white; font-size: 0.85rem; }
-                .btn-add-sm { background: var(--secondary); color: #0f172a; border: none; border-radius: 6px; width: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
+                .input-sm { padding: 8px 12px; background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border); border-radius: 6px; color: white; font-size: 0.85rem; }
+                .btn-add-sm { background: var(--secondary); color: #0f172a; border: none; border-radius: 6px; padding: 8px 16px; display: flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; transition: all 0.2s; font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
                 .btn-add-sm:hover { background: white; }
             `}</style>
         </div>

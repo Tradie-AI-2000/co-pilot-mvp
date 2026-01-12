@@ -13,6 +13,8 @@ import CandidateModal from "../../components/candidate-modal.js";
 import WeeklyCheckinWidget from "../../components/weekly-checkin-widget.js";
 import BenchRoster from "../../components/bench-roster.js";
 import HotListModal from "../../components/hot-list-modal.js";
+import { FinishingSoonWidget, ClientDemandWidget, SharePointModal } from "../../components/sharepoint-mirror-widgets.js";
+import { mockSharePointData } from "../../services/enhanced-mock-data.js";
 
 
 export default function CandidatesPage() {
@@ -22,7 +24,7 @@ export default function CandidatesPage() {
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [viewMode, setViewMode] = useState('list'); // 'list', 'table', 'map', 'squads', 'check-ins'
   const [squads, setSquads] = useState([]); // Squads can remain local for now or move to context if needed
-  
+
   // Hot List State
   const [isHotListOpen, setIsHotListOpen] = useState(false);
   const [selectedHotList, setSelectedHotList] = useState([]);
@@ -33,10 +35,13 @@ export default function CandidatesPage() {
   const [selectedTrade, setSelectedTrade] = useState(null);
   const [dashboardFilter, setDashboardFilter] = useState(null);
 
+  // SharePoint Mirror State
+  const [mirrorModal, setMirrorModal] = useState({ isOpen: false, type: null });
+
   // Auto-switch to table view on Bench Filter
   useEffect(() => {
     if (dashboardFilter === 'Available' || dashboardFilter === 'Finishing Soon') {
-        setViewMode('table');
+      setViewMode('table');
     }
   }, [dashboardFilter]);
 
@@ -113,8 +118,8 @@ export default function CandidatesPage() {
   };
 
   const handleGenerateHotList = (selected) => {
-      setSelectedHotList(selected);
-      setIsHotListOpen(true);
+    setSelectedHotList(selected);
+    setIsHotListOpen(true);
   };
 
   return (
@@ -143,6 +148,18 @@ export default function CandidatesPage() {
         </header>
 
         <div className="candidates-list">
+          {/* SharePoint Mirror Portals */}
+          <div className="mirror-portals-grid">
+            <FinishingSoonWidget
+              data={mockSharePointData.finishingSoon}
+              onExpand={() => setMirrorModal({ isOpen: true, type: 'finishingSoon' })}
+            />
+            <ClientDemandWidget
+              data={mockSharePointData.clientDemand}
+              onExpand={() => setMirrorModal({ isOpen: true, type: 'clientDemand' })}
+            />
+          </div>
+
           {!isLoading && (
             <CandidateDashboard
               candidates={candidates}
@@ -157,40 +174,40 @@ export default function CandidatesPage() {
 
           <div className="view-controls">
             <div className="toggle-group">
-              <button className={`toggle-btn ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')}> 
+              <button className={`toggle-btn ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')}>
                 <LayoutGrid size={18} /> Grid
               </button>
-              <button className={`toggle-btn ${viewMode === 'table' ? 'active' : ''}`} onClick={() => setViewMode('table')}> 
+              <button className={`toggle-btn ${viewMode === 'table' ? 'active' : ''}`} onClick={() => setViewMode('table')}>
                 <Table size={18} /> Roster
               </button>
-              <button className={`toggle-btn ${viewMode === 'map' ? 'active' : ''}`} onClick={() => setViewMode('map')}> 
+              <button className={`toggle-btn ${viewMode === 'map' ? 'active' : ''}`} onClick={() => setViewMode('map')}>
                 <Map size={18} /> Map
               </button>
-              <button className={`toggle-btn ${viewMode === 'squads' ? 'active' : ''}`} onClick={() => setViewMode('squads')}> 
+              <button className={`toggle-btn ${viewMode === 'squads' ? 'active' : ''}`} onClick={() => setViewMode('squads')}>
                 <Users size={18} /> Squads
               </button>
-              <button className={`toggle-btn ${viewMode === 'check-ins' ? 'active' : ''}`} onClick={() => setViewMode('check-ins')}> 
+              <button className={`toggle-btn ${viewMode === 'check-ins' ? 'active' : ''}`} onClick={() => setViewMode('check-ins')}>
                 <Calendar size={18} /> Check-ins
               </button>
             </div>
-            
+
             {/* Filter Breadcrumbs if active */}
             {dashboardFilter && (
-                <div className="filter-badge">
-                    Showing: <strong>{dashboardFilter}</strong>
-                    <button onClick={() => { setDashboardFilter(null); setViewMode('list'); }}><X size={14}/></button>
-                </div>
+              <div className="filter-badge">
+                Showing: <strong>{dashboardFilter}</strong>
+                <button onClick={() => { setDashboardFilter(null); setViewMode('list'); }}><X size={14} /></button>
+              </div>
             )}
           </div>
 
           {viewMode === 'table' ? (
-             <BenchRoster 
-                candidates={filteredCandidates} 
-                onGenerateHotList={handleGenerateHotList}
-             />
+            <BenchRoster
+              candidates={filteredCandidates}
+              onGenerateHotList={handleGenerateHotList}
+            />
           ) : viewMode === 'check-ins' ? (
             <div className="checkin-view-wrapper">
-                <WeeklyCheckinWidget />
+              <WeeklyCheckinWidget />
             </div>
           ) : viewMode === 'squads' ? (
             <SquadBuilder
@@ -230,7 +247,7 @@ export default function CandidatesPage() {
               )}
 
               {viewLevel === 'regions' && <RegionGrid candidates={candidates} onRegionClick={(region) => { setSelectedRegion(region); setViewLevel('trades'); }} />}
-              {viewLevel === 'trades' && <TradeGrid candidates={candidates.filter(c => c.state === selectedRegion)} onTradeClick={(trade) => { setSelectedTrade(trade); setViewLevel('candidates'); }} regionName={selectedRegion}/>}
+              {viewLevel === 'trades' && <TradeGrid candidates={candidates.filter(c => c.state === selectedRegion)} onTradeClick={(trade) => { setSelectedTrade(trade); setViewLevel('candidates'); }} regionName={selectedRegion} />}
               {viewLevel === 'candidates' && (
                 <div className="flex flex-col gap-4">
                   {isLoading ? (
@@ -261,17 +278,17 @@ export default function CandidatesPage() {
                               <div className="candidate-details-grid">
                                 <div className="detail-item"><span className="label">Role:</span><span className="value">{candidate.role || 'None'}</span></div>
                                 <div className="detail-item">
-                                    <span className="label">Status:</span>
-                                    <div className="flex flex-col">
-                                        <span className={`value status-text ${statusColorClass}`}>
-                                            {candidate.status === "Available" ? "On Bench" : candidate.status}
-                                        </span>
-                                        {candidate.finishDate && candidate.status !== "Available" && (
-                                            <span className="text-[0.65rem] text-orange-400 font-mono mt-0.5">
-                                                Ends: {candidate.finishDate}
-                                            </span>
-                                        )}
-                                    </div>
+                                  <span className="label">Status:</span>
+                                  <div className="flex flex-col">
+                                    <span className={`value status-text ${statusColorClass}`}>
+                                      {candidate.status === "Available" ? "On Bench" : candidate.status}
+                                    </span>
+                                    {candidate.finishDate && candidate.status !== "Available" && (
+                                      <span className="text-[0.65rem] text-orange-400 font-mono mt-0.5">
+                                        Ends: {candidate.finishDate}
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
                                 <div className="detail-item"><span className="label">Pay:</span><span className="value">${candidate.payRate || 0}/hr</span></div>
                                 <div className="detail-item"><span className="label">Charge:</span><span className="value highlight">${candidate.chargeRate || 0}/hr</span></div>
@@ -306,13 +323,26 @@ export default function CandidatesPage() {
         )}
 
         {isHotListOpen && (
-            <HotListModal 
-                candidates={selectedHotList} 
-                onClose={() => setIsHotListOpen(false)} 
-            />
+          <HotListModal
+            candidates={selectedHotList}
+            onClose={() => setIsHotListOpen(false)}
+          />
         )}
-        
+
+        <SharePointModal
+          isOpen={mirrorModal.isOpen}
+          type={mirrorModal.type}
+          data={mirrorModal.type ? mockSharePointData[mirrorModal.type] : null}
+          onClose={() => setMirrorModal({ isOpen: false, type: null })}
+        />
+
         <style jsx>{`
+          .mirror-portals-grid {
+              display: grid;
+              grid-template-columns: repeat(2, 1fr);
+              gap: 1.5rem;
+              margin-bottom: 1rem;
+          }
         .status-text.status-blue { color: #3b82f6; }
         .status-text.status-green { color: #10b981; }
         

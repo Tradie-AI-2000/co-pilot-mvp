@@ -1,192 +1,139 @@
-import { MapPin, Users, ChevronRight } from "lucide-react";
+"use client";
 
-export default function RegionGrid({ candidates, onRegionClick }) {
-    // Group candidates by region (using 'state' as proxy for Region)
-    const regions = candidates.reduce((acc, candidate) => {
-        const region = candidate.state || "Unknown";
-        if (!acc[region]) {
-            acc[region] = { name: region, count: 0, avatars: [] };
-        }
-        acc[region].count++;
-        if (acc[region].avatars.length < 3) {
-            acc[region].avatars.push({
-                initials: `${candidate.firstName?.[0] || ''}${candidate.lastName?.[0] || ''}`,
-                id: candidate.id
+import { MapPin } from "lucide-react";
+
+export default function RegionGrid({ clients, candidates, onSelectRegion, onRegionClick }) {
+    const regions = ["National", "Auckland", "Waikato", "BoP", "Northland", "Hawkes Bay"];
+    
+    // Normalize props
+    const data = clients || candidates || [];
+    const isClients = !!clients;
+    const clickHandler = onSelectRegion || onRegionClick;
+
+    // Dynamic stats
+    const getStats = (region) => {
+        if (!data || data.length === 0) return { active: 0, total: 0 };
+
+        const relevantItems = region === "National" 
+            ? data 
+            : data.filter(item => {
+                // Clients use 'region', Candidates use 'state' (legacy field name for region)
+                const itemRegion = isClients ? item.region : item.state;
+                return itemRegion === region;
             });
+        
+        let activeCount = 0;
+        if (isClients) {
+            activeCount = relevantItems.filter(c => c.activeJobs > 0).length;
+        } else {
+            // Candidates: 'On Job' or 'Deployed' implies active
+            activeCount = relevantItems.filter(c => c.status === 'On Job' || c.status === 'Deployed').length;
         }
-        return acc;
-    }, {});
 
-    const regionList = Object.values(regions).sort((a, b) => b.count - a.count);
+        return { active: activeCount, total: relevantItems.length };
+    };
 
     return (
         <div className="region-grid">
-            {regionList.map((region) => (
-                <div
-                    key={region.name}
-                    onClick={() => onRegionClick(region.name)}
-                    className="region-card"
-                >
-                    <div className="card-top">
-                        <div className="icon-badge">
-                            <MapPin size={24} />
-                        </div>
-                        <div className="count-badge">
-                            {region.count} Candidates
+            {regions.map(region => {
+                const stats = getStats(region);
+                const isActive = stats.total > 0;
+
+                return (
+                    <div 
+                        key={region} 
+                        className={`region-card ${isActive ? 'active' : 'inactive'}`}
+                        onClick={() => isActive && clickHandler && clickHandler(region)}
+                    >
+                        <div className="card-bg-icon"><MapPin size={100} /></div>
+                        <h3 className="region-title">{region}</h3>
+                        
+                        <div className="stats">
+                            <div className="stat-row">
+                                <span className="stat-val text-green-400">{stats.active}</span>
+                                <span className="stat-label">Active {isClients ? 'Clients' : 'Workers'}</span>
+                            </div>
+                            <div className="stat-row">
+                                <span className="stat-val text-white">{stats.total}</span>
+                                <span className="stat-label">Total {isClients ? 'Clients' : 'Pool'}</span>
+                            </div>
                         </div>
                     </div>
+                );
+            })}
 
-                    <h3 className="region-title">{region.name}</h3>
-                    <p className="region-sub">View available trades</p>
-
-                    <div className="card-footer">
-                        <div className="avatars">
-                            {region.avatars.map((avatar, i) => (
-                                <div key={i} className="avatar">
-                                    {avatar.initials}
-                                </div>
-                            ))}
-                            {region.count > 3 && (
-                                <div className="avatar more">
-                                    +{region.count - 3}
-                                </div>
-                            )}
-                        </div>
-                        <div className="arrow-btn">
-                            <ChevronRight size={16} />
-                        </div>
-                    </div>
-                </div>
-            ))}
             <style jsx>{`
+                .region-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                    gap: 1.5rem;
+                }
+
                 .region-card {
-                    background: var(--surface);
-                    border: 1px solid var(--border);
-                    border-radius: var(--radius-md);
+                    background: rgba(30, 41, 59, 0.4);
+                    border: 1px solid rgba(255, 255, 255, 0.05);
+                    border-radius: 12px;
                     padding: 1.5rem;
+                    height: 180px;
+                    position: relative;
+                    overflow: hidden;
                     cursor: pointer;
-                    transition: all 0.2s;
+                    transition: all 0.2s ease;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
+                }
+
+                .region-card.active:hover {
+                    background: rgba(30, 41, 59, 0.6);
+                    border-color: var(--secondary);
+                    transform: translateY(-2px);
+                }
+
+                .region-card.inactive {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                    background: rgba(15, 23, 42, 0.4);
+                }
+
+                .card-bg-icon {
+                    position: absolute;
+                    right: -20px;
+                    bottom: -20px;
+                    opacity: 0.05;
+                    transform: rotate(-15deg);
+                }
+
+                .region-title {
+                    font-size: 1.5rem;
+                    font-weight: 800;
+                    color: white;
+                    z-index: 1;
+                }
+
+                .stats {
+                    display: flex;
+                    gap: 1.5rem;
+                    z-index: 1;
+                }
+
+                .stat-row {
                     display: flex;
                     flex-direction: column;
                 }
 
-                .region-card:hover {
-                    border-color: var(--secondary);
-                    transform: translateY(-2px);
-                    box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
-                }
-
-                .card-top {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: flex-start;
-                    margin-bottom: 1rem;
-                }
-
-                .icon-badge {
-                    width: 48px;
-                    height: 48px;
-                    border-radius: 50%;
-                    background: rgba(255, 255, 255, 0.03);
-                    border: 1px solid var(--border);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    color: var(--secondary);
-                }
-
-                .region-card:hover .icon-badge {
-                    background: var(--secondary);
-                    color: #0f172a;
-                    border-color: var(--secondary);
-                }
-
-                .count-badge {
-                    font-size: 0.75rem;
-                    font-weight: 600;
-                    padding: 0.25rem 0.75rem;
-                    background: rgba(255, 255, 255, 0.03);
-                    border: 1px solid var(--border);
-                    border-radius: 999px;
-                    color: var(--text-muted);
-                }
-
-                .region-title {
-                    font-size: 1.25rem;
+                .stat-val {
+                    font-size: 1.5rem;
                     font-weight: 700;
-                    color: white;
+                    line-height: 1;
                     margin-bottom: 0.25rem;
                 }
 
-                .region-sub {
-                    font-size: 0.875rem;
+                .stat-label {
+                    font-size: 0.75rem;
                     color: var(--text-muted);
-                    margin-bottom: 1.5rem;
-                }
-
-                .card-footer {
-                    margin-top: auto;
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                }
-
-                .avatars {
-                    display: flex;
-                    margin-left: 0.5rem;
-                }
-
-                .avatar {
-                    width: 32px;
-                    height: 32px;
-                    border-radius: 50%;
-                    background: var(--surface);
-                    border: 2px solid var(--surface);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 0.65rem;
-                    font-weight: 700;
-                    color: white;
-                    margin-left: -0.5rem;
-                    background: #334155;
-                }
-
-                .avatar.more {
-                    background: #1e293b;
-                    color: var(--text-muted);
-                }
-
-                .arrow-btn {
-                    width: 32px;
-                    height: 32px;
-                    border-radius: 50%;
-                    background: rgba(255, 255, 255, 0.03);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    color: var(--text-muted);
-                    transition: all 0.2s;
-                }
-
-                .region-card:hover .arrow-btn {
-                    background: var(--secondary);
-                    color: #0f172a;
-                }
-
-                .region-grid {
-                    display: grid;
-                    grid-template-columns: 1fr;
-                    gap: 2.5rem;
-                    width: 100%;
-                }
-
-                @media (min-width: 768px) {
-                    .region-grid { grid-template-columns: repeat(2, 1fr); }
-                }
-
-                @media (min-width: 1024px) {
-                    .region-grid { grid-template-columns: repeat(3, 1fr); }
+                    text-transform: uppercase;
+                    font-weight: 600;
                 }
             `}</style>
         </div>

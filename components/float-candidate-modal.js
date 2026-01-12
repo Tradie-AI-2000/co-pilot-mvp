@@ -1,29 +1,67 @@
 "use client";
 
-import { useState } from "react";
-import { X, Send, Calculator, User, Building2, FileText, CheckCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, Send, Calculator, User, Building2, FileText, CheckCircle, AlertTriangle, Shield } from "lucide-react";
 import { useData } from "../context/data-context.js";
+import { checkVisaCompliance, generatePhaseMessage } from "../services/construction-logic.js";
 
-export default function FloatCandidateModal({ candidate, isOpen, onClose }) {
+export default function FloatCandidateModal({ candidate, isOpen, onClose, prefilledData }) {
     const { clients, projects, floatCandidate } = useData();
-    const [step, setStep] = useState(1); // 1: Target, 2: Financials, 3: Review
-    const [selectedClientId, setSelectedClientId] = useState("");
-    const [selectedProjectId, setSelectedProjectId] = useState("");
-    const [selectedContact, setSelectedContact] = useState("");
-    const [chargeRate, setChargeRate] = useState(candidate.chargeRate || 0);
-    const [payRate, setPayRate] = useState(candidate.payRate || 0);
-    const [message, setMessage] = useState(`Hi,\n\nI'd like to put forward ${candidate.firstName} for the open role. They have strong experience in ${candidate.role} and are available immediately.\n\nPlease find the CV attached.\n\nBest,\nJoe`);
+
+    // Determine initial step: if prefilled from project card, skip to step 2
+    const initialStep = prefilledData ? 2 : 1;
+
+    const [step, setStep] = useState(initialStep);
+    const [selectedClientId, setSelectedClientId] = useState(prefilledData?.clientId || "");
+    const [selectedProjectId, setSelectedProjectId] = useState(prefilledData?.projectId || "");
+    const [selectedContact, setSelectedContact] = useState(prefilledData?.siteManagerName || "");
+    const [chargeRate, setChargeRate] = useState(candidate?.chargeRate || 0);
+    const [payRate, setPayRate] = useState(candidate?.payRate || 0);
+    const [message, setMessage] = useState(
+        candidate
+            ? `Hi,\n\nI'd like to put forward ${candidate.firstName} for the open role. They have strong experience in ${candidate.role} and are available immediately.\n\nPlease find the CV attached.\n\nBest,\nJoe`
+            : `Hi,\n\nI'd like to discuss a candidate for your project. Please let me know if you're interested.\n\nBest,\nJoe`
+    );
 
     if (!isOpen) return null;
 
     const selectedClient = clients.find(c => c.id === parseInt(selectedClientId));
     const clientContacts = selectedClient?.keyContacts || [];
     const clientProjects = projects.filter(p => p.assignedCompanyIds?.includes(parseInt(selectedClientId)));
+    const selectedProject = projects.find(p => p.id === selectedProjectId);
+
+    // Visa Compliance Check
+    const complianceCheck = candidate && selectedProject
+        ? checkVisaCompliance(candidate, selectedProject)
+        : { valid: true, reason: '' };
 
     const margin = chargeRate - (payRate * 1.3); // 30% burden
     const marginPercent = chargeRate > 0 ? (margin / chargeRate) * 100 : 0;
 
+    // Phase-aware message generation
+    useEffect(() => {
+        if (candidate && selectedProject && prefilledData) {
+            const currentPhase = selectedProject.phaseSettings?.currentPhase || prefilledData.currentPhase || '02_structure';
+            const siteManagerName = prefilledData.siteManagerName || selectedContact || 'there';
+            const phaseMessage = generatePhaseMessage(
+                candidate.firstName,
+                selectedProject.name,
+                currentPhase,
+                siteManagerName
+            );
+            setMessage(phaseMessage);
+        }
+    }, [candidate, selectedProject, prefilledData, selectedContact]);
+
     const handleSend = () => {
+        if (!candidate) {
+            alert('Please select a candidate first');
+            return;
+        }
+        if (!complianceCheck.valid) {
+            alert(`Compliance Error: ${complianceCheck.reason}`);
+            return;
+        }
         floatCandidate(candidate.id, selectedProjectId || null, {
             clientId: selectedClientId,
             contactName: selectedContact,
@@ -40,7 +78,7 @@ export default function FloatCandidateModal({ candidate, isOpen, onClose }) {
         <div className="modal-overlay">
             <div className="float-modal">
                 <div className="modal-header">
-                    <h3>Float Candidate: {candidate.firstName} {candidate.lastName}</h3>
+                    <h3>Float Candidate{candidate ? `: ${candidate.firstName} ${candidate.lastName}` : ''}</h3>
                     <button onClick={onClose} className="close-btn"><X size={20} /></button>
                 </div>
 
@@ -58,9 +96,9 @@ export default function FloatCandidateModal({ candidate, isOpen, onClose }) {
                         <div className="step-content space-y-4">
                             <div className="form-group">
                                 <label>Client</label>
-                                <select 
-                                    className="input-field" 
-                                    value={selectedClientId} 
+                                <select
+                                    className="input-field"
+                                    value={selectedClientId}
                                     onChange={(e) => setSelectedClientId(e.target.value)}
                                 >
                                     <option value="">Select Client...</option>
@@ -72,7 +110,7 @@ export default function FloatCandidateModal({ candidate, isOpen, onClose }) {
                                 <>
                                     <div className="form-group">
                                         <label>Project (Optional)</label>
-                                        <select 
+                                        <select
                                             className="input-field"
                                             value={selectedProjectId}
                                             onChange={(e) => setSelectedProjectId(e.target.value)}
@@ -84,7 +122,7 @@ export default function FloatCandidateModal({ candidate, isOpen, onClose }) {
 
                                     <div className="form-group">
                                         <label>Key Contact</label>
-                                        <select 
+                                        <select
                                             className="input-field"
                                             value={selectedContact}
                                             onChange={(e) => setSelectedContact(e.target.value)}
@@ -104,20 +142,20 @@ export default function FloatCandidateModal({ candidate, isOpen, onClose }) {
                                 <div className="row">
                                     <div className="col">
                                         <label>Pay Rate (Cost)</label>
-                                        <input 
-                                            type="number" 
-                                            className="input-field" 
-                                            value={payRate} 
-                                            onChange={(e) => setPayRate(parseFloat(e.target.value))} 
+                                        <input
+                                            type="number"
+                                            className="input-field"
+                                            value={payRate}
+                                            onChange={(e) => setPayRate(parseFloat(e.target.value))}
                                         />
                                     </div>
                                     <div className="col">
                                         <label>Charge Rate (Bill)</label>
-                                        <input 
-                                            type="number" 
-                                            className="input-field highlight" 
-                                            value={chargeRate} 
-                                            onChange={(e) => setChargeRate(parseFloat(e.target.value))} 
+                                        <input
+                                            type="number"
+                                            className="input-field highlight"
+                                            value={chargeRate}
+                                            onChange={(e) => setChargeRate(parseFloat(e.target.value))}
                                         />
                                     </div>
                                 </div>
@@ -134,6 +172,31 @@ export default function FloatCandidateModal({ candidate, isOpen, onClose }) {
 
                     {step === 3 && (
                         <div className="step-content space-y-4">
+                            {/* Visa Compliance Alert */}
+                            {!complianceCheck.valid && (
+                                <div className="compliance-alert error">
+                                    <div className="alert-header">
+                                        <AlertTriangle size={20} />
+                                        <span className="alert-title">Visa Compliance Error</span>
+                                    </div>
+                                    <div className="alert-message">
+                                        {complianceCheck.reason}
+                                    </div>
+                                </div>
+                            )}
+
+                            {complianceCheck.valid && candidate && selectedProject && (
+                                <div className="compliance-alert success">
+                                    <div className="alert-header">
+                                        <Shield size={20} />
+                                        <span className="alert-title">Compliance Check Passed</span>
+                                    </div>
+                                    <div className="alert-message">
+                                        Candidate is eligible for placement in this region.
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="summary-card">
                                 <div className="summary-row">
                                     <Building2 size={14} /> <span>{selectedClient?.name}</span>
@@ -147,9 +210,9 @@ export default function FloatCandidateModal({ candidate, isOpen, onClose }) {
                             </div>
                             <div className="form-group">
                                 <label>Message Preview</label>
-                                <textarea 
-                                    className="input-field message-box" 
-                                    value={message} 
+                                <textarea
+                                    className="input-field message-box"
+                                    value={message}
                                     onChange={(e) => setMessage(e.target.value)}
                                     rows={5}
                                 />
@@ -164,15 +227,20 @@ export default function FloatCandidateModal({ candidate, isOpen, onClose }) {
                     )}
                     <div className="spacer"></div>
                     {step < 3 ? (
-                        <button 
-                            className="btn-primary" 
+                        <button
+                            className="btn-primary"
                             disabled={!selectedClientId}
                             onClick={() => setStep(step + 1)}
                         >
                             Next
                         </button>
                     ) : (
-                        <button className="btn-success" onClick={handleSend}>
+                        <button
+                            className="btn-success"
+                            onClick={handleSend}
+                            disabled={!complianceCheck.valid}
+                            title={!complianceCheck.valid ? 'Compliance check failed' : 'Send float to client'}
+                        >
                             <Send size={16} /> Send Float
                         </button>
                     )}
@@ -374,6 +442,49 @@ export default function FloatCandidateModal({ candidate, isOpen, onClose }) {
                 .btn-primary:disabled {
                     opacity: 0.5;
                     cursor: not-allowed;
+                }
+
+                .btn-success:disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                    background: #6b7280;
+                }
+
+                .compliance-alert {
+                    padding: 1rem;
+                    border-radius: 8px;
+                    border: 1px solid;
+                    margin-bottom: 1rem;
+                }
+
+                .compliance-alert.error {
+                    background: rgba(239, 68, 68, 0.1);
+                    border-color: rgba(239, 68, 68, 0.3);
+                    color: #fca5a5;
+                }
+
+                .compliance-alert.success {
+                    background: rgba(16, 185, 129, 0.1);
+                    border-color: rgba(16, 185, 129, 0.3);
+                    color: #6ee7b7;
+                }
+
+                .alert-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    margin-bottom: 0.5rem;
+                }
+
+                .alert-title {
+                    font-weight: 600;
+                    font-size: 0.9rem;
+                }
+
+                .alert-message {
+                    font-size: 0.85rem;
+                    line-height: 1.5;
+                    opacity: 0.9;
                 }
             `}</style>
         </div>

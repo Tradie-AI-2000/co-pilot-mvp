@@ -114,6 +114,44 @@ export const candidates = [
         siteSafeExpiry: "2026-01-10",
         satisfactionRating: 4,
         compliance: ["Site Safe"]
+    },
+    {
+        id: 11,
+        firstName: "Alice",
+        lastName: "History",
+        mobile: "021 111 2222",
+        email: "alice@example.com",
+        suburb: "Ponsonby",
+        state: "Auckland",
+        residency: "Citizen",
+        status: "Available",
+        recruiter: "Joe Ward",
+        role: "Carpenter",
+        payRate: 36.00,
+        chargeRate: 62.00,
+        guaranteedHours: 0,
+        siteSafeExpiry: "2025-12-01",
+        satisfactionRating: 5,
+        compliance: ["Site Safe", "LBP"]
+    },
+    {
+        id: 12,
+        firstName: "Bob",
+        lastName: "Pipeline",
+        mobile: "021 222 3333",
+        email: "bob@example.com",
+        suburb: "Avondale",
+        state: "Auckland",
+        residency: "Resident",
+        status: "Interviewing",
+        recruiter: "Sarah Jenkins",
+        role: "Site Manager",
+        payRate: 55.00,
+        chargeRate: 95.00,
+        guaranteedHours: 40,
+        siteSafeExpiry: "2026-06-01",
+        satisfactionRating: 4,
+        compliance: ["Site Safe", "First Aid"]
     }
 ];
 

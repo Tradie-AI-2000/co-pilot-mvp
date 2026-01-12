@@ -261,11 +261,8 @@ export const getProjectSize = (valueStr) => {
     if (!valueStr) return "S";
 
     // Simple heuristic for demo:
-    // If user enters "150M", "150000000", etc.
     let value = parseFloat(valueStr.replace(/[^0-9.]/g, ''));
 
-    // Handle "M" notation if exists? 
-    // Usually user inputs "150M". 
     if (valueStr.toUpperCase().includes('M')) {
         // value is already in Millions
     } else if (value > 1000) {
@@ -277,4 +274,74 @@ export const getProjectSize = (valueStr) => {
     if (value < 20) return "M";
     if (value < 100) return "L";
     return "XL";
+};
+
+// --- Phase & Compliance Helpers ---
+import phaseSchema from './construction-phase-schema.json';
+
+export const CONSTRUCTION_LIFECYCLE = phaseSchema.construction_lifecycle;
+export const REGIONAL_CONSTRAINTS = phaseSchema.regional_constraints;
+
+export const getTradesForPhase = (phaseId) => {
+    return CONSTRUCTION_LIFECYCLE[phaseId]?.primary_trades || [];
+};
+
+export const checkVisaCompliance = (candidate, project) => {
+    if (!candidate || !project) return { valid: true };
+
+    const isFilipino = candidate.country?.toLowerCase() === 'philippines' ||
+        candidate.nationality?.toLowerCase() === 'filipino';
+
+    if (isFilipino) {
+        const approvedRegions = REGIONAL_CONSTRAINTS.approved_regions;
+        const projectRegion = approvedRegions.find(region =>
+            project.location?.toLowerCase().includes(region.toLowerCase()) ||
+            project.state?.toLowerCase().includes(region.toLowerCase())
+        );
+
+        if (!projectRegion) {
+            return {
+                valid: false,
+                reason: "Visa Violation: Filipino workers restricted to Auckland, Waikato, Northland, and BoP.",
+                type: "RESTRICTED_REGION"
+            };
+        }
+    }
+
+    return { valid: true };
+};
+
+export const formatWhatsAppLink = (phone) => {
+    if (!phone) return null;
+    // Remove non-numeric
+    let cleaned = phone.replace(/\D/g, '');
+    // If starts with 0, replace with 64
+    if (cleaned.startsWith('0')) {
+        cleaned = '64' + cleaned.substring(1);
+    }
+    // If doesn't start with 64, prepend 64
+    if (!cleaned.startsWith('64')) {
+        cleaned = '64' + cleaned;
+    }
+    return `https://wa.me/${cleaned}`;
+};
+
+export const generatePhaseMessage = (candidateName, projectName, currentPhase, siteManagerName) => {
+    const phaseData = CONSTRUCTION_LIFECYCLE[currentPhase];
+
+    if (!phaseData) {
+        return `Hi ${siteManagerName}, I have ${candidateName} available for ${projectName}. They're ready to start immediately. Can we discuss?`;
+    }
+
+    const trades = phaseData.primary_trades.slice(0, 2).join(' and ');
+    const phaseLabel = phaseData.label;
+
+    return `Hi ${siteManagerName}, I see you're in the ${phaseLabel} phase at ${projectName}. I have ${candidateName} available - experienced ${trades} ready to deploy. Can we arrange a site meeting?`;
+};
+
+export const generateSiteManagerWhatsAppMessage = (siteManagerName, projectName, currentPhase) => {
+    const phaseData = CONSTRUCTION_LIFECYCLE[currentPhase];
+    const phaseLabel = phaseData?.label || 'current phase';
+
+    return `Hi ${siteManagerName}, I'm checking in regarding the crew at ${projectName}. Everything on track for the ${phaseLabel}?`;
 };

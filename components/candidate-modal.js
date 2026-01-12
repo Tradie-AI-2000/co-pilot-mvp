@@ -58,13 +58,13 @@ export default function CandidateModal({ candidate, squads, projects, onClose, o
                                 <div className="flex gap-2">
                                     <input
                                         className="edit-input title-input"
-                                        value={formData.firstName}
+                                        value={formData.firstName || ""}
                                         onChange={(e) => handleChange('firstName', e.target.value)}
                                         placeholder="First Name"
                                     />
                                     <input
                                         className="edit-input title-input"
-                                        value={formData.lastName}
+                                        value={formData.lastName || ""}
                                         onChange={(e) => handleChange('lastName', e.target.value)}
                                         placeholder="Last Name"
                                     />
@@ -129,7 +129,7 @@ export default function CandidateModal({ candidate, squads, projects, onClose, o
                                             <input
                                                 type="date"
                                                 className="edit-input"
-                                                value={formData.visaExpiry || ''}
+                                                value={formData.visaExpiry || ""}
                                                 onChange={(e) => handleChange('visaExpiry', e.target.value)}
                                             />
                                         ) : (
@@ -146,7 +146,7 @@ export default function CandidateModal({ candidate, squads, projects, onClose, o
                                         <input
                                             type="date"
                                             className="edit-input"
-                                            value={formData.siteSafeExpiry || ''}
+                                            value={formData.siteSafeExpiry || ""}
                                             onChange={(e) => handleChange('siteSafeExpiry', e.target.value)}
                                         />
                                     ) : (
@@ -264,12 +264,26 @@ export default function CandidateModal({ candidate, squads, projects, onClose, o
                                 {(formData.status === "On Job" || formData.status === "Placed") && (
                                     <>
                                         <div className="info-field">
+                                            <span className="field-label">Start Date</span>
+                                            {isEditing ? (
+                                                <input
+                                                    type="date"
+                                                    className="edit-input"
+                                                    value={formData.startDate || ""}
+                                                    onChange={(e) => handleChange('startDate', e.target.value)}
+                                                />
+                                            ) : (
+                                                <span className="field-value">{formData.startDate || 'N/A'}</span>
+                                            )}
+                                        </div>
+
+                                        <div className="info-field">
                                             <span className="field-label">Finish Date</span>
                                             {isEditing ? (
                                                 <input
                                                     type="date"
                                                     className="edit-input"
-                                                    value={formData.finishDate || ''}
+                                                    value={formData.finishDate || ""}
                                                     onChange={(e) => handleChange('finishDate', e.target.value)}
                                                 />
                                             ) : (
@@ -283,7 +297,7 @@ export default function CandidateModal({ candidate, squads, projects, onClose, o
                                                 {isEditing ? (
                                                     <select
                                                         className="edit-input"
-                                                        value={formData.projectId || ''}
+                                                        value={formData.projectId || ""}
                                                         onChange={(e) => {
                                                             const projectId = e.target.value;
                                                             const project = projects.find(p => p.id === projectId);
@@ -326,7 +340,7 @@ export default function CandidateModal({ candidate, squads, projects, onClose, o
                                     {isEditing ? (
                                         <select
                                             className="edit-input"
-                                            value={formData.squadId || ''}
+                                            value={formData.squadId || ""}
                                             onChange={(e) => {
                                                 const squadId = e.target.value;
                                                 handleChange('squadId', squadId);
@@ -474,6 +488,7 @@ export default function CandidateModal({ candidate, squads, projects, onClose, o
                             <h3>Internal Info</h3>
                             <div className="info-grid">
                                 <InfoField label="Recruiter" field="recruiter" value={formData.recruiter} isEditing={isEditing} onChange={handleChange} />
+                                <InfoField label="Candidate Manager" field="candidateManager" value={formData.candidateManager} isEditing={isEditing} onChange={handleChange} />
                                 <InfoField label="Branch" field="branch" value={formData.branch} isEditing={isEditing} onChange={handleChange} />
                                 <InfoField label="Division" field="division" value={formData.division} isEditing={isEditing} onChange={handleChange} />
                                 <InfoField label="Internal Rating" field="internalRating" value={formData.internalRating} isEditing={isEditing} onChange={handleChange} />
