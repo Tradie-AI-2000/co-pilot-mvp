@@ -3,30 +3,21 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
-  Users,
-  Briefcase,
-  Map,
-  Settings,
   LogOut,
-  HardHat,
-  DollarSign,
-  Target,
-  Globe,
   RefreshCw,
   CheckCircle2,
-  AlertCircle
 } from "lucide-react";
 import { useData } from "../context/data-context";
 
 const navItems = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Projects", href: "/projects", icon: HardHat },
-  { name: "CRM", href: "/crm", icon: Briefcase },
-  { name: "Candidates", href: "/candidates", icon: Users },
-  { name: "Business Dev", href: "/bd", icon: Target },
-  { name: "Market Intel", href: "/market", icon: Map },
-  { name: "Financials", href: "/financials", icon: DollarSign },
+  { name: "Dashboard", href: "/" },
+  { name: "Projects", href: "/projects" },
+  { name: "CRM", href: "/crm" },
+  { name: "Candidates", href: "/candidates" },
+  { name: "Business Dev", href: "/bd" },
+  { name: "Market Intel", href: "/market" },
+  { name: "Financials", href: "/financials" },
+  { name: "Help Desk", href: "/help" },
 ];
 
 export default function Sidebar() {
@@ -53,7 +44,7 @@ export default function Sidebar() {
               href={item.href}
               className={`nav-item ${isActive ? "active" : ""}`}
             >
-              <span>{item.name}</span>
+              <span className="nav-text">{item.name}</span>
               {isActive && <div className="active-indicator" />}
             </Link>
           );
@@ -63,7 +54,7 @@ export default function Sidebar() {
         <div className="mt-4 pt-4 border-t border-slate-700/50">
           <p className="px-4 text-xs text-slate-500 font-bold uppercase mb-2">External Views</p>
           <Link href="/portal" className={`nav-item ${pathname === '/portal' ? 'active' : ''}`}>
-            <span>Client Portal</span>
+            <span className="nav-text">Client Portal</span>
           </Link>
         </div>
       </nav>
@@ -161,23 +152,27 @@ export default function Sidebar() {
         .nav-item {
           display: flex;
           align-items: center;
-          gap: 0.75rem;
-          padding: 0.75rem 1rem;
+          padding: 0.75rem 1.25rem;
           border-radius: var(--radius-sm);
           color: var(--text-muted);
           transition: var(--transition-fast);
           position: relative;
           overflow: hidden;
+          font-weight: 600;
+          font-size: 0.9rem;
+          letter-spacing: 0.02em;
         }
 
         .nav-item:hover {
           background: rgba(255, 255, 255, 0.05);
           color: var(--text-main);
+          padding-left: 1.5rem;
         }
 
         .nav-item.active {
           background: rgba(56, 189, 248, 0.1);
           color: var(--secondary);
+          padding-left: 1.5rem;
         }
 
         .active-indicator {
