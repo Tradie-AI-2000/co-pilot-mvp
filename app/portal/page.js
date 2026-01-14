@@ -1,18 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { Users, Map as MapIcon, ClipboardCheck, DollarSign, LogOut } from "lucide-react";
+import { Users, Map as MapIcon, ClipboardCheck, DollarSign, LogOut, Building, HardHat, Shield, Phone } from "lucide-react";
 import PortalDashboard from "../../components/portal/portal-dashboard.js";
+import ClientProjectsView from "../../components/portal/client-projects-view.js";
+import ProjectBuilder from "../../components/portal/project-builder.js";
+import PortalTimesheets from "../../components/portal/portal-timesheets.js";
+import PortalHealthSafety from "../../components/portal/portal-health-safety.js";
+import PortalContact from "../../components/portal/portal-contact.js";
 
 export default function PortalPage() {
     // Mock Client Login State
     const clientUser = {
         name: "Sarah Jenkins",
         company: "Fletcher Construction",
-        logo: "FC" 
+        logo: "FC"
     };
 
-    const [activeTab, setActiveTab] = useState('deploy');
+    const [activeTab, setActiveTab] = useState('projects'); // Default to Project History
 
     return (
         <div className="portal-container">
@@ -33,29 +38,41 @@ export default function PortalPage() {
                 </div>
 
                 <nav className="portal-nav">
-                    <button 
-                        className={`nav-item ${activeTab === 'deploy' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('deploy')}
+                    <button
+                        className={`nav-item ${activeTab === 'projects' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('projects')}
                     >
-                        <MapIcon size={20} /> Click & Deploy
+                        <Building size={20} /> Project History
                     </button>
-                    <button 
-                        className={`nav-item ${activeTab === 'muster' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('muster')}
+                    <button
+                        className={`nav-item ${activeTab === 'candidates' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('candidates')}
                     >
-                        <Users size={20} /> Live Muster
+                        <Users size={20} /> Candidates
                     </button>
-                    <button 
+                    <button
+                        className={`nav-item ${activeTab === 'builder' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('builder')}
+                    >
+                        <HardHat size={20} /> Project Builder
+                    </button>
+                    <button
                         className={`nav-item ${activeTab === 'timesheets' ? 'active' : ''}`}
                         onClick={() => setActiveTab('timesheets')}
                     >
                         <ClipboardCheck size={20} /> Timesheets
                     </button>
-                    <button 
-                        className={`nav-item ${activeTab === 'budget' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('budget')}
+                    <button
+                        className={`nav-item ${activeTab === 'hs' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('hs')}
                     >
-                        <DollarSign size={20} /> Budget
+                        <Shield size={20} /> Health & Safety
+                    </button>
+                    <button
+                        className={`nav-item ${activeTab === 'contact' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('contact')}
+                    >
+                        <Phone size={20} /> Contact Us
                     </button>
                 </nav>
 
@@ -68,12 +85,12 @@ export default function PortalPage() {
 
             {/* Main Content */}
             <main className="portal-main">
-                {activeTab === 'deploy' && <PortalDashboard />}
-                {activeTab !== 'deploy' && (
-                    <div className="placeholder-view">
-                        Feature coming soon to Stellar Connect.
-                    </div>
-                )}
+                {activeTab === 'projects' && <ClientProjectsView />}
+                {activeTab === 'candidates' && <PortalDashboard />}
+                {activeTab === 'builder' && <ProjectBuilder />}
+                {activeTab === 'timesheets' && <PortalTimesheets />}
+                {activeTab === 'hs' && <PortalHealthSafety />}
+                {activeTab === 'contact' && <PortalContact />}
             </main>
 
             <style jsx>{`

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { EyeOff, Trash2, Plus, Calendar, Layers, Truck, Users, MapPin, Building2, Save, ChevronDown, ChevronUp, Clock, Info, AlertCircle, X, RotateCcw } from 'lucide-react';
+import { EyeOff, Trash2, Plus, Calendar, Layers, Truck, Users, MapPin, Building2, Save, ChevronDown, ChevronUp, Clock, Info, AlertCircle, X, RotateCcw, TrendingUp } from 'lucide-react';
 import { PHASE_TEMPLATES, WORKFORCE_MATRIX, RELATED_ROLES, PHASE_MAP } from '../services/construction-logic.js';
 import { useData } from "../context/data-context.js";
 import CandidateModal from "./candidate-modal.js";
@@ -131,7 +131,7 @@ const LaborRequirementBuilder = ({ requirements = [], phaseId, onChange, candida
 };
 
 export default function AddProjectModal({ isOpen, onClose, onSave, initialData }) {
-    const { clients, candidates, availableRoles, addRole } = useData();
+    const { clients, candidates, availableRoles, addRole, moneyMoves } = useData();
     const [activeTab, setActiveTab] = useState("core");
     const [selectedCandidateId, setSelectedCandidateId] = useState(null);
     const [tempId] = useState(() => `new-${Date.now()}`);
@@ -143,6 +143,7 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
     const defaultFormData = {
         name: "", description: "", assetOwner: "", client: "", assignedCompanyIds: [], address: "", tier: "Tier 1", type: "Healthcare", value: "", funding: "Government/Public", cartersLink: "", greenStar: "No", status: "Planning",
         projectDirector: "", seniorQS: "", siteManager: "", additionalSiteManagers: [], safetyOfficer: "", gateCode: "",
+        engagementType: "confirmed", // 'confirmed' | 'speculative'
         phaseSettings: {},
         packages: {
             civilWorks: { name: "", status: "Tendering", phase: "01_civil", label: "Civil & Excavation" },
@@ -177,6 +178,10 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
     // Use existing ID or stable temp ID
     const effectiveProjectId = initialData?.id || formData.id || tempId;
 
+    // Intelligence Data
+    const projectMoneyMoves = (moneyMoves || []).filter(m => m.projectId === effectiveProjectId);
+    const nextTrigger = projectMoneyMoves[0];
+
     if (!isOpen) return null;
 
     const handleSubmit = (e) => {
@@ -194,6 +199,7 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
 
     const tabs = [
         { id: "core", label: "The Core", icon: Building2 },
+        { id: "intel", label: "Intelligence", icon: TrendingUp },
         { id: "contacts", label: "Key Contacts", icon: Users },
         { id: "packages", label: "Workforce Strategy", icon: Layers },
         { id: "candidates", label: "Candidates", icon: Users },
@@ -262,6 +268,30 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                     <div className="tab-content">
                         {activeTab === "core" && (
                             <div className="tab-pane">
+                                {/* Engagement Mode Toggle */}
+                                <div className="engagement-toggle">
+                                    <button
+                                        type="button"
+                                        className={`toggle-option ${formData.engagementType === 'confirmed' ? 'active' : ''}`}
+                                        onClick={() => updateFormData("engagementType", "confirmed")}
+                                    >
+                                        <div className="flex flex-col items-start text-left">
+                                            <span className="font-bold text-sm">Active Project</span>
+                                            <span className="text-[10px] opacity-70 font-normal">Confirmed Work with Client</span>
+                                        </div>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={`toggle-option ${formData.engagementType === 'speculative' ? 'active' : ''}`}
+                                        onClick={() => updateFormData("engagementType", "speculative")}
+                                    >
+                                        <div className="flex flex-col items-start text-left">
+                                            <span className="font-bold text-sm">Speculative</span>
+                                            <span className="text-[10px] opacity-70 font-normal">Market Intel & Tendering</span>
+                                        </div>
+                                    </button>
+                                </div>
+
                                 <div className="form-group">
                                     <label>Project Name</label>
                                     <input type="text" required value={formData.name || ""} onChange={(e) => updateFormData("name", e.target.value)} placeholder="e.g. Whangarei Hospital" />
@@ -290,11 +320,11 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                                                 const client = clients.find(c => String(c.id) === String(val));
                                                 // Use the client's actual ID type (string/number) to maintain consistency
                                                 const idToSave = client ? client.id : val;
-                                                
-                                                setFormData(prev => ({ 
-                                                    ...prev, 
-                                                    assignedCompanyIds: [idToSave], 
-                                                    client: client ? client.name : "" 
+
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    assignedCompanyIds: [idToSave],
+                                                    client: client ? client.name : ""
                                                 }));
                                             }}
                                         >
@@ -507,7 +537,8 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                                                                 }));
                                                             }}
                                                         >
-                                                            <Plus size={16} /> Create Work Package
+                                                            <Plus size={16} />
+                                                            {formData.engagementType === 'speculative' ? "Create Work Package" : "Add Labor Resource"}
                                                         </button>
                                                     </div>
                                                 ) : (
@@ -529,37 +560,41 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                                                                     <Trash2 size={16} />
                                                                 </button>
                                                             </div>
-                                                            <div className="package-card-main">
-                                                                <div className="card-input">
-                                                                    <label>Subcontractor</label>
-                                                                    <input
-                                                                        type="text"
-                                                                        value={pkg.name || ""}
-                                                                        onChange={(e) => {
-                                                                            const val = e.target.value;
-                                                                            updateFormData("packages", (prev) => ({
-                                                                                ...prev,
-                                                                                [key]: { ...prev[key], name: val }
-                                                                            }));
-                                                                        }}
-                                                                    />
+                                                            {/* Only show Tender/Subcontractor details for Speculative Projects */}
+                                                            {formData.engagementType === 'speculative' && (
+                                                                <div className="package-card-main">
+                                                                    <div className="card-input">
+                                                                        <label>Subcontractor</label>
+                                                                        <input
+                                                                            type="text"
+                                                                            value={pkg.name || ""}
+                                                                            onChange={(e) => {
+                                                                                const val = e.target.value;
+                                                                                updateFormData("packages", (prev) => ({
+                                                                                    ...prev,
+                                                                                    [key]: { ...prev[key], name: val }
+                                                                                }));
+                                                                            }}
+                                                                            placeholder="Tender Winner / Contractor"
+                                                                        />
+                                                                    </div>
+                                                                    <div className="card-input">
+                                                                        <label>Status</label>
+                                                                        <select
+                                                                            value={pkg.status}
+                                                                            onChange={(e) => {
+                                                                                const val = e.target.value;
+                                                                                updateFormData("packages", (prev) => ({
+                                                                                    ...prev,
+                                                                                    [key]: { ...prev[key], status: val }
+                                                                                }));
+                                                                            }}
+                                                                        >
+                                                                            <option>Tendering</option><option>Awarded</option><option>On-Site</option><option>Completed</option>
+                                                                        </select>
+                                                                    </div>
                                                                 </div>
-                                                                <div className="card-input">
-                                                                    <label>Status</label>
-                                                                    <select
-                                                                        value={pkg.status}
-                                                                        onChange={(e) => {
-                                                                            const val = e.target.value;
-                                                                            updateFormData("packages", (prev) => ({
-                                                                                ...prev,
-                                                                                [key]: { ...prev[key], status: val }
-                                                                            }));
-                                                                        }}
-                                                                    >
-                                                                        <option>Tendering</option><option>Awarded</option><option>On-Site</option><option>Completed</option>
-                                                                    </select>
-                                                                </div>
-                                                            </div>
+                                                            )}
                                                             <div className="package-card-footer">
                                                                 <LaborRequirementBuilder
                                                                     requirements={pkg.laborRequirements || []}
@@ -595,7 +630,7 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                                             {candidates.filter(c => c.projectId === formData.id).length} Active
                                         </span>
                                     </div>
-                                    
+
                                     <div className="candidates-grid">
                                         {candidates.filter(c => c.projectId === formData.id).map(c => (
                                             <div key={c.id} className="candidate-card" onClick={() => setSelectedCandidateId(c.id)}>
@@ -633,30 +668,126 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
 
                         {activeTab === "logistics" && (
                             <div className="tab-pane">
+                                {/* --- SECTION 1: SITE SAFETY ASSESSMENT (SSA) --- */}
+                                <div className="form-group mb-6">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <label className="text-secondary flex items-center gap-2">
+                                            <AlertCircle size={14} /> Site Safety Assessment (SSA)
+                                        </label>
+                                        {/* Status Badge Logic */}
+                                        {(() => {
+                                            const lastDate = formData.ssaDate ? new Date(formData.ssaDate) : null;
+                                            const today = new Date();
+                                            const isExpired = lastDate && (today - lastDate) / (1000 * 60 * 60 * 24) > 365;
+                                            const status = !formData.ssaType ? "missing" : isExpired ? "expired" : "valid";
+
+                                            const badges = {
+                                                missing: { color: "bg-red-500/20 text-red-400 border-red-500/50", label: "NO SSA ON FILE" },
+                                                expired: { color: "bg-amber-500/20 text-amber-400 border-amber-500/50", label: "SSA EXPIRED" },
+                                                valid: { color: "bg-emerald-500/20 text-emerald-400 border-emerald-500/50", label: "SITE COMPLIANT" }
+                                            };
+
+                                            return (
+                                                <span className={`px-2 py-1 rounded text-[10px] font-black border ${badges[status].color}`}>
+                                                    {badges[status].label}
+                                                </span>
+                                            );
+                                        })()}
+                                    </div>
+
+                                    <div className="p-4 bg-slate-900/50 rounded-lg border border-slate-700 space-y-4">
+                                        {/* Row 1: Assessment Type & Date */}
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="form-group">
+                                                <label>Assessment Type</label>
+                                                <select
+                                                    value={formData.ssaType || ""}
+                                                    onChange={(e) => updateFormData("ssaType", e.target.value)}
+                                                    className="bg-slate-800 border border-slate-600 rounded p-2 text-sm text-white"
+                                                >
+                                                    <option value="">Select Type...</option>
+                                                    <option value="Site Visit">Full Site Visit (New Client)</option>
+                                                    <option value="Visual Check">Site Visual (Existing Client)</option>
+                                                    <option value="Phone Questionnaire">Phone Questionnaire (Remote/Low Risk)</option>
+                                                    <option value="Systems Review">Systems Review (Multi-Site)</option>
+                                                </select>
+                                            </div>
+                                            <div className="form-group">
+                                                <label>Last Assessment Date</label>
+                                                <input
+                                                    type="date"
+                                                    value={formData.ssaDate || ""}
+                                                    onChange={(e) => updateFormData("ssaDate", e.target.value)}
+                                                    className="bg-slate-800 border border-slate-600 rounded p-2 text-sm text-white date-input"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Row 2: Hazards & Controls */}
+                                        <div className="form-group">
+                                            <label>Critical Site Hazards</label>
+                                            <textarea
+                                                value={formData.siteHazards || ""}
+                                                onChange={(e) => updateFormData("siteHazards", e.target.value)}
+                                                placeholder="e.g. Overhead powerlines, confined spaces, asbestos risk..."
+                                                rows={2}
+                                                className="bg-slate-800 border border-slate-600 rounded p-2 text-sm text-white w-full"
+                                            />
+                                        </div>
+
+                                        {/* ALERT LOGIC: Triggered if Missing or Expired */}
+                                        {(!formData.ssaType || (formData.ssaDate && (new Date() - new Date(formData.ssaDate)) / (1000 * 60 * 60 * 24) > 365)) && (
+                                            <div className="flex items-start gap-3 p-3 bg-red-500/10 border border-red-500/30 rounded-md mt-2">
+                                                <AlertCircle size={20} className="text-red-500 flex-shrink-0 mt-0.5" />
+                                                <div>
+                                                    <h4 className="text-red-400 font-bold text-xs uppercase tracking-wider m-0">Action Required</h4>
+                                                    <p className="text-slate-300 text-xs mt-1">
+                                                        Candidates cannot be deployed until an SSA is recorded.
+                                                        <br />
+                                                        <strong>Call Site Supervisor ({formData.siteManager || "Unknown"}) immediately</strong> to arrange a
+                                                        {formData.client ? " Site Visual" : " Full Assessment"}.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* --- SECTION 2: STANDARD LOGISTICS --- */}
                                 <div className="form-row">
                                     <div className="form-group">
-                                        <label>Parking</label>
+                                        <label>Parking & Access</label>
                                         <select value={formData.parking} onChange={(e) => updateFormData("parking", e.target.value)}>
-                                            <option>On-site</option><option>Street Only</option><option>Paid Parking</option>
+                                            <option>On-site (Free)</option>
+                                            <option>Street Only (Free)</option>
+                                            <option>Paid Parking (Reimbursed)</option>
+                                            <option>Paid Parking (Not Reimbursed)</option>
+                                            <option>No Parking (Drop-off Only)</option>
                                         </select>
                                     </div>
                                     <div className="form-group">
                                         <label>Public Transport</label>
                                         <select value={formData.publicTransport} onChange={(e) => updateFormData("publicTransport", e.target.value)}>
-                                            <option>Yes</option><option>No</option>
+                                            <option>Yes - Easy Access</option>
+                                            <option>Yes - Limited/Far</option>
+                                            <option>No - Vehicle Required</option>
                                         </select>
                                     </div>
                                 </div>
-                                <div className="form-group">
-                                    <label>PPE Requirements</label>
+
+                                {/* --- SECTION 3: PPE & INDUCTION --- */}
+                                <div className="form-group mt-4">
+                                    <label>Mandatory PPE & Induction</label>
                                     <div className="checkbox-grid">
-                                        {["Hard Hat", "Steel Caps", "Hi-Vis", "Safety Glasses"].map(item => (
+                                        {["Hard Hat", "Steel Caps", "Hi-Vis", "Safety Glasses", "Gloves", "Hearing Protection", "Site Safe Passport", "ConstructSafe"].map(item => (
                                             <label key={item} className="checkbox-label">
                                                 <input
                                                     type="checkbox"
-                                                    checked={formData.ppe.includes(item)}
+                                                    checked={(formData.ppe || []).includes(item)}
                                                     onChange={(e) => {
-                                                        const newPPE = e.target.checked ? [...formData.ppe, item] : formData.ppe.filter(i => i !== item);
+                                                        const newPPE = e.target.checked
+                                                            ? [...(formData.ppe || []), item]
+                                                            : (formData.ppe || []).filter(i => i !== item);
                                                         updateFormData("ppe", newPPE);
                                                     }}
                                                 />
@@ -701,6 +832,51 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                     cursor: pointer; transition: all 0.2s;
                 }
                 .candidate-card:hover { background: rgba(255, 255, 255, 0.05); border-color: var(--secondary); transform: translateY(-2px); }
+
+                /* Intelligence Tab Styles */
+                .stats-grid {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr 1fr;
+                    gap: 1rem;
+                    margin-bottom: 2rem;
+                }
+
+                .stat-box {
+                    background: rgba(255,255,255,0.03);
+                    padding: 1rem;
+                    border-radius: var(--radius-sm);
+                    border: 1px solid var(--border);
+                }
+
+                .stat-box label { display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem; text-transform: uppercase; }
+                .stat-box .value { font-size: 1.1rem; font-weight: 700; color: white; }
+                .stat-box .subtext { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                .stat-box.warning .value { color: #f59e0b; }
+
+                .feed-list { display: flex; flex-direction: column; gap: 0.75rem; }
+                .feed-item {
+                    display: flex;
+                    gap: 1rem;
+                    padding: 1rem;
+                    background: rgba(255,255,255,0.03);
+                    border: 1px solid var(--border);
+                    border-radius: var(--radius-sm);
+                    border-left: 3px solid transparent;
+                }
+                .feed-item.priority-critical { border-left-color: #ef4444; }
+                .feed-item.priority-high { border-left-color: #f59e0b; }
+                .feed-item .feed-icon { margin-top: 2px; color: var(--text-muted); }
+                .feed-content { flex: 1; }
+                .feed-title { font-weight: 600; color: white; font-size: 0.9rem; }
+                .feed-desc { font-size: 0.85rem; color: var(--text-muted); margin: 0.2rem 0; line-height: 1.4; }
+                .feed-date { font-size: 0.75rem; color: var(--primary); font-weight: 500; margin-top: 0.25rem; }
+
+                .gap-row-mini {
+                    display: flex; justify-content: space-between;
+                    padding: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05);
+                    font-size: 0.9rem;
+                }
+                .gap-row-mini .trade { color: white; }
                 
                 .c-avatar {
                     width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.1);
@@ -739,7 +915,7 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                 .modal-content {
                     background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.8) 100%);
                     border: 1px solid var(--border);
-                    border-radius: var(--radius-lg); width: 100%; max-width: 1000px;
+                    border-radius: var(--radius-lg); width: 100%; max-width: 1200px;
                     height: 90vh; max-height: 850px; display: flex;
                     flex-direction: column; box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.6);
                     overflow: hidden;
@@ -925,6 +1101,24 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                 .input-sm { padding: 8px 12px; background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border); border-radius: 6px; color: white; font-size: 0.85rem; }
                 .btn-add-sm { background: var(--secondary); color: #0f172a; border: none; border-radius: 6px; padding: 8px 16px; display: flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; transition: all 0.2s; font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
                 .btn-add-sm:hover { background: white; }
+                /* Engagement Toggle */
+                .engagement-toggle {
+                    display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+                    background: rgba(0,0,0,0.2); p: 0.5rem; border-radius: var(--radius-md);
+                    border: 1px solid var(--border); margin-bottom: 2rem;
+                    padding: 4px;
+                }
+                .toggle-option {
+                    background: transparent; border: none; padding: 0.75rem 1rem;
+                    border-radius: var(--radius-sm); cursor: pointer; color: var(--text-muted);
+                    transition: all 0.2s; border: 1px solid transparent;
+                }
+                .toggle-option:hover { background: rgba(255,255,255,0.02); color: white; }
+                .toggle-option.active {
+                    background: var(--surface-highlight, rgba(30, 41, 59, 1));
+                    border-color: var(--secondary); color: white;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                }
             `}</style>
         </div>
     );

@@ -77,6 +77,8 @@ export function DataProvider({ children }) {
     const [availableRoles, setAvailableRoles] = useState(MASTER_ROLES);
     const [placements, setPlacements] = useState(initialPlacementsData);
     const [isSyncing, setIsSyncing] = useState(false);
+    const [activityLogs, setActivityLogs] = useState([]); // NEW: Store activity logs
+    const [isHydrated, setIsHydrated] = useState(false); // NEW: Track hydration status
 
     // --- Cloud Sync Logic ---
     const sanitizeData = (data, prefix) => {
@@ -127,20 +129,20 @@ export function DataProvider({ children }) {
         // R: Visa Expiry
 
         // Check Title Case (Sheet Standard) OR camelCase (Code Standard)
-        const payRate = cleanNumber(candidate['Pay Rate'] || candidate.payRate); 
-        const chargeRate = cleanNumber(candidate['Charge Rate'] || candidate.chargeRate); 
-        const guaranteedHours = cleanNumber(candidate['Guaranteed Hours'] || candidate.guaranteedHours); 
-        
+        const payRate = cleanNumber(candidate['Pay Rate'] || candidate.payRate);
+        const chargeRate = cleanNumber(candidate['Charge Rate'] || candidate.chargeRate);
+        const guaranteedHours = cleanNumber(candidate['Guaranteed Hours'] || candidate.guaranteedHours);
+
         const role = candidate['Role'] || candidate.role || "Candidate";
         const finishDate = parseFlexibleDate(candidate['Finish Date'] || candidate.finishDate);
         const residency = candidate['Residency'] || candidate.residency || "Unknown";
         const visaExpiry = parseFlexibleDate(candidate['Visa Expiry'] || candidate.visaExpiry);
-        
+
         // --- MOBILITY LOGIC ---
         // If residency indicates Visa/Filipino, mark as Mobile Crew
-        const isMobile = residency.toLowerCase().includes('work visa') || 
-                         residency.toLowerCase().includes('filipino') ||
-                         residency.toLowerCase().includes('mobile');
+        const isMobile = residency.toLowerCase().includes('work visa') ||
+            residency.toLowerCase().includes('filipino') ||
+            residency.toLowerCase().includes('mobile');
 
         // Normalize Country (keep existing logic but sync with new residency check)
         let country = candidate.country || candidate.Country || "NZ";
@@ -172,16 +174,17 @@ export function DataProvider({ children }) {
 
         let region = client['Location'] || client.Location || client.region || "National"; // Column W
         let tier = client['Tier'] || client.tier || "3"; // Column D
-        if (typeof tier === 'string') tier = tier.replace(/tier\s?/i, '').trim();
-        
+        // Normalize: "Tier 1" -> "1", 1 -> "1", "1" -> "1"
+        tier = String(tier).replace(/tier\s?/i, '').trim();
+
         // Safe Date Parsing
         let lastContact = parseFlexibleDate(client['Last Contact'] || client.lastContact); // Column F
-        
+
         let accountManager = client['Account Manager'] || client.accountManager || "Unassigned"; // Column X
 
         // Basic fields
         let industry = client.industry || client.Industry || "Construction";
-        
+
         // ... (Keep existing JSON parsing for complex fields if they exist in other columns) ...
         // Parse Project IDs (Handle JSON string or comma-separated)
         let projectIds = client.projectIds || client.ProjectIds || [];
@@ -254,15 +257,15 @@ export function DataProvider({ children }) {
     const enrichProjectData = (project) => {
         // 1. Construct Phase Settings from Hard-Wired Columns (AF, AG, AH)
         let phaseSettings = project.phaseSettings || {};
-        
+
         // Map: Civil (AF), Structure (AG), Fitout (AH)
         const civilStart = parseFlexibleDate(project['Civil Start'] || project.civilStart);
         const structureStart = parseFlexibleDate(project['Structure Start'] || project.structureStart);
         const fitoutStart = parseFlexibleDate(project['Fitout Start'] || project.fitoutStart);
 
         if (civilStart) phaseSettings['01_civil'] = { startDate: civilStart, offsetWeeks: 2, skipped: false };
-        if (structureStart) phaseSettings['02a_concrete'] = { startDate: structureStart, offsetWeeks: 2, skipped: false }; 
-        if (fitoutStart) phaseSettings['05a_linings_stopping'] = { startDate: fitoutStart, offsetWeeks: 2, skipped: false }; 
+        if (structureStart) phaseSettings['02a_concrete'] = { startDate: structureStart, offsetWeeks: 2, skipped: false };
+        if (fitoutStart) phaseSettings['05a_linings_stopping'] = { startDate: fitoutStart, offsetWeeks: 2, skipped: false };
 
         // 2. Map Site Manager Phone
         const siteManagerPhone = project.siteManagerPhone || project['Site Manager Phone'] || project['Site Manager Mobile'] || "";
@@ -273,7 +276,7 @@ export function DataProvider({ children }) {
         let contactTriggers = [];
 
         if (Object.keys(phaseSettings).length > 0) {
-             phases = Object.entries(phaseSettings)
+            phases = Object.entries(phaseSettings)
                 .filter(([_, settings]) => !settings.skipped)
                 .map(([phaseId, settings]) => {
                     const phaseInfo = PHASE_MAP[phaseId];
@@ -285,13 +288,13 @@ export function DataProvider({ children }) {
                     if (settings.startDate) {
                         const start = new Date(settings.startDate);
                         const end = new Date(start);
-                        end.setDate(end.getDate() + 28); 
+                        end.setDate(end.getDate() + 28);
 
                         const today = new Date();
-                        if (today > end) { status = "Completed"; progress = 100; } 
-                        else if (today >= start) { 
-                            status = "In Progress"; 
-                            progress = Math.min(100, Math.round(((today - start) / (end - start)) * 100)); 
+                        if (today > end) { status = "Completed"; progress = 100; }
+                        else if (today >= start) {
+                            status = "In Progress";
+                            progress = Math.min(100, Math.round(((today - start) / (end - start)) * 100));
                         }
 
                         const daysUntil = Math.ceil((start - today) / (1000 * 60 * 60 * 24));
@@ -327,6 +330,39 @@ export function DataProvider({ children }) {
         };
     };
 
+    // --- PLACEMENT SYNC GENERATOR (Fix for Missing Placements) ---
+    const generateImplicitPlacements = (candidatesList, projectsList) => {
+        const implicitPlacements = [];
+
+        candidatesList.forEach(candidate => {
+            // Check if candidate is Active/On Job and has a Project ID
+            // Normalize status check (case insensitive)
+            const status = candidate.status || '';
+            const isActive = ['on job', 'deployed', 'placed', 'active'].includes(status.toLowerCase());
+
+            if (isActive && candidate.projectId) {
+                // Verify project exists
+                const projectExists = projectsList.some(p => String(p.id) === String(candidate.projectId));
+
+                if (projectExists) {
+                    implicitPlacements.push({
+                        id: `pl-implicit-${candidate.id}-${candidate.projectId}`,
+                        candidateId: candidate.id,
+                        projectId: candidate.projectId,
+                        status: 'On Job', // Standardize status for the modal
+                        floatedDate: candidate.startDate || new Date().toISOString(), // Fallback
+                        startDate: candidate.startDate,
+                        endDate: candidate.finishDate,
+                        chargeRate: candidate.chargeRate,
+                        payRate: candidate.payRate,
+                        isImplicit: true // Flag to identify auto-generated records
+                    });
+                }
+            }
+        });
+        return implicitPlacements;
+    };
+
     const syncFromSheets = async () => {
         setIsSyncing(true);
         try {
@@ -336,9 +372,15 @@ export function DataProvider({ children }) {
                 fetch('/api/sync?tab=Candidates').then(res => res.json()),
             ]);
 
+            // Track latest data for placement generation
+            let currentProjects = projects;
+            let currentCandidates = candidates;
+
             // Only update if we got valid arrays with content
             if (Array.isArray(projRes) && projRes.length > 0) {
-                setProjects(sanitizeData(projRes, 'P').map(p => enrichProjectData(p)));
+                const processedProjects = sanitizeData(projRes, 'P').map(p => enrichProjectData(p));
+                setProjects(processedProjects);
+                currentProjects = processedProjects;
             }
             if (Array.isArray(clientRes) && clientRes.length > 0) {
                 setClients(sanitizeData(clientRes, 'CL').map(c => enrichClientData(c)));
@@ -347,8 +389,28 @@ export function DataProvider({ children }) {
                 const syncedCandidates = sanitizeData(candRes, 'C').map(c => enrichCandidateData(c));
                 // Merge Mock Candidates (ID 10, 11, 12) so they survive the sync
                 const mockCandidates = initialCandidates.filter(mock => !syncedCandidates.some(synced => String(synced.id) === String(mock.id)));
-                setCandidates([...syncedCandidates, ...mockCandidates]);
+                currentCandidates = [...syncedCandidates, ...mockCandidates];
+                setCandidates(currentCandidates);
             }
+
+            // RE-SYNC PLACEMENTS
+            // 1. Keep existing "manual" placements (mocks or user-created that aren't implicit)
+            // 2. Add new implicit placements from the fresh candidate data
+            setPlacements(prevPlacements => {
+                const manualPlacements = prevPlacements.filter(p => !p.isImplicit);
+                const newImplicit = generateImplicitPlacements(currentCandidates, currentProjects);
+
+                // Deduplicate: Don't add implicit if a manual placement already exists for this candidate+project
+                const filteredImplicit = newImplicit.filter(imp =>
+                    !manualPlacements.some(man =>
+                        String(man.candidateId) === String(imp.candidateId) &&
+                        String(man.projectId) === String(imp.projectId)
+                    )
+                );
+
+                return [...manualPlacements, ...filteredImplicit];
+            });
+
         } catch (error) {
             console.error('Failed to sync from Google Sheets:', error);
         } finally {
@@ -371,28 +433,39 @@ export function DataProvider({ children }) {
     // --- Persistence Logic ---
     useEffect(() => {
         // 1. Hydrate from localStorage first (for speed)
-        const localCandidates = localStorage.getItem('stellar_candidates_v3');
-        const localClients = localStorage.getItem('stellar_clients_v3');
-        const localProjects = localStorage.getItem('stellar_projects_v3');
-        const localRoles = localStorage.getItem('stellar_roles_v3');
-        const localPlacements = localStorage.getItem('stellar_placements_v3');
+        const localCandidates = localStorage.getItem('stellar_candidates_v4');
+        const localClients = localStorage.getItem('stellar_clients_v4');
+        const localProjects = localStorage.getItem('stellar_projects_v4');
+        const localRoles = localStorage.getItem('stellar_roles_v4');
+        const localPlacements = localStorage.getItem('stellar_placements_v4');
 
         if (localCandidates) setCandidates(sanitizeData(JSON.parse(localCandidates), 'C'));
         if (localClients) setClients(sanitizeData(JSON.parse(localClients), 'CL').map(c => enrichClientData(c)));
         if (localProjects) setProjects(sanitizeData(JSON.parse(localProjects), 'P').map(p => enrichProjectData(p)));
         if (localRoles) setAvailableRoles(JSON.parse(localRoles));
         if (localPlacements) setPlacements(sanitizeData(JSON.parse(localPlacements), 'PL'));
+        const localActivity = localStorage.getItem('stellar_activity_v4');
+        if (localActivity) setActivityLogs(JSON.parse(localActivity));
+
+        setIsHydrated(true); // Mark as hydrated
 
         // 2. Trigger Cloud Sync to get latest
         syncFromSheets();
     }, []);
 
     // Sync updates to localStorage
-    useEffect(() => { localStorage.setItem('stellar_candidates_v3', JSON.stringify(candidates)); }, [candidates]);
-    useEffect(() => { localStorage.setItem('stellar_clients_v3', JSON.stringify(clients)); }, [clients]);
-    useEffect(() => { localStorage.setItem('stellar_projects_v3', JSON.stringify(projects)); }, [projects]);
-    useEffect(() => { localStorage.setItem('stellar_roles_v3', JSON.stringify(availableRoles)); }, [availableRoles]);
-    useEffect(() => { localStorage.setItem('stellar_placements_v3', JSON.stringify(placements)); }, [placements]);
+    useEffect(() => { localStorage.setItem('stellar_candidates_v4', JSON.stringify(candidates)); }, [candidates]);
+    useEffect(() => { localStorage.setItem('stellar_clients_v4', JSON.stringify(clients)); }, [clients]);
+    useEffect(() => { localStorage.setItem('stellar_projects_v4', JSON.stringify(projects)); }, [projects]);
+    useEffect(() => { localStorage.setItem('stellar_roles_v4', JSON.stringify(availableRoles)); }, [availableRoles]);
+    useEffect(() => { localStorage.setItem('stellar_placements_v4', JSON.stringify(placements)); }, [placements]);
+
+    // Only save activityLogs if hydration is complete
+    useEffect(() => {
+        if (isHydrated) {
+            localStorage.setItem('stellar_activity_v4', JSON.stringify(activityLogs));
+        }
+    }, [activityLogs, isHydrated]);
 
     // --- Unified Action Engine (formerly moneyMoves) ---
     const [moneyMoves, setMoneyMoves] = useState([]);
@@ -466,6 +539,48 @@ export function DataProvider({ children }) {
                         rawDate: project.startDate,
                         financialImpact: impact
                     });
+                });
+            }
+
+            // NEW: Aggregate Hiring Signals from Packages
+            if (project.packages) {
+                Object.values(project.packages).forEach(pkg => {
+                    if (pkg.laborRequirements) {
+                        pkg.laborRequirements.forEach(req => {
+                            const assignedCount = (req.assignedIds || []).length;
+                            const gap = req.requiredCount - assignedCount;
+                            if (gap > 0) {
+                                const related = RELATED_ROLES[req.trade] || [];
+                                const searchRoles = [req.trade, ...related];
+                                const supply = candidates.filter(c => searchRoles.includes(c.role) && c.status === "Available").length;
+
+                                let urgency = "Medium";
+                                let title = `${gap}x ${req.trade} Required`;
+                                const description = `Package: ${pkg.label}`;
+
+                                // Simple urgency logic based on supply vs demand
+                                if (supply < gap) {
+                                    urgency = "High";
+                                    title = `RISK: Need ${gap} ${req.trade}. Only ${supply} available!`;
+                                } else {
+                                    title = `MATCH: ${gap} ${req.trade} needed. ${supply} Available.`;
+                                }
+
+                                triggers.push({
+                                    id: `pkg-gap-${project.id}-${req.id}`,
+                                    projectId: project.id,
+                                    projectName: project.name,
+                                    type: 'signal', // Re-use 'signal' type for consistent icon
+                                    title,
+                                    description,
+                                    urgency,
+                                    date: "ASAP",
+                                    rawDate: new Date().toISOString(),
+                                    financialImpact: gap * 800
+                                });
+                            }
+                        });
+                    }
                 });
             }
             // Aggregate Contact Triggers - Existing Logic
@@ -625,21 +740,21 @@ export function DataProvider({ children }) {
             if (candidate.status === "On Job" && candidate.startDate) {
                 const startDate = new Date(candidate.startDate);
                 const diffDays = Math.ceil((startDate - today) / (1000 * 60 * 60 * 24));
-                
+
                 // Alert if starting within next 7 days or started recently (up to 3 days ago)
                 if (diffDays >= -3 && diffDays <= 7) {
                     const project = projects.find(p => p.id === candidate.projectId);
                     const projectName = project ? project.name : "Unknown Project";
                     const isToday = diffDays === 0;
                     const isFuture = diffDays > 0;
-                    
+
                     triggers.push({
                         id: `start-${candidate.id}`,
                         candidateId: candidate.id,
                         type: 'task',
-                        title: isToday ? `STARTING TODAY: ${candidate.firstName}` : 
-                               isFuture ? `Starting Soon: ${candidate.firstName}` : 
-                               `Started Recently: ${candidate.firstName}`,
+                        title: isToday ? `STARTING TODAY: ${candidate.firstName}` :
+                            isFuture ? `Starting Soon: ${candidate.firstName}` :
+                                `Started Recently: ${candidate.firstName}`,
                         description: `Starting at ${projectName} on ${candidate.startDate}. Confirm attendance.`,
                         urgency: isToday ? "Critical" : "High",
                         date: candidate.startDate,
@@ -838,16 +953,16 @@ export function DataProvider({ children }) {
     const assignCandidateToProject = (candidateId, projectId, reqId = null) => {
         const project = projects.find(p => p.id === projectId);
         if (!project) return;
-        
+
         // 1. Update Candidate
         const updatedCandidate = candidates.find(c => c.id === candidateId);
         if (updatedCandidate) {
-            const newCand = { 
-                ...updatedCandidate, 
-                status: "On Job", 
+            const newCand = {
+                ...updatedCandidate,
+                status: "On Job",
                 projectId: projectId,
                 currentEmployer: project.client || project.name,
-                startDate: new Date().toISOString().split('T')[0] 
+                startDate: new Date().toISOString().split('T')[0]
             };
             updateCandidate(newCand);
         }
@@ -857,7 +972,7 @@ export function DataProvider({ children }) {
             // Find the package containing this requirement
             let pkgKeyFound = null;
             let updatedPkgs = { ...project.packages };
-            
+
             Object.entries(updatedPkgs).forEach(([key, pkg]) => {
                 if (pkg.laborRequirements) {
                     const reqIndex = pkg.laborRequirements.findIndex(r => r.id === reqId);
@@ -884,9 +999,9 @@ export function DataProvider({ children }) {
         // 1. Update Candidate
         const updatedCandidate = candidates.find(c => c.id === candidateId);
         if (updatedCandidate) {
-            const newCand = { 
-                ...updatedCandidate, 
-                status: "Available", 
+            const newCand = {
+                ...updatedCandidate,
+                status: "Available",
                 projectId: null,
                 currentEmployer: null,
                 startDate: "",
@@ -897,11 +1012,11 @@ export function DataProvider({ children }) {
 
         // 2. Update Project (remove from requirement)
         if (reqId) {
-             const project = projects.find(p => p.id === projectId);
-             if (project) {
+            const project = projects.find(p => p.id === projectId);
+            if (project) {
                 let updatedPkgs = { ...project.packages };
                 let found = false;
-                
+
                 Object.entries(updatedPkgs).forEach(([key, pkg]) => {
                     if (pkg.laborRequirements) {
                         const reqIndex = pkg.laborRequirements.findIndex(r => r.id === reqId);
@@ -920,7 +1035,7 @@ export function DataProvider({ children }) {
                 if (found) {
                     updateProject({ ...project, packages: updatedPkgs });
                 }
-             }
+            }
         }
     };
 
@@ -932,6 +1047,16 @@ export function DataProvider({ children }) {
             }
             return p;
         }));
+    };
+
+    const logActivity = (type, details) => {
+        const newLog = {
+            id: `act-${Date.now()}`,
+            type, // 'call', 'sms', 'email', 'meeting'
+            date: new Date().toISOString(),
+            ...details
+        };
+        setActivityLogs(prev => [newLog, ...prev]);
     };
 
     const submitPortalBooking = (cartItems, projectId, jobSpecs) => {
@@ -951,8 +1076,8 @@ export function DataProvider({ children }) {
 
     const value = {
         candidates, clients, projects, selectedProject, setSelectedProject, moneyMoves, availableRoles, placements,
-        weeklyRevenue, weeklyPayroll, benchLiability, weeklyGrossProfit, revenueAtRisk, isSyncing,
-        addCandidate, updateCandidate, addClient, updateClient, addProject, updateProject, addRole, floatCandidate, updatePlacementStatus, logCheckin, submitPortalBooking,
+        weeklyRevenue, weeklyPayroll, benchLiability, weeklyGrossProfit, revenueAtRisk, isSyncing, activityLogs,
+        addCandidate, updateCandidate, addClient, updateClient, addProject, updateProject, addRole, floatCandidate, updatePlacementStatus, logCheckin, submitPortalBooking, logActivity,
         assignCandidateToProject, unassignCandidate,
         setCandidates, setClients, setProjects, syncFromSheets
     };

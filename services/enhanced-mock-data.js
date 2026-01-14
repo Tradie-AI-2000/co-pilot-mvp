@@ -331,7 +331,7 @@ export const enhancedProjects = [
         labourPrediction: [],
         packages: {},
         phaseSettings: {
-            "05_interiors": { startDate: "2026-01-22", offsetWeeks: 4, skipped: false } // Trigger Matchmaker
+            "05b_carpentry_trim": { startDate: "2026-01-22", offsetWeeks: 4, skipped: false } // Trigger Matchmaker (Carpenters)
         },
         assignedCompanyIds: [99] // Alpha Auckland
     }
@@ -345,7 +345,7 @@ export const enhancedClients = [
         region: "Auckland", // New field
         activeJobs: 5,
         status: "Key Account", // Maps to Active
-        lastContact: "Yesterday",
+        lastContact: "2025-12-01", // FIXED: Was "Yesterday", set to >30 days for Tier 1 Defense
         pipelineStage: "Active",
         tier: "1", // Tier 1: Generals
         contractStatus: "Active PSA - expires 01/01/2027",
@@ -623,7 +623,7 @@ export const enhancedClients = [
         status: "Active",
         lastContact: "2025-12-23", // HUNTER TEST: 20 Days ago (Tier 1 Risk)
         pipelineStage: "Active",
-        tier: "1", 
+        tier: "1",
         contractStatus: "Preferred Supplier",
         projectIds: ["P099"],
         network: [],

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from 'react';
-import { Download, Edit, Save, X, Plus, AlertCircle, Briefcase, ArrowRight, UserCheck, Send } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Download, Edit, Save, X, Plus, AlertCircle, Briefcase, ArrowRight, UserCheck, Send, UploadCloud, FileText, Trash2 } from 'lucide-react';
 import { RELATED_ROLES } from '../services/construction-logic.js';
 import { useData } from "../context/data-context.js";
 import FloatCandidateModal from "./float-candidate-modal.js";
@@ -13,12 +13,39 @@ export default function CandidateModal({ candidate, squads, projects, onClose, o
     const [formData, setFormData] = useState(candidate);
     const [isFloatModalOpen, setIsFloatModalOpen] = useState(false);
 
+    // --- CV Upload State & Logic ---
+    const fileInputRef = useRef(null);
+    const [cvFile, setCvFile] = useState(candidate.cvFile || null);
+
+    const handleFileUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            // Mock file object for UI - in production upload to blob storage here
+            const mockFileObj = {
+                name: file.name,
+                size: (file.size / 1024 / 1024).toFixed(2) + ' MB',
+                type: file.type,
+                lastModified: new Date().toLocaleDateString()
+            };
+            setCvFile(mockFileObj);
+            setFormData(prev => ({ ...prev, cvFile: mockFileObj }));
+        }
+    };
+
+    const handleRemoveCV = (e) => {
+        e.stopPropagation();
+        setCvFile(null);
+        setFormData(prev => ({ ...prev, cvFile: null }));
+        if (fileInputRef.current) fileInputRef.current.value = "";
+    };
+    // -------------------------------
+
     const handleChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
     const handleSave = () => {
-        onSave(formData);
+        onSave({ ...formData, cvFile });
         setIsEditing(false);
     };
 
@@ -27,6 +54,7 @@ export default function CandidateModal({ candidate, squads, projects, onClose, o
             onClose();
         } else {
             setFormData(candidate);
+            setCvFile(candidate.cvFile || null);
             setIsEditing(false);
         }
     };
@@ -102,6 +130,55 @@ export default function CandidateModal({ candidate, squads, projects, onClose, o
                     </div>
 
                     <div className="modal-body">
+                        {/* --- NEW SECTION: CANDIDATE DOCUMENTS --- */}
+                        <div className="info-section">
+                            <h3>Candidate Documents</h3>
+                            <div className="cv-uploader">
+                                {cvFile ? (
+                                    <div className="cv-card">
+                                        <div className="cv-icon">
+                                            <FileText size={24} />
+                                        </div>
+                                        <div className="cv-details">
+                                            <span className="cv-name">{cvFile.name}</span>
+                                            <span className="cv-meta">{cvFile.size} • {cvFile.lastModified}</span>
+                                        </div>
+                                        {isEditing && (
+                                            <button onClick={handleRemoveCV} className="cv-remove-btn" title="Remove CV">
+                                                <Trash2 size={16} />
+                                            </button>
+                                        )}
+                                        {!isEditing && (
+                                            <div className="cv-badge">Ready</div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    isEditing ? (
+                                        <div
+                                            className="upload-zone"
+                                            onClick={() => fileInputRef.current.click()}
+                                        >
+                                            <UploadCloud size={28} className="mb-2 text-secondary opacity-50" />
+                                            <span className="text-sm font-bold text-secondary">Upload CV / Resume</span>
+                                            <span className="text-xs text-muted">PDF or DOCX up to 10MB</span>
+                                            <input
+                                                type="file"
+                                                ref={fileInputRef}
+                                                className="hidden"
+                                                accept=".pdf,.doc,.docx"
+                                                onChange={handleFileUpload}
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="empty-cv-state">
+                                            <AlertCircle size={16} /> No CV attached. Edit profile to upload.
+                                        </div>
+                                    )
+                                )}
+                            </div>
+                        </div>
+                        {/* --- END NEW SECTION --- */}
+
                         <div className="info-section">
                             <h3>Recruiter Intelligence & Compliance</h3>
                             <div className="info-grid">
@@ -502,7 +579,7 @@ export default function CandidateModal({ candidate, squads, projects, onClose, o
             </div>
 
             <FloatCandidateModal
-                candidate={formData}
+                candidate={{ ...formData, cvFile: cvFile }}
                 isOpen={isFloatModalOpen}
                 onClose={() => setIsFloatModalOpen(false)}
             />
@@ -765,6 +842,92 @@ export default function CandidateModal({ candidate, squads, projects, onClose, o
             .mb-2 { margin-bottom: 0.5rem; }
             .justify-between { justify-content: space-between; }
             .items-center { align-items: center; }
+
+            /* CV UPLOAD STYLES */
+            .cv-uploader {
+                width: 100%;
+            }
+            .upload-zone {
+                border: 2px dashed var(--border);
+                border-radius: var(--radius-md);
+                padding: 2rem;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                background: rgba(255, 255, 255, 0.02);
+                transition: all 0.2s;
+            }
+            .upload-zone:hover {
+                border-color: var(--secondary);
+                background: rgba(255, 255, 255, 0.05);
+            }
+            .hidden { display: none; }
+            .cv-card {
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                padding: 1rem;
+                background: rgba(15, 23, 42, 0.6);
+                border: 1px solid var(--border);
+                border-radius: var(--radius-md);
+                position: relative;
+            }
+            .cv-icon {
+                width: 40px;
+                height: 40px;
+                background: rgba(59, 130, 246, 0.1);
+                color: #3b82f6;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .cv-details {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+            }
+            .cv-name {
+                color: white;
+                font-weight: 600;
+                font-size: 0.9rem;
+            }
+            .cv-meta {
+                color: var(--text-muted);
+                font-size: 0.75rem;
+            }
+            .cv-remove-btn {
+                background: rgba(239, 68, 68, 0.1);
+                color: #ef4444;
+                border: none;
+                padding: 0.5rem;
+                border-radius: 6px;
+                cursor: pointer;
+                display: flex; align-items: center; justify-content: center;
+            }
+            .cv-remove-btn:hover {
+                background: rgba(239, 68, 68, 0.2);
+            }
+            .cv-badge {
+                background: rgba(16, 185, 129, 0.1);
+                color: #10b981;
+                font-size: 0.7rem;
+                font-weight: 700;
+                padding: 2px 8px;
+                border-radius: 99px;
+                text-transform: uppercase;
+            }
+            .empty-cv-state {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                color: var(--text-muted);
+                font-size: 0.85rem;
+                font-style: italic;
+                padding: 0.5rem;
+            }
           `}</style>
         </>
     );

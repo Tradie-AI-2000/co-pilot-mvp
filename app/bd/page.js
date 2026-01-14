@@ -1,46 +1,42 @@
 "use client";
 
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useData } from "../../context/data-context.js";
 import {
     Target, Flame, MapPin, Phone, ArrowRight, Zap,
     TrendingUp, AlertTriangle, CheckCircle, Clock,
-    Briefcase, Calendar, DollarSign, X, Filter, User
+    Briefcase, Calendar, DollarSign, X, Filter, User,
+    BarChart2, Activity, MessageSquare, Mail
 } from "lucide-react";
 import ActionDrawer from "../../components/action-drawer.js";
-import FocusFeedCard from "../../components/focus-feed-card.js";
 import ClientSidePanel from "../../components/client-side-panel.js";
 import FloatCandidateModal from "../../components/float-candidate-modal.js";
 import GoldenHourMode from "../../components/golden-hour-mode.js";
+import RelationshipDecayWidget from "../../components/relationship-decay-widget.js";
+import RelationshipActionModal from "../../components/relationship-action-modal.js";
 import { RELATED_ROLES, WORKFORCE_MATRIX, PHASE_MAP } from "../../services/construction-logic.js";
-import { parse, differenceInDays, isValid } from 'date-fns';
+import { parse, differenceInDays, isValid, format, subDays, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, parseISO, startOfMonth, endOfMonth, isSameWeek, subMonths } from 'date-fns';
 
-// --- Sub-Components for the Hunter Grid ---
+// --- SUB-COMPONENTS ---
 
 // 1. THE BLEED (Retention Risk)
-const TheBleedWidget = ({ candidates, placements, forwardRef }) => {
-    // Logic: Calculate margin expiring in next 14 days
+const TheBleedWidget = ({ candidates, forwardRef }) => {
     const bleedMetrics = useMemo(() => {
         const today = new Date();
         const twoWeeks = new Date();
         twoWeeks.setDate(today.getDate() + 14);
-
         let weeklyMarginAtRisk = 0;
         let count = 0;
         let criticalList = [];
 
-        // Filter active placements ending soon
         candidates.forEach(c => {
             if (c.status !== 'On Job' || !c.finishDate) return;
-
-            // Handle dd/MM/yyyy format or standard ISO
             let finish;
             if (typeof c.finishDate === 'string' && c.finishDate.includes('/')) {
                 finish = parse(c.finishDate, 'dd/MM/yyyy', new Date());
             } else {
                 finish = new Date(c.finishDate);
             }
-
             if (isValid(finish) && finish >= today && finish <= twoWeeks) {
                 const charge = parseFloat(c.chargeRate) || 55;
                 const pay = parseFloat(c.payRate) || 35;
@@ -57,13 +53,12 @@ const TheBleedWidget = ({ candidates, placements, forwardRef }) => {
                 });
             }
         });
-
         return { value: Math.round(weeklyMarginAtRisk), count, list: criticalList };
     }, [candidates]);
 
     return (
-        <div ref={forwardRef} className="hunter-card bleed-card col-span-12 md:col-span-3 glass-panel">
-            <div className="card-header border-b border-rose-500/30 pb-2 mb-2 flex justify-between items-center">
+        <div ref={forwardRef} className="hunter-card bleed-card glass-panel flex flex-col h-full">
+            <div className="card-header border-b border-rose-500/30 pb-3 mb-3 flex justify-between items-center">
                 <div className="flex items-center gap-2">
                     <Flame size={18} className="text-rose-500 animate-pulse" />
                     <h3 className="text-rose-100 font-bold uppercase tracking-wider text-xs">The Bleed (14 Days)</h3>
@@ -72,25 +67,23 @@ const TheBleedWidget = ({ candidates, placements, forwardRef }) => {
                     -{bleedMetrics.count} Heads
                 </span>
             </div>
-
-            <div className="main-metric text-rose-500 text-2xl font-black mb-3">
+            <div className="main-metric text-rose-500 text-3xl font-black mb-4">
                 -${bleedMetrics.value.toLocaleString()}
                 <span className="text-sm text-rose-400/50 font-medium ml-1">/wk GP</span>
             </div>
-
             <div className="list-container overflow-y-auto flex-1 pr-2 custom-scrollbar">
                 {bleedMetrics.list.length === 0 ? (
                     <div className="empty-state text-xs text-slate-500 italic">No imminent retention risks.</div>
                 ) : (
                     bleedMetrics.list.map(item => (
-                        <div key={item.id} className="list-item mb-2 p-2 bg-rose-500/5 rounded border border-rose-500/10">
+                        <div key={item.id} className="list-item mb-2 p-3 bg-rose-500/5 rounded border border-rose-500/10 hover:border-rose-500/30 transition-colors">
                             <div className="flex justify-between">
                                 <span className="font-bold text-slate-200 text-xs">{item.name}</span>
                                 <span className="text-rose-400 text-xs font-mono">-${item.value}</span>
                             </div>
                             <div className="text-[10px] text-slate-500 flex justify-between mt-1">
                                 <span>{item.role} @ {item.project}</span>
-                                <span>{item.finishDate.toLocaleDateString('en-NZ', { month: 'short', day: 'numeric' })}</span>
+                                <span>{format(item.finishDate, 'd MMM')}</span>
                             </div>
                         </div>
                     ))
@@ -100,87 +93,79 @@ const TheBleedWidget = ({ candidates, placements, forwardRef }) => {
     );
 };
 
-// 2. THE MATCHMAKER (Growth & Mobility)
+// 2. THE MATCHMAKER (Growth)
 const MatchmakerWidget = ({ candidates, projects, onPitch }) => {
-    // Logic: Cross reference Finishing Candidates with Starting Phases
     const matches = useMemo(() => {
         const results = [];
         const today = new Date();
 
-        // Supply: Available or Finishing < 21 Days
+        // 1. Filter Supply (Available + Mobile/Finishing)
         const supply = candidates.filter(c => {
             if (c.status === 'Available') return true;
             if (c.finishDate) {
-                let finish;
-                if (typeof c.finishDate === 'string' && c.finishDate.includes('/')) {
-                    finish = parse(c.finishDate, 'dd/MM/yyyy', new Date());
-                } else {
-                    finish = new Date(c.finishDate);
-                }
-
+                let finish = typeof c.finishDate === 'string' && c.finishDate.includes('/')
+                    ? parse(c.finishDate, 'dd/MM/yyyy', new Date())
+                    : new Date(c.finishDate);
                 if (!isValid(finish)) return false;
-
                 const diff = differenceInDays(finish, today);
-                return diff >= 0 && diff <= 21;
+                return diff >= 0 && diff <= 21; // Finishing in next 3 weeks
             }
             return false;
         });
 
-        // Demand: Projects entering new phases
+        // 2. Iterate Projects via phaseSettings
         projects.forEach(p => {
-            // Check specific phase columns from Google Sheet
-            const phases = [
-                { id: 'civil', label: 'Civil', date: p.civilStart },
-                { id: 'structure', label: 'Structure', date: p.structureStart },
-                { id: 'fitout', label: 'Fitout', date: p.fitoutStart }
-            ];
+            if (!p.phaseSettings) return;
 
-            phases.forEach(phase => {
-                if (phase.date) {
-                    let start;
-                    if (typeof phase.date === 'string' && phase.date.includes('/')) {
-                        start = parse(phase.date, 'dd/MM/yyyy', new Date());
-                    } else {
-                        start = new Date(phase.date);
-                    }
+            Object.entries(p.phaseSettings).forEach(([phaseId, settings]) => {
+                if (!settings.startDate || settings.skipped) return;
 
-                    if (isValid(start)) {
-                        const diff = differenceInDays(start, today);
+                const phaseLabel = PHASE_MAP[phaseId]?.label || phaseId;
 
-                        // Look ahead 7-45 days
-                        if (diff >= 7 && diff <= 45) {
-                            const rolesNeeded = WORKFORCE_MATRIX?.[phase.id] ? Object.keys(WORKFORCE_MATRIX[phase.id]) : ['Carpenter', 'Hammerhand', 'Laborer'];
+                let start = typeof settings.startDate === 'string' && settings.startDate.includes('/')
+                    ? parse(settings.startDate, 'dd/MM/yyyy', new Date())
+                    : new Date(settings.startDate);
 
-                            rolesNeeded.forEach(role => {
-                                const matchingCandidates = supply.filter(c => {
-                                    const roleMatch = c.role === role || (RELATED_ROLES[role] && RELATED_ROLES[role].includes(c.role));
-                                    if (!roleMatch) return false;
+                if (isValid(start)) {
+                    const diff = differenceInDays(start, today);
 
-                                    // Mobility Logic
-                                    const isMobile = c.residency === 'Work Visa' || c.residency === 'Filipino Crew';
-                                    if (isMobile) return true;
+                    // Match Window: 7 to 45 days out
+                    if (diff >= 7 && diff <= 45) {
+                        // Get Roles from Matrix or fallbacks
+                        const rolesFromMatrix = WORKFORCE_MATRIX?.[phaseId] ? Object.keys(WORKFORCE_MATRIX[phaseId]) : [];
+                        const rolesNeeded = rolesFromMatrix.length > 0 ? rolesFromMatrix : ['Carpenter', 'Hammerhand', 'Laborer'];
 
-                                    // Local Logic - simple check against Location column
-                                    return p.location && c.address1 && p.location.includes(c.address1);
-                                });
+                        rolesNeeded.forEach(role => {
+                            const matchingCandidates = supply.filter(c => {
+                                // Role Match (Direct or Related)
+                                const roleMatch = c.role === role || (RELATED_ROLES[role] && RELATED_ROLES[role].includes(c.role));
+                                if (!roleMatch) return false;
 
-                                if (matchingCandidates.length > 0) {
-                                    results.push({
-                                        id: `${p.id}-${phase.id}-${role}`,
-                                        project: p.name,
-                                        projectId: p.id,
-                                        client: p.client,
-                                        clientId: p.assignedCompanyIds?.[0],
-                                        phase: phase.label,
-                                        role: role,
-                                        count: matchingCandidates.length,
-                                        candidate: matchingCandidates[0],
-                                        startsIn: Math.ceil(diff),
-                                        isMobile: matchingCandidates.some(c => c.residency === 'Work Visa' || c.residency === 'Filipino Crew')
-                                    });
-                                }
+                                // Location Match (Mobile/Visa Crew bypass location check)
+                                const isMobile = c.isMobile || c.residency === 'Work Visa' || c.country === 'Philippines';
+                                if (isMobile) return true;
+
+                                // Local Candidates must match region/address
+                                return p.region && c.state && (p.region === c.state || p.address?.includes(c.state));
                             });
-                        }
+
+                            if (matchingCandidates.length > 0) {
+                                results.push({
+                                    id: `${p.id}-${phaseId}-${role}`,
+                                    project: p.name,
+                                    projectId: p.id,
+                                    client: p.assetOwner || "Client", // Fallback
+                                    clientId: p.assignedCompanyIds?.[0], // For Modal
+                                    phase: phaseLabel,
+                                    currentPhase: phaseId, // Passthrough for Modal logic
+                                    role: role,
+                                    count: matchingCandidates.length,
+                                    candidate: matchingCandidates[0], // Prime candidate for modal pre-fill
+                                    startsIn: Math.ceil(diff),
+                                    isMobile: matchingCandidates.some(c => c.isMobile || c.residency === 'Work Visa')
+                                });
+                            }
+                        });
                     }
                 }
             });
@@ -189,46 +174,35 @@ const MatchmakerWidget = ({ candidates, projects, onPitch }) => {
     }, [candidates, projects]);
 
     return (
-        <div className="hunter-card match-card col-span-12 md:col-span-5 glass-panel">
-            <div className="card-header border-b border-cyan-500/30 pb-2 mb-2 flex justify-between items-center">
+        <div className="hunter-card match-card glass-panel flex flex-col h-full">
+            <div className="card-header border-b border-cyan-500/30 pb-3 mb-3 flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                    <Zap size={18} className="text-cyan-400" />
-                    <h3 className="text-cyan-100 font-bold uppercase tracking-wider text-xs">The Matchmaker</h3>
+                    <Zap size={24} className="text-cyan-400" />
+                    <h3 className="text-cyan-100 font-bold uppercase tracking-wider text-xl">The Matchmaker</h3>
                 </div>
-                <span className="bg-cyan-500/20 text-cyan-400 px-2 py-0.5 rounded text-[10px] font-bold">
-                    {matches.length} Opportunities
+                <span className="bg-cyan-500/20 text-cyan-400 px-3 py-1 rounded text-base font-bold">
+                    {matches.length} Matches
                 </span>
             </div>
-
             <div className="list-container overflow-y-auto flex-1 pr-2 custom-scrollbar">
                 {matches.length === 0 ? (
-                    <div className="empty-state text-xs text-slate-500 italic">No predictive matches found today.</div>
+                    <div className="empty-state text-lg text-slate-500 italic">No matches found.</div>
                 ) : (
                     matches.map(m => (
-                        <div key={m.id} className="match-item group mb-2 p-2 bg-cyan-500/5 rounded border border-cyan-500/10 hover:bg-cyan-500/10 transition-colors">
-                            <div className="flex justify-between items-start mb-1">
-                                <div className="flex flex-col">
-                                    <span className="font-bold text-white text-sm">{m.count}x {m.role}</span>
-                                    <span className="text-[10px] text-slate-400 uppercase tracking-wide">{m.client} • {m.project}</span>
+                        <div key={m.id} className="match-item group mb-3 p-4 bg-cyan-500/5 rounded border border-cyan-500/10 hover:bg-cyan-500/10 transition-all cursor-pointer" onClick={() => onPitch(m)}>
+                            <div className="flex justify-between items-start mb-2">
+                                <div>
+                                    <div className="font-bold text-white text-xl flex items-center gap-2">
+                                        {m.count}x {m.role}
+                                        {m.isMobile && <span className="text-xs bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded border border-purple-500/30">MOBILE</span>}
+                                    </div>
+                                    <div className="text-sm text-slate-400 uppercase tracking-wide mt-1">{m.client} • {m.project}</div>
                                 </div>
                                 <div className="text-right">
-                                    <span className="text-xs font-bold text-cyan-400">In {m.startsIn} Days</span>
-                                    <div className="text-[10px] text-slate-500">{m.phase} Phase</div>
+                                    <span className="text-lg font-bold text-cyan-400">In {m.startsIn} Days</span>
+                                    <div className="text-sm text-slate-500">{m.phase} Phase</div>
                                 </div>
                             </div>
-                            {m.isMobile && (
-                                <div className="mb-2">
-                                    <span className="text-[9px] bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded border border-purple-500/30 font-bold tracking-wide">
-                                        MOBILE CREW
-                                    </span>
-                                </div>
-                            )}
-                            <button
-                                className="w-full py-1.5 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 text-xs font-bold rounded border border-cyan-500/20 transition-all flex items-center justify-center gap-2"
-                                onClick={() => onPitch(m)}
-                            >
-                                Generate Pitch <ArrowRight size={12} />
-                            </button>
                         </div>
                     ))
                 )}
@@ -237,223 +211,232 @@ const MatchmakerWidget = ({ candidates, projects, onPitch }) => {
     );
 };
 
-// 3. RELATIONSHIP HEATMAP (CRM)
-const RelationshipHeatmap = ({ clients, onClientClick }) => {
-    // Logic: Bucket clients by Tier and Last Contact
-    const heatmap = useMemo(() => {
-        const buckets = {
-            tier1_risk: [],
-            tier2_risk: [],
-            dormant: []
+// 3. ACTIVITY VISUALIZER (NEW COMPONENT)
+const ActivityPulseWidget = () => {
+    const { activityLogs } = useData(); // Get logs from context
+    const [view, setView] = useState("daily"); // Default to 'daily' for immediate feedback
+
+    // Aggregation Logic
+    const data = useMemo(() => {
+        const today = new Date();
+        const getLocalISODate = (date) => {
+            const offset = date.getTimezoneOffset();
+            const local = new Date(date.getTime() - (offset * 60 * 1000));
+            return local.toISOString().split('T')[0];
         };
 
-        const today = new Date();
+        const todayStr = getLocalISODate(today);
 
-        clients.forEach(c => {
-            let daysSince = "Never";
-            let rawDays = 999;
+        // Helper: Robust Date Match
+        const matchLogDate = (logDateISO, targetDate) => {
+            // Parse log date (UTC ISO) to local YYYY-MM-DD for comparison
+            const d = new Date(logDateISO);
+            const logLocal = getLocalISODate(d);
+            const targetLocal = getLocalISODate(targetDate);
+            return logLocal === targetLocal;
+        };
 
-            if (c.lastContact && c.lastContact !== "Never" && c.lastContact !== "Unknown") {
-                let lastDate;
-                // Parse DD/MM/YYYY
-                if (c.lastContact.includes('/')) {
-                    lastDate = parse(c.lastContact, 'dd/MM/yyyy', new Date());
-                } else {
-                    lastDate = new Date(c.lastContact);
+        if (view === 'daily') {
+            // Show last 5 weekdays including today
+            const days = [];
+            let i = 0;
+            while (days.length < 5) {
+                const d = subDays(today, i);
+                const dayOfWeek = d.getDay(); // 0 = Sun, 6 = Sat
+                if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                    days.push(d);
                 }
-
-                if (isValid(lastDate)) {
-                    rawDays = differenceInDays(today, lastDate);
-                    daysSince = rawDays;
-                }
+                i++;
             }
+            // Reverse so it's oldest to newest for the array map, but wait, the existing code mapped [4,3,2,1,0] then reverse()d later for listData.
+            // Actually the current map order is efficient for chart.
+            // Let's keep the order consistent: Array of Date objects.
 
-            const isTier1 = c.tier === '1' || c.tier === 'Tier 1';
-            const isTier2 = c.tier === '2' || c.tier === 'Tier 2';
+            return days.map(day => {
+                const dayLogs = activityLogs.filter(log => matchLogDate(log.date, day));
+                return {
+                    label: isSameDay(day, today) ? 'Today' : format(day, 'EEE'),
+                    fullLabel: format(day, 'd MMM'),
+                    calls: dayLogs.filter(l => l.type === 'contact' || l.type === 'meeting' || l.type === 'fail').length,
+                    sms: dayLogs.filter(l => l.type === 'sms').length,
+                    email: dayLogs.filter(l => l.type === 'email').length
+                };
+            });
+        }
 
-            const riskItem = {
-                id: c.id,
-                name: c.name,
-                tier: c.tier,
-                daysSince,
-                status: c.status,
-                owner: c.clientOwner || "Unassigned",
-                raw: c
-            };
+        if (view === 'weekly') {
+            const start = startOfWeek(today, { weekStartsOn: 1 }); // Monday
+            const end = endOfWeek(today, { weekStartsOn: 1 });
+            const days = eachDayOfInterval({ start, end }).filter(d => {
+                const day = d.getDay();
+                return day !== 0 && day !== 6; // Exclude Sun (0) and Sat (6)
+            });
 
-            if (isTier1 && rawDays > 14) {
-                buckets.tier1_risk.push(riskItem);
-            } else if (isTier2 && rawDays > 30) {
-                buckets.tier2_risk.push(riskItem);
-            }
+            return days.map(day => {
+                const dayLogs = activityLogs.filter(log => matchLogDate(log.date, day));
+                return {
+                    label: format(day, 'EEE'),
+                    fullLabel: format(day, 'd MMM'),
+                    calls: dayLogs.filter(l => l.type === 'contact' || l.type === 'meeting' || l.type === 'fail').length, // 'contact' is from GoldenHour
+                    sms: dayLogs.filter(l => l.type === 'sms').length,
+                    email: dayLogs.filter(l => l.type === 'email').length
+                };
+            });
+        } else {
+            // Monthly view (last 4 weeks)
+            const weeks = [0, 1, 2, 3].map(n => {
+                const weekStart = subDays(startOfWeek(today, { weekStartsOn: 1 }), n * 7);
+                return {
+                    label: `Wk ${format(weekStart, 'w')}`,
+                    fullLabel: `Week of ${format(weekStart, 'd MMM')}`,
+                    start: weekStart
+                };
+            }).reverse();
 
-            // Dormant Check (60+ days)
-            if (rawDays > 60 && c.status !== 'Never Used') {
-                buckets.dormant.push(riskItem);
-            }
-        });
+            return weeks.map(week => {
+                const weekLogs = activityLogs.filter(log => isSameWeek(parseISO(log.date), week.start, { weekStartsOn: 1 }));
+                return {
+                    label: week.label,
+                    fullLabel: week.fullLabel,
+                    calls: weekLogs.filter(l => l.type === 'contact' || l.type === 'meeting' || l.type === 'fail').length,
+                    sms: weekLogs.filter(l => l.type === 'sms').length,
+                    email: weekLogs.filter(l => l.type === 'email').length
+                };
+            });
+        }
+    }, [view, activityLogs]);
 
-        // Sort each bucket by daysSince desc
-        const sorter = (a, b) => (typeof b.daysSince === 'number' ? b.daysSince : 999) - (typeof a.daysSince === 'number' ? a.daysSince : 999);
-        buckets.tier1_risk.sort(sorter);
-        buckets.tier2_risk.sort(sorter);
-        buckets.dormant.sort(sorter);
+    // Jarvis Logic
+    const jarvisInsight = useMemo(() => {
+        const totalCalls = data.reduce((acc, d) => acc + d.calls, 0);
+        if (totalCalls > 150) return "🔥 You are on fire! Call volume is elite. Convert these to meetings.";
+        if (totalCalls < 100 && (view === 'weekly' || view === 'monthly')) return "⚠️ Call volume is slightly low. Try a 'Power Hour' to boost numbers.";
+        if (view === 'daily' && totalCalls > 30) return "🚀 Great daily momentum. Keep pushing!";
+        return "✅ Consistent activity. Your SMS follow-up rate is improving.";
+    }, [data, view]);
 
-        return buckets;
-    }, [clients]);
+    const maxVal = Math.max(...data.map(d => d.calls + d.sms + d.email), 1); // Ensure maxVal is at least 1 to avoid NaN
+    const listData = [...data].reverse();
 
     return (
-        <div className="hunter-card heatmap-card col-span-12 md:col-span-4 glass-panel flex flex-col">
-            <div className="card-header border-b border-amber-500/30 pb-2 mb-2 flex items-center gap-2">
-                <Target size={18} className="text-amber-400" />
-                <h3 className="text-amber-100 font-bold uppercase tracking-wider text-xs">Relationship Decay</h3>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 flex-1 overflow-y-auto custom-scrollbar pb-2">
-                {/* Quadrant 1: Tier 1 Risk */}
-                <div className="quadrant bg-rose-500/5 border border-rose-500/20 rounded p-2">
-                    <div className="quad-head text-rose-400 text-[10px] font-bold uppercase mb-2">Tier 1 Drift ({heatmap.tier1_risk.length})</div>
-                    <div className="quad-list flex flex-col gap-1">
-                        {heatmap.tier1_risk.slice(0, 5).map(c => (
-                            <div key={c.id} className="quad-item flex justify-between text-xs p-1 hover:bg-white/5 rounded cursor-pointer" onClick={() => onClientClick(c.raw)}>
-                                <span className="name text-slate-300 truncate">{c.name}</span>
-                                <span className="days text-rose-500 font-mono">{c.daysSince}d</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Quadrant 2: Tier 2 Risk */}
-                <div className="quadrant bg-amber-500/5 border border-amber-500/20 rounded p-2">
-                    <div className="quad-head text-amber-400 text-[10px] font-bold uppercase mb-2">Tier 2 Drift ({heatmap.tier2_risk.length})</div>
-                    <div className="quad-list flex flex-col gap-1">
-                        {heatmap.tier2_risk.slice(0, 5).map(c => (
-                            <div key={c.id} className="quad-item flex justify-between text-xs p-1 hover:bg-white/5 rounded cursor-pointer" onClick={() => onClientClick(c.raw)}>
-                                <span className="name text-slate-300 truncate">{c.name}</span>
-                                <span className="days text-amber-500 font-mono">{c.daysSince}d</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Quadrant 3: Dormant Giants (Full Width) */}
-                <div className="quadrant col-span-2 bg-slate-800/50 border border-slate-700 rounded p-2">
-                    <div className="quad-head text-slate-400 text-[10px] font-bold uppercase mb-2">Dormant Accounts ({heatmap.dormant.length})</div>
-                    <div className="quad-list flex flex-wrap gap-2">
-                        {heatmap.dormant.slice(0, 6).map(c => (
-                            <div key={c.id} className="chip bg-slate-800 border border-slate-700 rounded px-2 py-1 text-[10px] text-slate-300 hover:border-slate-500 cursor-pointer" onClick={() => onClientClick(c.raw)}>
-                                {c.name} <span className="text-slate-500">({c.daysSince}d)</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-// 4. POWER BLOCK (Execution)
-const PowerBlockWidget = ({ clients, moneyMoves, onStartPowerMode }) => {
-    // Logic: Get top 5 prioritized actions
-    const missionList = useMemo(() => {
-        // Filter & Deduplicate
-        const uniqueIds = new Set();
-        const missions = [];
-
-        // 1. Critical Signals
-        moneyMoves.forEach(m => {
-            if (uniqueIds.has(m.id)) return;
-
-            // Logic: Critical Signals OR Buying Signals OR Critical Risks
-            if (m.type === 'buying_signal' || m.urgency === 'Critical' || (m.type === 'risk' && m.urgency === 'High')) {
-                uniqueIds.add(m.id);
-                missions.push(m);
-            }
-        });
-
-        // Top 5 only
-        return missions.slice(0, 5);
-    }, [moneyMoves]);
-
-    return (
-        <div className="hunter-card power-card col-span-12 glass-panel flex flex-col min-h-[150px]">
-            <div className="card-header border-b border-emerald-500/30 pb-2 mb-2 flex justify-between items-center">
+        <div className="hunter-card activity-card glass-panel flex flex-col h-full col-span-12 md:col-span-12 lg:col-span-6">
+            <div className="card-header border-b border-secondary/30 pb-3 mb-3 flex justify-between items-center flex-shrink-0">
                 <div className="flex items-center gap-2">
-                    <CheckCircle size={18} className="text-emerald-400" />
-                    <h3 className="text-emerald-100 font-bold uppercase tracking-wider text-xs">The Mission (Top 5)</h3>
+                    <Activity size={24} className="text-secondary" />
+                    <h3 className="text-secondary font-bold uppercase tracking-wider text-xl">Activity Pulse ({activityLogs.length})</h3>
                 </div>
-                <button
-                    className="text-[10px] bg-emerald-500 text-slate-900 font-bold px-3 py-1 rounded hover:bg-emerald-400 transition-colors"
-                    onClick={onStartPowerMode}
-                >
-                    START POWER BLOCK
-                </button>
+                <div className="flex bg-slate-800 rounded p-1 border border-slate-700">
+                    <button
+                        className={`text-xs px-3 py-1 rounded font-bold transition-all ${view === 'daily' ? 'bg-secondary text-slate-900' : 'text-slate-400 hover:text-white'}`}
+                        onClick={() => setView('daily')}
+                    >
+                        DAY
+                    </button>
+                    <button
+                        className={`text-xs px-3 py-1 rounded font-bold transition-all ${view === 'weekly' ? 'bg-secondary text-slate-900' : 'text-slate-400 hover:text-white'}`}
+                        onClick={() => setView('weekly')}
+                    >
+                        WEEK
+                    </button>
+                    <button
+                        className={`text-xs px-3 py-1 rounded font-bold transition-all ${view === 'monthly' ? 'bg-secondary text-slate-900' : 'text-slate-400 hover:text-white'}`}
+                        onClick={() => setView('monthly')}
+                    >
+                        MONTH
+                    </button>
+                </div>
             </div>
 
-            <div className="list-container flex-1 overflow-x-auto custom-scrollbar">
-                {missionList.length === 0 ? (
-                    <div className="empty-state text-xs text-slate-500 italic p-4 text-center">No mission critical tasks. Go hunting.</div>
-                ) : (
-                    <div className="flex gap-4 pb-2">
-                        {missionList.map((item, i) => (
-                            <div key={i} className="mission-item min-w-[250px] bg-slate-800/50 p-3 rounded border border-slate-700 flex gap-3 items-start">
-                                <div className="mt-1 w-4 h-4 rounded-full border-2 border-slate-600 hover:border-emerald-500 cursor-pointer flex-shrink-0"></div>
-                                <div className="mission-content overflow-hidden">
-                                    <div className="flex justify-between items-center mb-1 gap-2">
-                                        <span className="font-bold text-white text-xs truncate">{item.title}</span>
-                                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase flex-shrink-0 ${item.type === 'risk' ? 'bg-rose-500/20 text-rose-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
-                                            {item.type === 'risk' ? 'DEFEND' : 'ATTACK'}
-                                        </span>
-                                    </div>
-                                    <p className="text-[10px] text-slate-400 line-clamp-2">{item.description}</p>
-                                </div>
+            {/* CONTENT CONTAINER - Flex Column */}
+            <div className="flex flex-col flex-1 min-h-0 gap-4">
+
+                {/* 1. VISUAL CHART (Fixed Height) */}
+                <div className="chart-area h-24 flex items-end justify-between gap-2 px-2 flex-shrink-0">
+                    {data.map((d, i) => (
+                        <div key={i} className="flex flex-col items-center gap-1 w-full group relative h-full justify-end">
+                            <div className="w-full max-w-[32px] flex flex-col-reverse h-full max-h-full bg-slate-800/30 rounded-t overflow-hidden">
+                                <div style={{ height: `${(d.calls / maxVal) * 100}%` }} className="bg-emerald-500 w-full transition-all duration-500"></div>
+                                <div style={{ height: `${(d.sms / maxVal) * 100}%` }} className="bg-purple-500 w-full transition-all duration-500"></div>
+                                <div style={{ height: `${(d.email / maxVal) * 100}%` }} className="bg-sky-500 w-full transition-all duration-500"></div>
                             </div>
-                        ))}
+                            <span className="text-xs text-slate-500 font-bold uppercase">{d.label}</span>
+                        </div>
+                    ))}
+                </div>
+
+                {/* 2. DATA GRID (Scrollable) */}
+                <div className="grid-area flex-1 overflow-y-auto custom-scrollbar border-t border-slate-700/50 pt-2 relative min-h-0">
+                    <table className="w-full text-left border-collapse relative">
+                        <thead className="sticky top-0 bg-slate-900/95 backdrop-blur-md z-20 shadow-sm">
+                            <tr className="text-sm uppercase text-slate-500 border-b border-slate-700/50">
+                                <th className="pb-2 pl-2 font-bold">Timeframe</th>
+                                <th className="pb-2 text-center font-bold text-emerald-500">Calls</th>
+                                <th className="pb-2 text-center font-bold text-purple-500">SMS</th>
+                                <th className="pb-2 text-center font-bold text-sky-500">Emails</th>
+                                <th className="pb-2 pr-2 text-right font-bold">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {listData.map((d, i) => (
+                                <tr key={i} className="border-b border-slate-800/30 hover:bg-slate-800/50 transition-colors group">
+                                    <td className="py-3 pl-2 text-base font-bold text-slate-300 group-hover:text-white">
+                                        <div className="flex flex-col">
+                                            <span>{d.label}</span>
+                                            {d.fullLabel !== d.label && <span className="text-xs text-slate-500 font-normal">{d.fullLabel}</span>}
+                                        </div>
+                                    </td>
+                                    <td className="py-3 text-center text-base font-mono text-emerald-400 bg-emerald-500/5 rounded-sm">{d.calls}</td>
+                                    <td className="py-3 text-center text-base font-mono text-purple-400 bg-purple-500/5 rounded-sm">{d.sms}</td>
+                                    <td className="py-3 text-center text-base font-mono text-sky-400 bg-sky-500/5 rounded-sm">{d.email}</td>
+                                    <td className="py-3 pr-2 text-right text-base font-black text-white">{d.calls + d.sms + d.email}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+
+                {/* 3. INSIGHT (Fixed Bottom) */}
+                <div className="jarvis-bar pt-3 border-t border-slate-700 flex items-start gap-4 flex-shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center flex-shrink-0">
+                        <Zap size={20} className="text-yellow-400 fill-yellow-400" />
                     </div>
-                )}
+                    <div>
+                        <span className="text-xs text-slate-500 font-bold uppercase tracking-wider block mb-1">Co-Pilot Insight</span>
+                        <p className="text-base text-slate-300 leading-snug">{jarvisInsight}</p>
+                    </div>
+                </div>
             </div>
         </div>
     );
 };
 
-
-// --- MAIN PAGE COMPONENT ---
+// --- MAIN PAGE ---
 
 export default function BusinessDevPage() {
-    const { candidates, clients, projects, moneyMoves, updateClient } = useData();
-    const bleedRef = useRef(null);
-
-    // UI State
-    const [selectedAction, setSelectedAction] = useState(null);
+    const { candidates, clients, projects, updateClient, logActivity } = useData();
     const [selectedClient, setSelectedClient] = useState(null);
     const [floatTarget, setFloatTarget] = useState(null);
     const [isPowerMode, setIsPowerMode] = useState(false);
+    const [directPowerHourTarget, setDirectPowerHourTarget] = useState(null);
+    const [decayActionTarget, setDecayActionTarget] = useState(null);
 
-    // --- 1. HUD METRICS (The Bleed & Growth) ---
+    // --- HUD LOGIC ---
     const hudMetrics = useMemo(() => {
         const today = new Date();
         const twoWeeks = new Date();
         twoWeeks.setDate(today.getDate() + 14);
-
         let bleedValue = 0;
         let bleedCount = 0;
 
-        // Calculate Bleed (Expiring Margin)
         candidates.forEach(c => {
             if (c.status !== 'On Job' || !c.finishDate) return;
-
-            let finish;
-            if (typeof c.finishDate === 'string' && c.finishDate.includes('/')) {
-                finish = parse(c.finishDate, 'dd/MM/yyyy', new Date());
-            } else {
-                finish = new Date(c.finishDate);
-            }
-
+            let finish = typeof c.finishDate === 'string' && c.finishDate.includes('/')
+                ? parse(c.finishDate, 'dd/MM/yyyy', new Date())
+                : new Date(c.finishDate);
             if (isValid(finish) && finish >= today && finish <= twoWeeks) {
                 const charge = parseFloat(c.chargeRate) || 55;
                 const pay = parseFloat(c.payRate) || 35;
-                const margin = (charge - (pay * 1.30)) * (parseFloat(c.guaranteedHours) || 40);
-                bleedValue += margin;
+                bleedValue += (charge - (pay * 1.30)) * (parseFloat(c.guaranteedHours) || 40);
                 bleedCount++;
             }
         });
@@ -462,7 +445,7 @@ export default function BusinessDevPage() {
             bleedValue: Math.round(bleedValue),
             bleedCount,
             pipelineValue: 24000,
-            velocity: "12/40"
+            velocity: "32/50"
         };
     }, [candidates]);
 
@@ -478,24 +461,16 @@ export default function BusinessDevPage() {
         });
     };
 
-    const scrollToBleed = () => {
-        if (bleedRef.current) {
-            bleedRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            // Optional: trigger highlight
-            bleedRef.current.classList.add('highlight-pulse');
-            setTimeout(() => {
-                if (bleedRef.current) bleedRef.current.classList.remove('highlight-pulse');
-            }, 2000);
-        }
-    };
-
     if (isPowerMode) {
         return (
             <>
-                <GoldenHourMode />
+                <GoldenHourMode initialTarget={directPowerHourTarget} />
                 <button
-                    className="fixed bottom-4 right-4 bg-slate-800 text-white px-4 py-2 rounded-full border border-slate-700 hover:bg-slate-700 font-bold text-xs uppercase tracking-wider z-50"
-                    onClick={() => setIsPowerMode(false)}
+                    className="fixed bottom-4 right-4 bg-slate-800 text-white px-4 py-2 rounded-full border border-slate-700 hover:bg-slate-700 font-bold text-xs uppercase tracking-wider z-[110]"
+                    onClick={() => {
+                        setIsPowerMode(false);
+                        setDirectPowerHourTarget(null);
+                    }}
                 >
                     Exit Power Mode
                 </button>
@@ -504,9 +479,9 @@ export default function BusinessDevPage() {
     }
 
     return (
-        <div className="hunter-deck flex flex-col h-[calc(100vh-2rem)] overflow-hidden gap-6">
+        <div className="hunter-deck h-[calc(100vh-1rem)] flex flex-col overflow-hidden pb-4">
             {/* Header */}
-            <header className="deck-header flex-shrink-0 flex justify-between items-end">
+            <header className="flex-shrink-0 flex justify-between items-end mb-6 px-1">
                 <div>
                     <h1 className="text-2xl font-black text-white flex items-center gap-3 tracking-tight">
                         <Target className="text-rose-500" /> THE HUNTER DECK
@@ -516,140 +491,125 @@ export default function BusinessDevPage() {
                     </p>
                 </div>
                 <div className="flex items-center gap-4">
-                    <div className="kpi-pill bg-slate-800 px-3 py-1 rounded border border-slate-700 flex flex-col items-center">
-                        <span className="label text-[9px] text-slate-400 uppercase font-bold">CALL VELOCITY</span>
-                        <span className="value text-white font-black">{hudMetrics.velocity}</span>
-                    </div>
-                    <div className="kpi-pill highlight bg-emerald-500/10 px-3 py-1 rounded border border-emerald-500/30 flex flex-col items-center">
-                        <span className="label text-[9px] text-emerald-400 uppercase font-bold">PIPELINE ADDED</span>
-                        <span className="value text-emerald-400 font-black">+${hudMetrics.pipelineValue.toLocaleString()}</span>
-                    </div>
+                    <button
+                        className="bg-secondary text-slate-900 font-black px-6 py-2 rounded-lg hover:bg-white transition-all shadow-[0_0_20px_rgba(0,242,255,0.2)] flex items-center gap-2 uppercase tracking-wide text-xs"
+                        onClick={() => setIsPowerMode(true)}
+                    >
+                        <Zap size={16} fill="currentColor" /> Start Power Hour
+                    </button>
                 </div>
             </header>
 
-            {/* --- TOP ROW: HUD STATS --- */}
-            <div className="grid grid-cols-12 gap-6 h-32 flex-shrink-0">
-                {/* The Bleed */}
-                <div
-                    className="col-span-3 glass-panel p-4 flex flex-col justify-between border-l-4 border-l-rose-500 relative overflow-hidden group cursor-pointer hover:bg-white/5 transition-colors"
-                    onClick={scrollToBleed}
-                >
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <Flame size={48} className="text-rose-500" />
-                    </div>
-                    <div className="flex justify-between items-start z-10">
+            {/* --- TOP ROW: HUD METRICS --- */}
+            <div className="grid grid-cols-12 gap-4 mb-4 flex-shrink-0">
+                <div className="col-span-4 glass-panel p-4 border-l-4 border-l-rose-500 relative overflow-hidden group">
+                    <div className="flex justify-between items-start z-10 mb-2">
                         <h3 className="text-xs font-black text-rose-400 uppercase tracking-widest flex items-center gap-2">
-                            <AlertTriangle size={14} /> Retention Risk
+                            Retention Risk
                         </h3>
                         <span className="bg-rose-500/10 text-rose-400 text-[10px] font-bold px-2 py-0.5 rounded">14 Days</span>
                     </div>
-                    <div className="z-10">
-                        <div className="text-3xl font-black text-white tracking-tight">
-                            -${hudMetrics.bleedValue.toLocaleString()}
-                        </div>
-                        <div className="text-xs text-slate-400 font-medium">
-                            Weekly Margin at Risk ({hudMetrics.bleedCount} Workers)
-                        </div>
+                    <div className="text-3xl font-black text-white tracking-tight">
+                        -${hudMetrics.bleedValue.toLocaleString()}
                     </div>
+                    <div className="text-xs text-slate-400 font-medium mt-1">
+                        GP at Risk ({hudMetrics.bleedCount} Workers)
+                    </div>
+                    <Flame size={64} className="absolute -bottom-4 -right-4 text-rose-500/10 group-hover:text-rose-500/20 transition-all" />
                 </div>
 
-                {/* Pipeline Growth */}
-                <div
-                    className="col-span-3 glass-panel p-4 flex flex-col justify-between border-l-4 border-l-emerald-500 relative overflow-hidden group cursor-pointer hover:bg-white/5 transition-colors"
-                    onClick={() => alert('Pipeline Intelligence: Detailed breakdown of the $24k growth coming in next update.')}
-                >
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <TrendingUp size={48} className="text-emerald-500" />
-                    </div>
-                    <div className="flex justify-between items-start z-10">
+                <div className="col-span-4 glass-panel p-4 border-l-4 border-l-emerald-500 relative overflow-hidden group">
+                    <div className="flex justify-between items-start z-10 mb-2">
                         <h3 className="text-xs font-black text-emerald-400 uppercase tracking-widest flex items-center gap-2">
-                            <Target size={14} /> Pipeline Added
+                            Pipeline Added
                         </h3>
                         <span className="bg-emerald-500/10 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded">This Week</span>
                     </div>
-                    <div className="z-10">
-                        <div className="text-3xl font-black text-white tracking-tight">
-                            +${hudMetrics.pipelineValue.toLocaleString()}
-                        </div>
-                        <div className="text-xs text-slate-400 font-medium">
-                            Est. New Gross Margin
-                        </div>
+                    <div className="text-3xl font-black text-white tracking-tight">
+                        +${hudMetrics.pipelineValue.toLocaleString()}
                     </div>
+                    <div className="text-xs text-slate-400 font-medium mt-1">
+                        Est. New Gross Margin
+                    </div>
+                    <TrendingUp size={64} className="absolute -bottom-4 -right-4 text-emerald-500/10 group-hover:text-emerald-500/20 transition-all" />
                 </div>
 
-                {/* Call Velocity */}
-                <div
-                    className="col-span-3 glass-panel p-4 flex flex-col justify-between border-l-4 border-l-sky-500 relative overflow-hidden group cursor-pointer hover:bg-white/5 transition-colors"
-                    onClick={() => alert('Call Log: 12 calls made today. Target is 40. Keep dialing!')}
-                >
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <Phone size={48} className="text-sky-500" />
-                    </div>
-                    <div className="flex justify-between items-start z-10">
+                <div className="col-span-4 glass-panel p-4 border-l-4 border-l-sky-500 relative overflow-hidden group">
+                    <div className="flex justify-between items-start z-10 mb-2">
                         <h3 className="text-xs font-black text-sky-400 uppercase tracking-widest flex items-center gap-2">
-                            <Zap size={14} /> Call Velocity
+                            Call Velocity
                         </h3>
                         <span className="bg-sky-500/10 text-sky-400 text-[10px] font-bold px-2 py-0.5 rounded">Live</span>
                     </div>
-                    <div className="z-10">
-                        <div className="text-3xl font-black text-white tracking-tight">
-                            {hudMetrics.velocity}
-                        </div>
-                        <div className="text-xs text-slate-400 font-medium">
-                            Calls Made vs Target
-                        </div>
+                    <div className="text-3xl font-black text-white tracking-tight">
+                        {hudMetrics.velocity}
                     </div>
-                </div>
-
-                {/* Action Center Link */}
-                <div
-                    className="col-span-3 bg-secondary/10 border border-secondary/20 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:bg-secondary/20 transition-all group text-center"
-                    onClick={() => setIsPowerMode(true)}
-                >
-                    <div className="w-12 h-12 rounded-full bg-secondary/20 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-                        <Zap size={24} className="text-secondary" />
+                    <div className="text-xs text-slate-400 font-medium mt-1">
+                        Calls Made vs Target
                     </div>
-                    <span className="text-sm font-black text-secondary uppercase tracking-wider">Start Power Hour</span>
-                    <span className="text-[10px] text-secondary/60">Launch High Velocity Mode</span>
+                    <Phone size={64} className="absolute -bottom-4 -right-4 text-sky-500/10 group-hover:text-sky-500/20 transition-all" />
                 </div>
             </div>
 
-            {/* The Hunter Grid (Bento Layout) */}
-            <div className="hunter-grid grid grid-cols-12 gap-6 flex-1 min-h-0">
-                <TheBleedWidget
-                    candidates={candidates}
-                    placements={[]}
-                    forwardRef={bleedRef}
-                />
-                <MatchmakerWidget
-                    candidates={candidates}
-                    projects={projects}
-                    onPitch={handlePitch}
-                />
-                <RelationshipHeatmap
+            {/* --- MAIN GRID (BENTO LAYOUT) --- */}
+            <div className="grid grid-cols-12 gap-4 flex-1 min-h-0 relative pb-2">
+                {/* COLUMN 1: RISKS (HIDDEN AS PER REQUEST) */}
+                {/* <div className="col-span-3 flex flex-col gap-4 h-full">
+                    <TheBleedWidget candidates={candidates} />
+                </div> */}
+
+                {/* COLUMN 2: OPPORTUNITIES (Expanded) */}
+                <div className="col-span-7 flex flex-col gap-4 h-full min-h-0">
+                    <MatchmakerWidget candidates={candidates} projects={projects} onPitch={handlePitch} />
+                </div>
+
+                {/* COLUMN 3: ACTIVITY & CRM (Expanded) */}
+                <div className="col-span-12 md:col-span-5 flex flex-col gap-4 h-full min-h-0">
+                    <ActivityPulseWidget />
+                </div>
+            </div>
+
+            {/* --- BOTTOM ROW: RELATIONSHIP DECAY --- */}
+            <div className="mt-2 flex-none h-[340px]">
+                <RelationshipDecayWidget
                     clients={clients}
-                    onClientClick={setSelectedClient}
-                />
-                <PowerBlockWidget
-                    clients={clients}
-                    moneyMoves={moneyMoves}
-                    onStartPowerMode={() => setIsPowerMode(true)}
+                    onContact={(c) => {
+                        setDecayActionTarget(c);
+                    }}
                 />
             </div>
 
-            {/* INTERACTION LAYERS */}
-
-            <ActionDrawer
-                isOpen={!!selectedAction}
-                nudge={selectedAction}
-                onClose={() => setSelectedAction(null)}
-            />
-
+            {/* MODALS */}
             {selectedClient && (
                 <ClientSidePanel
                     client={selectedClient}
                     onClose={() => setSelectedClient(null)}
                     onUpdate={(updated) => updateClient(updated)}
+                />
+            )}
+
+            {/* Relationship Action Modal */}
+            {decayActionTarget && (
+                <RelationshipActionModal
+                    client={decayActionTarget}
+                    onClose={() => setDecayActionTarget(null)}
+                    onLogActivity={(activity) => {
+                        // 1. Log Activity to Pulse
+                        logActivity(activity.type, {
+                            notes: activity.notes,
+                            clientName: activity.client.name,
+                            clientId: activity.client.id
+                        });
+
+                        // 2. Update Client (Clear Risk)
+                        const today = new Date().toISOString().split('T')[0];
+                        updateClient({
+                            ...activity.client,
+                            lastContact: today,
+                            lastActivityType: activity.type,
+                            lastActivityNote: activity.notes
+                        });
+                    }}
                 />
             )}
 
@@ -663,40 +623,16 @@ export default function BusinessDevPage() {
             )}
 
             <style jsx global>{`
-                .hunter-deck {
-                    /* Ensures the page fits viewport */
-                    height: calc(100vh - 2rem);
-                }
                 .glass-panel {
                     background: rgba(15, 23, 42, 0.6);
                     backdrop-filter: blur(12px);
                     border: 1px solid rgba(255, 255, 255, 0.05);
-                    border-radius: 12px;
-                    display: flex;
-                    flex-direction: column;
+                    border-radius: 16px;
+                    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
                 }
-                .custom-scrollbar::-webkit-scrollbar {
-                    width: 4px;
-                    height: 4px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background: rgba(255, 255, 255, 0.1);
-                    border-radius: 4px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-track {
-                    background: transparent;
-                }
-                
-                @keyframes highlightPulse {
-                    0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.4); }
-                    70% { box-shadow: 0 0 0 15px rgba(244, 63, 94, 0); }
-                    100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
-                }
-                
-                .highlight-pulse {
-                    animation: highlightPulse 2s ease-out;
-                    border-color: #f43f5e !important;
-                }
+                .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 4px; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
             `}</style>
         </div>
     );

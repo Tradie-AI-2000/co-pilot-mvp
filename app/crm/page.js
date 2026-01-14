@@ -88,51 +88,53 @@ export default function CRMPage() {
         </div>
       </header>
 
-      {/* Virtual Assistant / Client Action Board */}
-      <ClientActionBoard onViewDeal={handleViewDeal} />
-
       <div className="section-divider">
         <div className="flex items-center gap-2">
-            <button onClick={resetToRegions} className={`breadcrumb-item ${viewState === 'regions' ? 'active' : ''}`}>
-                <Home size={16} /> Directory
-            </button>
-            {filters.region && (
-                <>
-                    <ChevronRight size={16} className="text-slate-600" />
-                    <button onClick={resetToTrades} className={`breadcrumb-item ${viewState === 'trades' ? 'active' : ''}`}>
-                        {filters.region}
-                    </button>
-                </>
-            )}
-            {filters.industry && (
-                <>
-                    <ChevronRight size={16} className="text-slate-600" />
-                    <span className="breadcrumb-item active text-secondary">
-                        {filters.industry}
-                    </span>
-                </>
-            )}
+          <button onClick={resetToRegions} className={`breadcrumb-item ${viewState === 'regions' ? 'active' : ''}`}>
+            <Home size={16} /> Directory
+          </button>
+          {filters.region && (
+            <>
+              <ChevronRight size={16} className="text-slate-600" />
+              <button onClick={resetToTrades} className={`breadcrumb-item ${viewState === 'trades' ? 'active' : ''}`}>
+                {filters.region}
+              </button>
+            </>
+          )}
+          {filters.industry && (
+            <>
+              <ChevronRight size={16} className="text-slate-600" />
+              <span className="breadcrumb-item active text-secondary">
+                {filters.industry}
+              </span>
+            </>
+          )}
         </div>
         <div className="h-px bg-slate-800 flex-1 ml-4"></div>
       </div>
 
       <div className="content-area">
         {viewState === 'regions' && (
-            <RegionGrid clients={clients} onSelectRegion={selectRegion} />
+          <RegionGrid clients={clients} onSelectRegion={selectRegion} />
         )}
 
         {viewState === 'trades' && (
-            <TradeGrid clients={clients} region={filters.region} onSelectTrade={selectTrade} />
+          <TradeGrid clients={clients} region={filters.region} onSelectTrade={selectTrade} />
         )}
 
         {viewState === 'clients' && (
-            <ClientTierBoard 
-                clients={clients} 
-                region={filters.region} 
-                industry={filters.industry} 
-                onClientClick={handleClientClick}
-            />
+          <ClientTierBoard
+            clients={clients}
+            region={filters.region}
+            industry={filters.industry}
+            onClientClick={handleClientClick}
+          />
         )}
+      </div>
+
+      {/* Virtual Assistant / Client Action Board (Now at Bottom) */}
+      <div className="flex-none pb-4 border-t border-slate-800 pt-4">
+        <ClientActionBoard onViewDeal={handleViewDeal} />
       </div>
 
       {selectedClient && (
@@ -162,7 +164,8 @@ export default function CRMPage() {
                     display: flex;
                     flex-direction: column;
                     gap: 2rem;
-                    height: calc(100vh - 4rem);
+                    min-height: 100vh; /* Allow scrolling */
+                    padding-bottom: 2rem;
                 }
 
                 .page-header {
@@ -251,8 +254,7 @@ export default function CRMPage() {
 
                 .content-area {
                     flex: 1;
-                    overflow-y: auto;
-                    min-height: 0;
+                    min-height: 450px; /* Reduced to 450px as requested */
                     padding-bottom: 2rem;
                 }
 

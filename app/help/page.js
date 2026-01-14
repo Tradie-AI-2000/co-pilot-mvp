@@ -220,6 +220,31 @@ export default function HelpPage() {
                             <li><strong>Switch to Farm:</strong> Once the hunt is done, go to the Main Dashboard to manage the day-to-day operations.</li>
                         </ol>
                     </div>
+
+                    <div className="tutorial-block mt-4">
+                        <h3>🎯 Setting Up "The Matchmaker"</h3>
+                        <p className="mb-2 text-sm text-slate-300">To get the auto-matching engine working, you need two things:</p>
+                        <ol>
+                            <li>
+                                <strong>Project Phase Dates:</strong> In the Projects sheet, you must populate the Start Date columns:
+                                <ul className="list-disc pl-5 mt-1 mb-2 text-slate-400">
+                                    <li>Col AF: Civil Start</li>
+                                    <li>Col AG: Structure Start</li>
+                                    <li>Col AH: Fitout Start</li>
+                                </ul>
+                            </li>
+                            <li>
+                                <strong>Mobile Crew Tags:</strong> To unlock the "Mobile Crew" superpower (matches any project, anywhere), tag candidates in the <strong>Residency (Col P)</strong> column with:
+                                <ul className="list-disc pl-5 mt-1 mb-2 text-slate-400">
+                                    <li>"Work Visa"</li>
+                                    <li>"Filipino"</li>
+                                </ul>
+                            </li>
+                        </ol>
+                        <p className="mt-2 text-sm text-slate-300">
+                            <strong>The Logic:</strong> The system looks for projects starting a phase in <strong>7-45 days</strong> and matches them with candidates finishing in the next <strong>21 days</strong> (or who are currently available).
+                        </p>
+                    </div>
                 </section>
             </div>
 

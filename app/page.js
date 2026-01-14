@@ -87,7 +87,7 @@ function DashboardContent() {
   };
 
   const handleFocusCardClick = (item) => {
-      setSelectedNudge(item);
+    setSelectedNudge(item);
   };
 
   // --- LIVE METRICS ---
@@ -99,35 +99,35 @@ function DashboardContent() {
     : 100;
 
   const stats = [
-    { 
-        title: "Est. Weekly Billings", 
-        value: `$${(weeklyRevenue / 1000).toFixed(1)}k`, 
-        subtext: "Live Estimate", 
-        progress: Math.min(100, (weeklyRevenue / 50000) * 100), 
-        status: "success", 
-        trend: "up",
-        onClick: () => console.log("Open Financials View"), // Future: Link to Financials Page
-        cursor: "pointer"
+    {
+      title: "Est. Weekly Billings",
+      value: `$${(weeklyRevenue / 1000).toFixed(1)}k`,
+      subtext: "Live Estimate",
+      progress: Math.min(100, (weeklyRevenue / 50000) * 100),
+      status: "success",
+      trend: "up",
+      onClick: () => console.log("Open Financials View"),
+      cursor: "pointer"
     },
-    { 
-        title: "Revenue at Risk", 
-        value: `$${(revenueAtRisk / 1000).toFixed(1)}k`, 
-        subtext: "Unfilled Roles", 
-        progress: Math.min(100, (revenueAtRisk / 10000) * 100), 
-        status: "danger", 
-        trend: "down",
-        onClick: () => console.log("Open Risk View"), // Future: Filter MoneyMoves by Risk
-        cursor: "pointer"
+    {
+      title: "Revenue at Risk",
+      value: `$${(revenueAtRisk / 1000).toFixed(1)}k`,
+      subtext: "Unfilled Roles",
+      progress: Math.min(100, (revenueAtRisk / 10000) * 100),
+      status: "danger",
+      trend: "down",
+      onClick: () => console.log("Open Risk View"),
+      cursor: "pointer"
     },
-    { 
-        title: "Active Placements", 
-        value: activePlacements.length.toString(), 
-        subtext: "On Site Now", 
-        progress: 100, 
-        status: "neutral", 
-        trend: "up",
-        onClick: () => setViewActivePlacements(true),
-        cursor: "pointer"
+    {
+      title: "Active Placements",
+      value: activePlacements.length.toString(),
+      subtext: "On Site Now",
+      progress: 100,
+      status: "neutral",
+      trend: "up",
+      onClick: () => setViewActivePlacements(true),
+      cursor: "pointer"
     },
     { title: "Fill Rate", value: `${fillRate}%`, subtext: "Demand vs Supply", progress: fillRate, status: fillRate > 80 ? "success" : "warning", trend: fillRate > 80 ? "up" : "down" }
   ];
@@ -174,8 +174,8 @@ function DashboardContent() {
 
         {/* Zone 1.5: Risk Control Center */}
         <section className="risk-control">
-          <BenchLiabilityWidget 
-            candidates={candidates} 
+          <BenchLiabilityWidget
+            candidates={candidates}
             onViewBench={() => setViewBenchList(true)} // Pass handler
           />
           <RedeploymentRadar candidates={candidates} />
@@ -278,20 +278,20 @@ function DashboardContent() {
         )}
 
         {viewActivePlacements && (
-            <ActivePlacementsModal onClose={() => setViewActivePlacements(false)} />
-        )}
-        
-        {viewBenchList && (
-            <ActiveBenchModal 
-                candidates={candidates.filter(c => c.status === "Available")} 
-                onClose={() => setViewBenchList(false)} 
-            />
+          <ActivePlacementsModal onClose={() => setViewActivePlacements(false)} />
         )}
 
-        <ActionDrawer 
-            isOpen={!!selectedNudge} 
-            nudge={selectedNudge} 
-            onClose={() => setSelectedNudge(null)} 
+        {viewBenchList && (
+          <ActiveBenchModal
+            candidates={candidates.filter(c => c.status === "Available")}
+            onClose={() => setViewBenchList(false)}
+          />
+        )}
+
+        <ActionDrawer
+          isOpen={!!selectedNudge}
+          nudge={selectedNudge}
+          onClose={() => setSelectedNudge(null)}
         />
 
         {isModalOpen && (
@@ -332,13 +332,30 @@ function DashboardContent() {
           flex-shrink: 0;
         }
 
-        /* Zone 1.5: Risk Control */
+        /* Zone 1.5: Risk Control (FIXED HERE) */
         .risk-control {
             display: grid;
-            grid-template-columns: 1fr 2fr; /* New layout preserved */
+            grid-template-columns: 1fr 2fr;
             gap: 1rem;
             flex-shrink: 0;
-            max-height: 250px;
+            max-height: 250px; /* Keep strict height */
+            height: 250px;     /* Force height */
+        }
+        
+        /* THIS IS THE FIX: Target the widgets directly */
+        .risk-control > :global(*) {
+            overflow-y: auto;       /* Internal scroll only */
+            height: 100%;           /* Fill container */
+            max-height: 100%;       /* Prevent overflow */
+        }
+        
+        /* Add custom scrollbar for the risk widgets */
+        .risk-control > :global(*)::-webkit-scrollbar {
+            width: 4px;
+        }
+        .risk-control > :global(*)::-webkit-scrollbar-thumb {
+            background-color: rgba(255,255,255,0.1);
+            border-radius: 4px;
         }
 
         /* Main Grid Layout */
@@ -347,7 +364,7 @@ function DashboardContent() {
           grid-template-columns: 65fr 35fr;
           gap: 1rem;
           flex: 1; 
-          min-height: 0; /* CRITICAL FIX: Allows children to calculate scroll height */
+          min-height: 0; 
         }
 
         /* Zone 2: Mission Control */
@@ -357,15 +374,15 @@ function DashboardContent() {
           border-radius: var(--radius-lg);
           display: flex;
           flex-direction: column;
-          overflow: hidden; /* Keeps content inside rounded corners */
-          height: 100%; /* FIX: Force fill of grid cell */
+          overflow: hidden; 
+          height: 100%; 
         }
 
         .section-header {
           padding: 1rem 1.5rem;
           border-bottom: 1px solid var(--border);
           background: rgba(30, 41, 59, 0.4);
-          flex-shrink: 0; /* Header never shrinks */
+          flex-shrink: 0;
         }
 
         .section-header h2 {
@@ -382,16 +399,16 @@ function DashboardContent() {
           gap: 1.5rem;
           padding: 1.5rem;
           flex: 1;
-          min-height: 0; /* FIX: Prevents grid blowout */
-          overflow: hidden; /* FIX: Don't scroll the whole panel */
+          min-height: 0;
+          overflow: hidden;
         }
 
         .panel-column {
             display: flex;
             flex-direction: column;
-            height: 100%; /* FIX: Fill the grid height */
-            min-height: 0; /* FIX: Allow flex shrinking */
-            overflow: hidden; /* Container doesn't scroll, inner list does */
+            height: 100%;
+            min-height: 0;
+            overflow: hidden;
         }
 
         .column-title {
@@ -400,19 +417,18 @@ function DashboardContent() {
           color: var(--text-muted);
           margin-bottom: 1rem;
           text-transform: uppercase;
-          flex-shrink: 0; /* Keep title visible */
+          flex-shrink: 0;
         }
 
         .urgent-list {
           display: flex;
           flex-direction: column;
           gap: 0.5rem;
-          overflow-y: auto; /* FIX: Scroll HERE only */
-          flex: 1; /* Take remaining height */
+          overflow-y: auto;
+          flex: 1; 
           padding-right: 0.5rem;
         }
         
-        /* Custom Scrollbar */
         .urgent-list::-webkit-scrollbar {
             width: 4px;
         }
@@ -426,7 +442,7 @@ function DashboardContent() {
           display: flex;
           flex-direction: column;
           gap: 1rem;
-          min-height: 0; /* FIX: Allow shrinking */
+          min-height: 0;
           height: 100%;
         }
 

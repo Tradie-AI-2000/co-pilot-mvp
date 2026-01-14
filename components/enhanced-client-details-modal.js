@@ -202,7 +202,7 @@ export default function EnhancedClientDetailsModal({ client, onClose, onUpdate }
                                 </div>
                             </div>
 
-                            {localClient.projectIds?.map(pid => {
+                            {[...new Set(localClient.projectIds || [])].map(pid => {
                                 const project = availableProjectsMetadata.find(p => p.id === pid);
                                 if (!project) return null;
 
@@ -358,7 +358,7 @@ export default function EnhancedClientDetailsModal({ client, onClose, onUpdate }
                                 )}
                             </div>
                             <div className="space-y-4">
-                                {localClient.projectIds?.map(pid => {
+                                {[...new Set(localClient.projectIds || [])].map(pid => {
                                     const project = availableProjectsMetadata.find(p => p.id === pid);
                                     if (!project) return null;
                                     const currentPhase = project.phaseSettings?.currentPhase || '02_structure';

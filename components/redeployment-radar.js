@@ -1,230 +1,205 @@
 "use client";
 
-import { Calendar, AlertCircle, Clock, CheckCircle } from "lucide-react";
+import { useMemo } from 'react';
+import { Clock, AlertTriangle, Calendar, CheckCircle } from 'lucide-react';
+import { differenceInDays, parseISO } from 'date-fns';
 
 export default function RedeploymentRadar({ candidates }) {
-    // 1. Filter for 'On Job' candidates finishing within 28 days
-    const today = new Date();
-    const fourWeeksOut = new Date(today);
-    fourWeeksOut.setDate(today.getDate() + 28);
+    // Logic: Bucket candidates by finish date
+    const buckets = useMemo(() => {
+        const today = new Date();
+        const data = {
+            critical: [], // 0-14 Days
+            upcoming: [], // 15-28 Days
+            horizon: []   // 29-60 Days
+        };
 
-    const upcomingFinishes = candidates.filter(c => {
-        if (c.status !== "On Job" || !c.finishDate) return false;
-        const finish = new Date(c.finishDate);
-        return finish >= today && finish <= fourWeeksOut;
-    }).sort((a, b) => new Date(a.finishDate) - new Date(b.finishDate));
+        candidates.forEach(c => {
+            if (c.status !== 'On Job' || !c.finishDate) return;
 
-    // Group by Urgency
-    const buckets = {
-        critical: [], // 0-7 days
-        urgent: [],   // 8-14 days
-        upcoming: []  // 15-28 days
-    };
+            // Handle date parsing safely
+            const finish = new Date(c.finishDate);
+            const diff = differenceInDays(finish, today);
 
-    upcomingFinishes.forEach(c => {
-        const finish = new Date(c.finishDate);
-        const diffTime = Math.abs(finish - today);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-        
-        c.daysLeft = diffDays;
+            const item = { ...c, daysLeft: diff };
 
-        if (diffDays <= 7) buckets.critical.push(c);
-        else if (diffDays <= 14) buckets.urgent.push(c);
-        else buckets.upcoming.push(c);
-    });
+            if (diff >= 0 && diff <= 14) data.critical.push(item);
+            else if (diff > 14 && diff <= 28) data.upcoming.push(item);
+            else if (diff > 28 && diff <= 60) data.horizon.push(item);
+        });
+
+        // Sort by urgency
+        data.critical.sort((a, b) => a.daysLeft - b.daysLeft);
+        data.upcoming.sort((a, b) => a.daysLeft - b.daysLeft);
+        data.horizon.sort((a, b) => a.daysLeft - b.daysLeft);
+
+        return data;
+    }, [candidates]);
 
     return (
-        <div className="radar-card">
-            <div className="card-header">
-                <div className="title-row">
-                    <Clock size={20} className="text-secondary" />
-                    <h3>Redeployment Radar (4 Weeks)</h3>
+        <div className="radar-widget glass-panel">
+            {/* 1. FIXED HEADER */}
+            <div className="widget-header">
+                <div className="flex items-center gap-2">
+                    <Clock size={16} className="text-secondary" />
+                    <h3 className="font-bold text-secondary uppercase tracking-wider text-xs">
+                        Redeployment Radar (4 Weeks)
+                    </h3>
                 </div>
-                <span className="count-badge">{upcomingFinishes.length} Finishing Soon</span>
+                <div className="text-[10px] text-slate-400 font-mono">
+                    {buckets.critical.length + buckets.upcoming.length} Active Risks
+                </div>
             </div>
 
-            <div className="radar-lanes">
-                {/* Critical Lane */}
-                <div className="lane critical">
-                    <div className="lane-header">
-                        <AlertCircle size={14} />
-                        <span>Critical (0-7 Days)</span>
+            {/* 2. SCROLLABLE GRID BODY */}
+            <div className="radar-grid">
+
+                {/* Column 1: Critical (0-14 Days) */}
+                <div className="radar-col critical-zone">
+                    <div className="col-header text-rose-400">
+                        <AlertTriangle size={12} /> Critical (0-14d)
                     </div>
-                    <div className="lane-content">
-                        {buckets.critical.length === 0 ? (
-                            <div className="empty-lane">No critical expiries</div>
-                        ) : (
-                            buckets.critical.map(c => (
-                                <div key={c.id} className="candidate-pill critical">
-                                    <div className="pill-name">{c.firstName} {c.lastName}</div>
-                                    <div className="pill-meta">{c.role} • {c.daysLeft} days</div>
-                                </div>
-                            ))
-                        )}
+                    <div className="col-list">
+                        {buckets.critical.map(c => (
+                            <CandidateCard key={c.id} c={c} color="rose" />
+                        ))}
+                        {buckets.critical.length === 0 && <EmptyState />}
                     </div>
                 </div>
 
-                {/* Urgent Lane */}
-                <div className="lane urgent">
-                    <div className="lane-header">
-                        <Clock size={14} />
-                        <span>Urgent (8-14 Days)</span>
+                {/* Column 2: Upcoming (15-28 Days) */}
+                <div className="radar-col warning-zone">
+                    <div className="col-header text-amber-400">
+                        <Calendar size={12} /> Upcoming (15-28d)
                     </div>
-                    <div className="lane-content">
-                        {buckets.urgent.length === 0 ? (
-                            <div className="empty-lane">No urgent expiries</div>
-                        ) : (
-                            buckets.urgent.map(c => (
-                                <div key={c.id} className="candidate-pill urgent">
-                                    <div className="pill-name">{c.firstName} {c.lastName}</div>
-                                    <div className="pill-meta">{c.role} • {c.daysLeft} days</div>
-                                </div>
-                            ))
-                        )}
+                    <div className="col-list">
+                        {buckets.upcoming.map(c => (
+                            <CandidateCard key={c.id} c={c} color="amber" />
+                        ))}
+                        {buckets.upcoming.length === 0 && <EmptyState />}
                     </div>
                 </div>
 
-                {/* Upcoming Lane */}
-                <div className="lane upcoming">
-                    <div className="lane-header">
-                        <CheckCircle size={14} />
-                        <span>Upcoming (15-28 Days)</span>
+                {/* Column 3: Horizon (29+ Days) */}
+                <div className="radar-col safe-zone">
+                    <div className="col-header text-emerald-400">
+                        <CheckCircle size={12} /> Horizon (29d+)
                     </div>
-                    <div className="lane-content">
-                        {buckets.upcoming.length === 0 ? (
-                            <div className="empty-lane">No upcoming expiries</div>
-                        ) : (
-                            buckets.upcoming.map(c => (
-                                <div key={c.id} className="candidate-pill upcoming">
-                                    <div className="pill-name">{c.firstName} {c.lastName}</div>
-                                    <div className="pill-meta">{c.role} • {c.finishDate}</div>
-                                </div>
-                            ))
-                        )}
+                    <div className="col-list">
+                        {buckets.horizon.map(c => (
+                            <CandidateCard key={c.id} c={c} color="emerald" />
+                        ))}
+                        {buckets.horizon.length === 0 && <EmptyState />}
                     </div>
                 </div>
             </div>
 
             <style jsx>{`
-                .radar-card {
-                    background: var(--surface);
-                    border: 1px solid var(--border);
-                    border-radius: var(--radius-md);
-                    padding: 1.25rem;
+                /* Component Container */
+                .radar-widget {
                     display: flex;
                     flex-direction: column;
-                    gap: 1rem;
                     height: 100%;
+                    overflow: hidden; /* Contains the scroll areas */
+                    background: rgba(15, 23, 42, 0.4);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    border-radius: 12px;
                 }
 
-                .card-header {
+                /* Fixed Header */
+                .widget-header {
+                    flex-shrink: 0; /* Prevents shrinking */
+                    padding: 0.75rem 1rem;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
+                    background: rgba(15, 23, 42, 0.6);
                 }
 
-                .title-row {
-                    display: flex;
-                    align-items: center;
-                    gap: 0.5rem;
-                    color: var(--text-main);
-                }
-
-                h3 {
-                    font-size: 0.8rem;
-                    font-weight: 700;
-                    margin: 0;
-                    text-transform: uppercase;
-                    letter-spacing: 0.05em;
-                }
-
-                .count-badge {
-                    background: rgba(255,255,255,0.1);
-                    padding: 0.2rem 0.6rem;
-                    border-radius: 99px;
-                    font-size: 0.75rem;
-                    color: var(--text-muted);
-                }
-
-                .radar-lanes {
+                /* Grid Layout */
+                .radar-grid {
+                    flex: 1; /* Fills remaining height */
+                    min-height: 0; /* Critical for nested flex scrolling */
                     display: grid;
                     grid-template-columns: 1fr 1fr 1fr;
-                    gap: 1rem;
-                    flex: 1;
+                    gap: 1px; /* Divider look */
+                    background: rgba(255,255,255,0.05); /* Grid line color */
                 }
 
-                .lane {
-                    background: rgba(0,0,0,0.2);
-                    border-radius: var(--radius-sm);
-                    padding: 0.75rem;
+                /* Columns */
+                .radar-col {
+                    background: rgba(15, 23, 42, 0.3);
                     display: flex;
                     flex-direction: column;
-                    gap: 0.75rem;
+                    min-height: 0; /* Enables scrolling inside */
                 }
 
-                .lane-header {
-                    display: flex;
-                    align-items: center;
-                    gap: 0.5rem;
-                    font-size: 0.7rem;
+                /* Fixed Column Headers */
+                .col-header {
+                    flex-shrink: 0;
+                    padding: 0.5rem;
+                    font-size: 13px;
                     font-weight: 700;
                     text-transform: uppercase;
-                    color: var(--text-muted);
-                    padding-bottom: 0.5rem;
-                    border-bottom: 1px solid var(--border);
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    background: rgba(0,0,0,0.2);
+                    border-bottom: 1px solid rgba(255,255,255,0.05);
                 }
 
-                .lane.critical .lane-header { color: #ef4444; }
-                .lane.urgent .lane-header { color: #f59e0b; }
-                .lane.upcoming .lane-header { color: #3b82f6; }
-
-                .lane-content {
+                /* Scrollable List Area */
+                .col-list {
+                    flex: 1;
+                    overflow-y: auto; /* Individual Scroll! */
+                    padding: 0.5rem;
                     display: flex;
                     flex-direction: column;
                     gap: 0.5rem;
-                    overflow-y: auto;
-                    max-height: 200px;
                 }
 
-                .empty-lane {
-                    font-size: 0.75rem;
-                    color: var(--text-muted);
-                    font-style: italic;
-                    text-align: center;
-                    margin-top: 1rem;
+                /* Custom Scrollbar */
+                .col-list::-webkit-scrollbar {
+                    width: 4px;
                 }
-
-                .candidate-pill {
-                    background: var(--surface);
-                    border: 1px solid var(--border);
+                .col-list::-webkit-scrollbar-thumb {
+                    background: rgba(255, 255, 255, 0.1);
                     border-radius: 4px;
-                    padding: 0.5rem;
-                    border-left-width: 3px;
-                    cursor: pointer;
-                    transition: transform 0.1s;
-                }
-
-                .candidate-pill:hover {
-                    transform: translateX(2px);
-                    background: rgba(255,255,255,0.05);
-                }
-
-                .candidate-pill.critical { border-left-color: #ef4444; }
-                .candidate-pill.urgent { border-left-color: #f59e0b; }
-                .candidate-pill.upcoming { border-left-color: #3b82f6; }
-
-                .pill-name {
-                    font-size: 0.85rem;
-                    font-weight: 600;
-                    color: var(--text-main);
-                }
-
-                .pill-meta {
-                    font-size: 0.7rem;
-                    color: var(--text-muted);
-                    margin-top: 0.1rem;
                 }
             `}</style>
+        </div>
+    );
+}
+
+// Sub-component for individual items
+function CandidateCard({ c, color }) {
+    const colors = {
+        rose: "bg-rose-500/10 border-rose-500/20 hover:border-rose-500/40 text-rose-100",
+        amber: "bg-amber-500/10 border-amber-500/20 hover:border-amber-500/40 text-amber-100",
+        emerald: "bg-emerald-500/10 border-emerald-500/20 hover:border-emerald-500/40 text-emerald-100"
+    };
+
+    return (
+        <div className={`p-2 rounded border ${colors[color]} transition-colors cursor-pointer group`}>
+            <div className="flex justify-between items-start">
+                <span className="font-bold text-xs truncate">{c.firstName} {c.lastName}</span>
+                <span className="text-[9px] font-mono opacity-60">{c.daysLeft}d</span>
+            </div>
+            <div className="text-[10px] opacity-60 mt-1 truncate">
+                {c.role}
+            </div>
+            <div className="text-[9px] opacity-40 truncate">
+                @ {c.currentEmployer || 'Unknown Site'}
+            </div>
+        </div>
+    );
+}
+
+function EmptyState() {
+    return (
+        <div className="h-full flex items-center justify-center text-[10px] text-slate-600 italic">
+            -
         </div>
     );
 }

@@ -4,16 +4,16 @@ import ClientCard from "./client-card.js";
 
 export default function ClientTierBoard({ clients, region, industry, onClientClick }) {
     // Filter clients
-    const filteredClients = clients.filter(c => 
+    const filteredClients = clients.filter(c =>
         (region === "National" || c.region === region) &&
         c.industry === industry
     );
 
-    // Group by Tier
+    // Group by Tier (Robust string comparison)
     const tiers = {
-        '1': filteredClients.filter(c => c.tier === '1'),
-        '2': filteredClients.filter(c => c.tier === '2'),
-        '3': filteredClients.filter(c => c.tier === '3')
+        '1': filteredClients.filter(c => String(c.tier) === '1'),
+        '2': filteredClients.filter(c => String(c.tier) === '2'),
+        '3': filteredClients.filter(c => String(c.tier) === '3')
     };
 
     return (
@@ -25,10 +25,10 @@ export default function ClientTierBoard({ clients, region, industry, onClientCli
                 </div>
                 <div className="column-content">
                     {tiers['1'].map(client => (
-                        <ClientCard 
-                            key={client.id} 
-                            client={client} 
-                            onClick={() => onClientClick(client)} 
+                        <ClientCard
+                            key={client.id}
+                            client={client}
+                            onClick={() => onClientClick(client)}
                             variant="compact"
                         />
                     ))}
@@ -43,10 +43,10 @@ export default function ClientTierBoard({ clients, region, industry, onClientCli
                 </div>
                 <div className="column-content">
                     {tiers['2'].map(client => (
-                        <ClientCard 
-                            key={client.id} 
-                            client={client} 
-                            onClick={() => onClientClick(client)} 
+                        <ClientCard
+                            key={client.id}
+                            client={client}
+                            onClick={() => onClientClick(client)}
                             variant="compact"
                         />
                     ))}
@@ -61,10 +61,10 @@ export default function ClientTierBoard({ clients, region, industry, onClientCli
                 </div>
                 <div className="column-content">
                     {tiers['3'].map(client => (
-                        <ClientCard 
-                            key={client.id} 
-                            client={client} 
-                            onClick={() => onClientClick(client)} 
+                        <ClientCard
+                            key={client.id}
+                            client={client}
+                            onClick={() => onClientClick(client)}
                             variant="compact"
                         />
                     ))}

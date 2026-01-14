@@ -6,7 +6,6 @@ import { Search, Filter, Plus, Building, MapPin, Calendar, DollarSign, Briefcase
 import { useSearchParams } from "next/navigation";
 
 import AddProjectModal from "../../components/add-project-modal.js";
-import ProjectIntelligencePanel from "../../components/project-intelligence-panel.js";
 import DashboardWidgets from "../../components/dashboard-widgets.js";
 import GeospatialMap from "../../components/geospatial-map.js";
 import ProjectList from "../../components/project-list.js";
@@ -223,7 +222,10 @@ function ProjectsContent() {
                             <div
                                 key={project.id}
                                 className="project-card glass-panel"
-                                onClick={() => handleCardClick(project)}
+                                onClick={() => {
+                                    setEditingProject(project);
+                                    setIsModalOpen(true);
+                                }}
                             >
                                 <div className="card-header">
                                     <h3 className="project-name">{project.name}</h3>
@@ -246,7 +248,7 @@ function ProjectsContent() {
 
                                     <div className="assigned-companies">
                                         <div className="company-badges">
-                                            {Array.isArray(project.assignedCompanyIds) && project.assignedCompanyIds.map(id => {
+                                            {Array.isArray(project.assignedCompanyIds) && [...new Set(project.assignedCompanyIds)].map(id => {
                                                 const company = clients.find(c => c.id === id);
                                                 return company ? (
                                                     <span key={id} className={`company-badge tier-${company.tier}`}>
@@ -285,7 +287,10 @@ function ProjectsContent() {
                         {projects.map(project => {
                             const contractor = clients.find(c => c.id === project.assignedCompanyIds?.[0])?.name || project.client || "-";
                             return (
-                                <div key={project.id} className="list-row" onClick={() => handleCardClick(project)}>
+                                <div key={project.id} className="list-row" onClick={() => {
+                                    setEditingProject(project);
+                                    setIsModalOpen(true);
+                                }}>
                                     <div className="col name font-bold">{project.name}</div>
                                     <div className="col contractor">{contractor}</div>
                                     <div className="col value">{project.value || "-"}</div>
@@ -299,14 +304,6 @@ function ProjectsContent() {
                     </div>
                 )}
             </div>
-
-            {selectedProject && (
-                <ProjectIntelligencePanel
-                    project={selectedProject}
-                    onClose={() => setSelectedProject(null)}
-                    onEdit={handleEditFromPanel}
-                />
-            )}
 
             {isModalOpen && (
                 <AddProjectModal

@@ -23,8 +23,7 @@ export default function FloatCandidateModal({ candidate, isOpen, onClose, prefil
             : `Hi,\n\nI'd like to discuss a candidate for your project. Please let me know if you're interested.\n\nBest,\nJoe`
     );
 
-    if (!isOpen) return null;
-
+    // Derived Data
     const selectedClient = clients.find(c => c.id === parseInt(selectedClientId));
     const clientContacts = selectedClient?.keyContacts || [];
     const clientProjects = projects.filter(p => p.assignedCompanyIds?.includes(parseInt(selectedClientId)));
@@ -40,7 +39,7 @@ export default function FloatCandidateModal({ candidate, isOpen, onClose, prefil
 
     // Phase-aware message generation
     useEffect(() => {
-        if (candidate && selectedProject && prefilledData) {
+        if (isOpen && candidate && selectedProject && prefilledData) {
             const currentPhase = selectedProject.phaseSettings?.currentPhase || prefilledData.currentPhase || '02_structure';
             const siteManagerName = prefilledData.siteManagerName || selectedContact || 'there';
             const phaseMessage = generatePhaseMessage(
@@ -51,7 +50,9 @@ export default function FloatCandidateModal({ candidate, isOpen, onClose, prefil
             );
             setMessage(phaseMessage);
         }
-    }, [candidate, selectedProject, prefilledData, selectedContact]);
+    }, [isOpen, candidate, selectedProject, prefilledData, selectedContact]);
+
+    if (!isOpen) return null;
 
     const handleSend = () => {
         if (!candidate) {
