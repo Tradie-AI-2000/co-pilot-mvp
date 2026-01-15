@@ -88,12 +88,21 @@ const LaborRequirementBuilder = ({ requirements = [], phaseId, onChange, candida
                                             <label>Match & Allocate ({matches.length} Matches)</label>
                                             <div className="match-list">
                                                 {matches.slice(0, 5).map(c => (
-                                                    <div key={c.id} className="match-row">
-                                                        <div className="match-info">
-                                                            <span className="match-name">{c.firstName} {c.lastName}</span>
-                                                            <span className="match-meta">{c.role} • {c.suburb}</span>
+                                                    <div key={c.id} className="match-card">
+                                                        <div className="match-avatar">
+                                                            {c.firstName?.[0]}{c.lastName?.[0]}
                                                         </div>
-                                                        <button className="btn-assign-sm" onClick={() => assignCandidateToProject(c.id, projectId, req.id)}>Allocate</button>
+                                                        <div className="match-info">
+                                                            <div className="match-name">{c.firstName} {c.lastName}</div>
+                                                            <div className="match-meta">
+                                                                <span className="match-role">{c.role}</span>
+                                                                <span className="dot"></span>
+                                                                <span className="match-suburb">{c.suburb}</span>
+                                                            </div>
+                                                        </div>
+                                                        <button className="btn-allocate" onClick={() => assignCandidateToProject(c.id, projectId, req.id)}>
+                                                            Allocate
+                                                        </button>
                                                     </div>
                                                 ))}
                                                 {matches.length === 0 && <div className="empty-match">No immediate matches in bench.</div>}
@@ -109,12 +118,12 @@ const LaborRequirementBuilder = ({ requirements = [], phaseId, onChange, candida
 
             <div className="add-interface">
                 {isCustom ? (
-                    <div className="flex gap-1" style={{ flex: 1, display: 'flex', gap: '4px' }}>
-                        <input type="text" placeholder="Custom..." value={newTrade} onChange={(e) => setNewTrade(e.target.value)} className="input-sm" style={{ flex: 1 }} autoFocus />
-                        <button className="btn-icon-danger" onClick={() => setIsCustom(false)}><X size={14} /></button>
+                    <div className="flex-1 flex gap-1">
+                        <input type="text" placeholder="Custom..." value={newTrade} onChange={(e) => setNewTrade(e.target.value)} className="input-sm flex-1" autoFocus />
+                        <button type="button" className="btn-icon-danger" onClick={() => setIsCustom(false)}><X size={14} /></button>
                     </div>
                 ) : (
-                    <select value={newTrade} onChange={(e) => e.target.value === "custom" ? setIsCustom(true) : setNewTrade(e.target.value)} className="input-sm" style={{ flex: 1 }}>
+                    <select value={newTrade} onChange={(e) => e.target.value === "custom" ? setIsCustom(true) : setNewTrade(e.target.value)} className="input-sm flex-1">
                         <option value="">+ Requirement...</option>
                         <optgroup label="Suggested">{suggestedTrades.map(t => <option key={t} value={t}>{t}</option>)}</optgroup>
                         <optgroup label="All">{otherRoles.map(r => <option key={r} value={r}>{r}</option>)}</optgroup>
@@ -126,6 +135,142 @@ const LaborRequirementBuilder = ({ requirements = [], phaseId, onChange, candida
                     <Plus size={16} /> Check Availability
                 </button>
             </div>
+            
+            <style jsx>{`
+                .labor-builder { display: flex; flex-direction: column; gap: 1rem; width: 100%; border-top: 1px solid var(--border); padding-top: 1.5rem; }
+                .req-list { display: flex; flex-direction: column; gap: 0.75rem; }
+                .req-group { border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; background: rgba(15, 23, 42, 0.4); transition: all 0.3s; }
+                .req-group.expanded { border-color: var(--secondary); box-shadow: 0 0 20px rgba(0, 242, 255, 0.05); }
+                .req-item { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; cursor: pointer; }
+                .req-item:hover { background: rgba(255, 255, 255, 0.02); }
+                .req-trade { font-weight: 800; font-size: 0.85rem; color: white; text-transform: uppercase; letter-spacing: 0.02em; }
+                .req-status-pill { font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 8px; border-radius: 4px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); }
+                .req-status-pill.filled { color: var(--secondary); border-color: var(--secondary); }
+                .req-status-pill.gap { color: #f59e0b; border-color: #f59e0b; }
+
+                .req-actions { display: flex; align-items: center; gap: 1rem; }
+                .traffic-light { font-size: 0.65rem; padding: 2px 8px; border-radius: 4px; font-weight: 900; text-transform: uppercase; }
+                .traffic-light.green { background: rgba(34, 197, 94, 0.1); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.2); }
+                .traffic-light.red { background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); }
+
+                .allocation-drawer { padding: 1rem; background: rgba(0,0,0,0.3); border-top: 1px solid var(--border); }
+                .assigned-section label, .match-section label { display: block; font-size: 0.6rem; color: var(--secondary); font-weight: 900; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; }
+
+                .match-list { display: flex; flex-direction: column; gap: 0.75rem; }
+                .match-card {
+                    display: flex; align-items: center; gap: 1rem;
+                    padding: 0.75rem 1rem; background: rgba(255, 255, 255, 0.03);
+                    border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px;
+                    transition: all 0.3s;
+                }
+                .match-card:hover { background: rgba(255, 255, 255, 0.05); border-color: var(--secondary); transform: translateX(4px); }
+
+                .match-avatar {
+                    width: 32px; height: 32px; border-radius: 50%;
+                    background: rgba(0, 242, 255, 0.1); color: var(--secondary);
+                    display: flex; align-items: center; justify-content: center;
+                    font-size: 0.75rem; font-weight: 900; border: 1px solid rgba(0, 242, 255, 0.2);
+                }
+                .match-info { flex: 1; }
+                .match-name { font-size: 0.85rem; font-weight: 700; color: white; margin-bottom: 2px; }
+                .match-meta { display: flex; align-items: center; gap: 8px; font-size: 0.7rem; color: var(--text-muted); font-weight: 500; }
+                .match-meta .dot { width: 3px; height: 3px; border-radius: 50%; background: rgba(255,255,255,0.2); }
+
+                .btn-allocate {
+                    background: rgba(0, 242, 255, 0.1); color: var(--secondary);
+                    border: 1px solid rgba(0, 242, 255, 0.2); border-radius: 6px;
+                    padding: 6px 12px; font-size: 0.7rem; font-weight: 800;
+                    text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .btn-allocate:hover { background: var(--secondary); color: #0f172a; border-color: var(--secondary); transform: scale(1.05); }
+
+                .add-interface { 
+                    display: flex; gap: 0.75rem; padding: 1.25rem 1.5rem; 
+                    background: rgba(255, 255, 255, 0.03); 
+                    border-radius: 0 0 12px 12px; 
+                    border: 1px solid var(--border);
+                    border-top: none; 
+                    align-items: center; 
+                }
+
+                .input-sm { 
+                    padding: 10px 14px; 
+                    background: var(--primary-light); 
+                    border: 1px solid var(--border); 
+                    border-radius: 8px; 
+                    color: var(--text-main); 
+                    font-size: 0.85rem;
+                    font-weight: 500;
+                    outline: none;
+                    transition: all 0.2s;
+                }
+
+                select.input-sm {
+                    cursor: pointer;
+                }
+
+                .input-sm:focus { 
+                    border-color: var(--secondary); 
+                    background: rgba(30, 41, 59, 1); 
+                    box-shadow: 0 0 0 2px rgba(0, 242, 255, 0.1); 
+                }
+
+                .input-sm option, 
+                .input-sm optgroup { 
+                    background: var(--primary); 
+                    color: var(--text-main); 
+                }
+
+                .input-sm optgroup { 
+                    font-weight: 800; 
+                    text-transform: uppercase; 
+                    font-size: 0.7rem; 
+                    color: var(--secondary); 
+                    padding: 8px; 
+                }
+
+                .input-count { width: 80px; text-align: center; }
+
+                .btn-add-sm { 
+                    background: var(--secondary); 
+                    color: var(--primary); 
+                    border: none; 
+                    border-radius: 8px; 
+                    padding: 10px 24px; 
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center; 
+                    gap: 0.75rem; 
+                    cursor: pointer; 
+                    transition: all 0.2s; 
+                    font-size: 0.8rem; 
+                    font-weight: 900; 
+                    white-space: nowrap;
+                    text-transform: uppercase;
+                    letter-spacing: 0.1em;
+                }
+                .btn-add-sm:hover { background: white; transform: translateY(-1px); box-shadow: 0 8px 20px rgba(0, 242, 255, 0.3); }
+                .btn-add-sm:disabled { opacity: 0.3; cursor: not-allowed; transform: none; box-shadow: none; }
+                .btn-icon-danger {
+                    background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid transparent;
+                    border-radius: 6px; padding: 6px; cursor: pointer; transition: all 0.2s;
+                    display: flex; align-items: center; justify-content: center;
+                }
+                .btn-icon-danger:hover { background: rgba(239, 68, 68, 0.2); border-color: #ef4444; }
+                .btn-remove-assign {
+                    background: transparent; color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);
+                    padding: 2px 8px; border-radius: 4px; font-size: 0.6rem; font-weight: 700;
+                    text-transform: uppercase; cursor: pointer; margin-left: auto;
+                }
+                .btn-remove-assign:hover { background: rgba(239, 68, 68, 0.1); }
+                .assigned-row {
+                    display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem;
+                    background: rgba(255,255,255,0.02); border-radius: 6px; margin-bottom: 4px;
+                }
+                .assigned-row .name { font-size: 0.8rem; font-weight: 700; color: white; }
+                .assigned-row .role-tag { font-size: 0.65rem; color: var(--text-muted); }
+            `}</style>
         </div>
     );
 };
@@ -957,7 +1102,12 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                     outline: none; font-size: 0.95rem; width: 100%; font-family: inherit;
                     transition: all 0.2s;
                 }
-                .date-input { color-scheme: dark; }
+                .date-input { 
+                    color-scheme: dark; 
+                    background: #0f172a !important;
+                    color: white !important;
+                    border: 1px solid rgba(255,255,255,0.1);
+                }
 
                 input:focus, select:focus, textarea:focus { border-color: var(--secondary); background: rgba(15, 23, 42, 0.8); box-shadow: 0 0 15px rgba(0, 242, 255, 0.05); }
 
@@ -975,18 +1125,19 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                 }
                 .sidebar-header {
                     padding: 1.5rem 1.25rem; border-bottom: 1px solid var(--border);
-                    font-size: 10px; color: var(--text-muted); font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em;
+                    font-size: 11px; color: var(--secondary); font-weight: 900; text-transform: uppercase; letter-spacing: 0.25em;
+                    background: rgba(0,0,0,0.2);
                 }
-                .strategy-detail { overflow-y: auto; padding: 2rem; background: rgba(2, 6, 23, 0.3); }
+                .strategy-detail { overflow-y: auto; padding: 2.5rem; background: rgba(2, 6, 23, 0.4); }
 
                 .phase-nav-item {
-                    display: flex; flex-direction: column; align-items: flex-start; padding: 1.25rem;
+                    display: flex; flex-direction: column; align-items: flex-start; padding: 1.5rem 1.25rem;
                     background: transparent; border: none; border-left: 4px solid transparent;
                     color: var(--text-muted); cursor: pointer; transition: all 0.3s;
                     border-bottom: 1px solid rgba(255,255,255,0.03); width: 100%; text-align: left;
                 }
-                .phase-nav-item:hover { background: rgba(255,255,255,0.02); color: white; }
-                .phase-nav-item.active { background: rgba(0, 242, 255, 0.05); border-left-color: var(--secondary); color: white; }
+                .phase-nav-item:hover { background: rgba(255,255,255,0.03); color: white; }
+                .phase-nav-item.active { background: rgba(0, 242, 255, 0.08); border-left-color: var(--secondary); color: white; box-shadow: inset 4px 0 15px rgba(0, 242, 255, 0.05); }
                 .phase-nav-item.skipped { opacity: 0.4; }
                 
                 .phase-nav-info { display: flex; gap: 1rem; align-items: center; width: 100%; }
@@ -1071,36 +1222,6 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                 }
                 .btn-save:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0, 242, 255, 0.3); }
 
-                .labor-builder { display: flex; flex-direction: column; gap: 1rem; width: 100%; border-top: 1px solid var(--border); padding-top: 1.5rem; }
-                .req-list { display: flex; flex-direction: column; gap: 0.75rem; }
-                .req-group { border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; background: rgba(15, 23, 42, 0.4); transition: all 0.3s; }
-                .req-group.expanded { border-color: var(--secondary); box-shadow: 0 0 20px rgba(0, 242, 255, 0.05); }
-                .req-item { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; cursor: pointer; }
-                .req-item:hover { background: rgba(255, 255, 255, 0.02); }
-                .req-trade { font-weight: 800; font-size: 0.85rem; color: white; text-transform: uppercase; letter-spacing: 0.02em; }
-                .req-status-pill { font-size: 0.65rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 8px; border-radius: 4px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); }
-                .req-status-pill.filled { color: var(--secondary); border-color: var(--secondary); }
-                .req-status-pill.gap { color: #f59e0b; border-color: #f59e0b; }
-                
-                .req-actions { display: flex; align-items: center; gap: 1rem; }
-                .traffic-light { font-size: 0.65rem; padding: 2px 8px; border-radius: 4px; font-weight: 900; text-transform: uppercase; }
-                .traffic-light.green { background: rgba(34, 197, 94, 0.1); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.2); }
-                .traffic-light.red { background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); }
-                
-                .allocation-drawer { padding: 1rem; background: rgba(0,0,0,0.3); border-top: 1px solid var(--border); }
-                .assigned-section label, .match-section label { display: block; font-size: 0.6rem; color: var(--secondary); font-weight: 900; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; }
-                .match-list { display: flex; flex-direction: column; gap: 6px; }
-                .match-row { display: flex; align-items: center; justify-content: space-between; padding: 10px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid transparent; transition: all 0.2s; }
-                .match-row:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.1); }
-                .match-name { font-size: 0.85rem; color: white; font-weight: 700; }
-                .match-meta { font-size: 0.7rem; color: var(--text-muted); font-weight: 500; }
-                .btn-assign-sm { background: var(--secondary); color: #0f172a; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.7rem; font-weight: 900; text-transform: uppercase; cursor: pointer; transition: all 0.2s; }
-                .btn-assign-sm:hover { transform: scale(1.05); box-shadow: 0 0 15px rgba(0, 242, 255, 0.3); }
-                
-                .add-interface { display: flex; gap: 0.75rem; padding-top: 0.75rem; }
-                .input-sm { padding: 8px 12px; background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border); border-radius: 6px; color: white; font-size: 0.85rem; }
-                .btn-add-sm { background: var(--secondary); color: #0f172a; border: none; border-radius: 6px; padding: 8px 16px; display: flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; transition: all 0.2s; font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
-                .btn-add-sm:hover { background: white; }
                 /* Engagement Toggle */
                 .engagement-toggle {
                     display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
