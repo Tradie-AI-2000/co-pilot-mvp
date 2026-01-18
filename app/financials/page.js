@@ -14,7 +14,7 @@ export default function FinancialsPage() {
     const [selectedPlacement, setSelectedPlacement] = useState(null);
     const [isFloatModalOpen, setIsFloatModalOpen] = useState(false);
 
-    const BURDEN_MULTIPLIER = 1.20; 
+    const BURDEN_MULTIPLIER = 1.20;
     const activeCandidates = candidates.filter(c => c.status === "On Job");
     const benchCandidates = candidates.filter(c => c.status === "Available" && c.guaranteedHours > 0);
     const grossMarginPercent = weeklyRevenue > 0 ? ((weeklyGrossProfit / weeklyRevenue) * 100).toFixed(1) : "0.0";
@@ -89,7 +89,13 @@ export default function FinancialsPage() {
             </div>
 
             <div className="main-content-grid">
-                {/* Zone 2: The Bleed (Bench Liability) */}
+
+                {/* HERO POSITION: Commission Dashboard (My Performance Desk) */}
+                {/* This is now the first child, so it inherits the 2fr width */}
+                <CommissionDashboard />
+
+                {/* SIDE POSITION: The Bleed (Liability Watchlist) */}
+                {/* This is now the second child, so it inherits the 1fr width */}
                 <div className="panel bleed-panel">
                     <div className="panel-header">
                         <h3 className="text-rose-400 flex items-center gap-2">
@@ -115,11 +121,11 @@ export default function FinancialsPage() {
                                     <div className="text-sm font-mono text-rose-400">
                                         -${Math.round((c.payRate * BURDEN_MULTIPLIER * c.guaranteedHours)).toLocaleString()}
                                     </div>
-                                    <button 
+                                    <button
                                         className="float-btn"
                                         onClick={() => handleFloatClick(c)}
                                     >
-                                        Float Now
+                                        Float
                                     </button>
                                 </div>
                             ))}
@@ -130,8 +136,6 @@ export default function FinancialsPage() {
                     </div>
                 </div>
 
-                {/* Zone 3: Commission Dashboard */}
-                <CommissionDashboard />
             </div>
 
             {/* Zone 4: Forecasting */}
@@ -217,7 +221,7 @@ export default function FinancialsPage() {
                 /* Main Content Grid */
                 .main-content-grid {
                     display: grid;
-                    grid-template-columns: 2fr 1fr;
+                    grid-template-columns: 2fr 1fr; /* First child is 2x wider than second */
                     gap: 1.5rem;
                     flex: 1;
                 }
