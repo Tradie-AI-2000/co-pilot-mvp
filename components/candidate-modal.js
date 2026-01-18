@@ -179,6 +179,50 @@ export default function CandidateModal({ candidate, squads, projects, onClose, o
                         </div>
                         {/* --- END NEW SECTION --- */}
 
+                        {/* --- NEW SECTION: QUALIFICATIONS & TICKETS --- */}
+                        <div className="info-section">
+                            <h3>Qualifications & Tickets</h3>
+                            <div className="tickets-container">
+                                {formData.tickets && formData.tickets.length > 0 ? (
+                                    <div className="tickets-list">
+                                        {formData.tickets.map((ticket, index) => (
+                                            <span key={index} className="ticket-tag">
+                                                {ticket}
+                                                {isEditing && (
+                                                    <button
+                                                        className="remove-ticket-btn"
+                                                        onClick={() => {
+                                                            const newTickets = [...formData.tickets];
+                                                            newTickets.splice(index, 1);
+                                                            handleChange('tickets', newTickets);
+                                                        }}
+                                                    >
+                                                        &times;
+                                                    </button>
+                                                )}
+                                            </span>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    !isEditing && <span className="text-muted text-sm">No tickets listed.</span>
+                                )}
+
+                                {isEditing && (
+                                    <div className="add-ticket-wrapper">
+                                        <TicketSelector
+                                            onAdd={(ticket) => {
+                                                const currentTickets = formData.tickets || [];
+                                                if (!currentTickets.includes(ticket)) {
+                                                    handleChange('tickets', [...currentTickets, ticket]);
+                                                }
+                                            }}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        {/* --- END TICKETS SECTION --- */}
+
                         <div className="info-section">
                             <h3>Recruiter Intelligence & Compliance</h3>
                             <div className="info-grid">
@@ -928,12 +972,136 @@ export default function CandidateModal({ candidate, squads, projects, onClose, o
                 font-style: italic;
                 padding: 0.5rem;
             }
+
+            /* TICKETS STYLES */
+            .tickets-container {
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+            }
+            .tickets-list {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+            .ticket-tag {
+                background: rgba(59, 130, 246, 0.15);
+                color: #60a5fa;
+                border: 1px solid rgba(59, 130, 246, 0.3);
+                padding: 0.25rem 0.75rem;
+                border-radius: 99px;
+                font-size: 0.85rem;
+                font-weight: 500;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+            .remove-ticket-btn {
+                background: none;
+                border: none;
+                color: inherit;
+                cursor: pointer;
+                font-size: 1.1rem;
+                line-height: 1;
+                opacity: 0.7;
+                padding: 0;
+                display: flex;
+                align-items: center;
+            }
+            .remove-ticket-btn:hover {
+                opacity: 1;
+            }
+            .add-ticket-wrapper {
+                margin-top: 0.5rem;
+            }
           `}</style>
         </>
     );
 }
 
 // --- Internal Components ---
+
+function TicketSelector({ onAdd }) {
+    const [isCreating, setIsCreating] = useState(false);
+    const [newTicket, setNewTicket] = useState("");
+    const commonTickets = [
+        "Site Safe (Passport)",
+        "ConstructSafe",
+        "First Aid L1",
+        "First Aid L2",
+        "EWP (Scissor)",
+        "EWP (Boom)",
+        "Working at Heights",
+        "Confined Space",
+        "WTR Endorsement",
+        "Forklift (F)",
+        "Traffic Control (TC)",
+        "STMS",
+        "LBP",
+        "Electrical Reg",
+        "Plumbing Reg"
+    ];
+
+    const handleCreate = () => {
+        if (newTicket) {
+            onAdd(newTicket);
+            setIsCreating(false);
+            setNewTicket("");
+        }
+    };
+
+    if (isCreating) {
+        return (
+            <div className="flex gap-2 items-center">
+                <input
+                    className="edit-input"
+                    placeholder="Ticket Name..."
+                    value={newTicket}
+                    onChange={e => setNewTicket(e.target.value)}
+                    autoFocus
+                    style={{ maxWidth: '200px' }}
+                />
+                <button
+                    className="icon-btn primary small"
+                    onClick={handleCreate}
+                    title="Add Ticket"
+                >
+                    <Plus size={14} />
+                </button>
+                <button
+                    className="icon-btn small"
+                    onClick={() => setIsCreating(false)}
+                    title="Cancel"
+                >
+                    <X size={14} />
+                </button>
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex gap-2">
+            <select
+                className="edit-input"
+                style={{ maxWidth: '250px' }}
+                onChange={(e) => {
+                    if (e.target.value === "__NEW__") {
+                        setIsCreating(true);
+                    } else if (e.target.value) {
+                        onAdd(e.target.value);
+                        e.target.value = ""; // Reset
+                    }
+                }}
+            >
+                <option value="">+ Add Qualification / Ticket...</option>
+                {commonTickets.map(t => (
+                    <option key={t} value={t}>{t}</option>
+                ))}
+                <option value="__NEW__">+ Add Custom...</option>
+            </select>
+        </div>
+    );
+}
 
 function RoleSelector({ value, onChange }) {
     const { availableRoles, addRole } = useData();

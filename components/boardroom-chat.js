@@ -44,7 +44,7 @@ export default function BoardroomChat({ agentId, onSignalUpdate }) {
         const currentPeriod = getFinancialWeek(); // <--- NEW: Calculate the period
 
         // A. Financials
-        const impliedWeeklyTarget = 96000;
+        const impliedWeeklyTarget = 6000;
         const financials = {
             weeklyRevenue: weeklyRevenue || 0,
             weeklyGrossProfit: weeklyGrossProfit || 0,
@@ -139,6 +139,7 @@ export default function BoardroomChat({ agentId, onSignalUpdate }) {
                         residency: c.residency || "Unknown",
                         siteSafe: c.siteSafeExpiry ? `Valid until ${c.siteSafeExpiry}` : "None/Expired"
                     },
+                    tickets: c.tickets || [],
                     rating: c.internalRating || "N/A",
                     financials: {
                         payRate: c.payRate || 0,

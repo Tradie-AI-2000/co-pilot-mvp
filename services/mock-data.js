@@ -37,7 +37,8 @@ export const candidates = [
         guaranteedHours: 30,
         siteSafeExpiry: "2025-05-20", // EXPIRED (Critical)
         satisfactionRating: 5,
-        compliance: ["Site Safe", "LBP"]
+        compliance: ["Site Safe", "LBP"],
+        tickets: ["Site Safe (Passport)", "LBP", "Working at Heights", "EWP (Scissor)"]
     },
     {
         id: 2,
@@ -57,7 +58,8 @@ export const candidates = [
         finishDate: "2025-12-15",
         siteSafeExpiry: "2026-06-01",
         satisfactionRating: 2, // FLIGHT RISK (Urgent)
-        compliance: ["Site Safe"]
+        compliance: ["Site Safe"],
+        tickets: ["Site Safe (Passport)", "First Aid L1"]
     },
     {
         id: 3,
@@ -76,7 +78,8 @@ export const candidates = [
         visaExpiry: "2025-06-05", // EXPIRING SOON (Urgent)
         siteSafeExpiry: "2026-01-10",
         satisfactionRating: 4,
-        compliance: ["Site Safe"]
+        compliance: ["Site Safe"],
+        tickets: ["Site Safe (Passport)", "Confined Space", "EWP (Boom)"]
     },
     {
         id: 4,
@@ -94,7 +97,8 @@ export const candidates = [
         guaranteedHours: 0,
         siteSafeExpiry: "2027-01-01",
         satisfactionRating: 5,
-        compliance: ["Site Safe", "LBP"]
+        compliance: ["Site Safe", "LBP"],
+        tickets: ["Site Safe (Passport)", "LBP", "Working at Heights"]
     },
     {
         id: 10,
@@ -114,7 +118,8 @@ export const candidates = [
         visaExpiry: "2025-06-05", // EXPIRING SOON (Urgent)
         siteSafeExpiry: "2026-01-10",
         satisfactionRating: 4,
-        compliance: ["Site Safe"]
+        compliance: ["Site Safe"],
+        tickets: ["Site Safe (Passport)", "EWP (Scissor)", "Working at Heights"]
     },
     {
         id: 11,
@@ -133,7 +138,8 @@ export const candidates = [
         guaranteedHours: 0,
         siteSafeExpiry: "2025-12-01",
         satisfactionRating: 5,
-        compliance: ["Site Safe", "LBP"]
+        compliance: ["Site Safe", "LBP"],
+        tickets: ["Site Safe (Passport)", "LBP", "First Aid L2"]
     },
     {
         id: 12,
@@ -152,7 +158,8 @@ export const candidates = [
         guaranteedHours: 40,
         siteSafeExpiry: "2026-06-01",
         satisfactionRating: 4,
-        compliance: ["Site Safe", "First Aid"]
+        compliance: ["Site Safe", "First Aid"],
+        tickets: ["Site Safe (Passport)", "First Aid L2", "STMS"]
     },
     {
         id: 13,
@@ -171,7 +178,8 @@ export const candidates = [
         guaranteedHours: 0,
         siteSafeExpiry: "2026-10-01",
         satisfactionRating: 5,
-        compliance: ["Site Safe"]
+        compliance: ["Site Safe"],
+        tickets: ["Site Safe (Passport)", "Working at Heights", "Confined Space"]
     },
     {
         id: 14,
@@ -190,7 +198,8 @@ export const candidates = [
         guaranteedHours: 0,
         siteSafeExpiry: "2026-05-15",
         satisfactionRating: 4,
-        compliance: ["WTR Endorsement", "Site Safe"]
+        compliance: ["WTR Endorsement", "Site Safe"],
+        tickets: ["Site Safe (Passport)", "WTR Endorsement", "Confined Space"]
     }
 ];
 
