@@ -1,14 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    experimental: {
-        outputFileTracingIncludes: {
-            '/api/agent': [
-                './_bmad/**/*', 
-                './_bmad-output/**/*',
-                './services/**/*',
-                './expert-agent-architecture.md'
-            ]
-        }
+    outputFileTracingIncludes: {
+        '/api/agent': [
+            './_bmad/**/*', 
+            './_bmad-output/**/*',
+            './services/**/*',
+            './expert-agent-architecture.md'
+        ]
     }
 };
 
