@@ -14,19 +14,27 @@
     *   `google-sheets.js`: Service for syncing data from external sheets.
     *   `enhanced-mock-data.js`: Rich static data for development.
     *   `construction-logic.js`: Domain-specific logic for phases and roles.
+    *   `db/schema`: Drizzle ORM schema for SQLite/Postgres persistence.
+    *   `api/`: Dedicated API routes for Nudges, Geo-services, and Crew Deployments.
 
 ## 3. Architecture
 The application uses the Next.js App Router architecture.
 
 *   **`app/`**: Routes and Page Logic.
-    *   `page.js`: **Predictive Command Center** (Main Dashboard).
-    *   `bd/page.js`: **Business Development** (The Hunter, Matchmaker, Golden Hour).
-    *   `crm/page.js`: **Client Management** (Tiered Clients, Relationship Tracking).
-    *   `projects/page.js`: **Projects Database** (Construction Sites, Phases).
-    *   `candidates/page.js`: **Candidate Pool** (Roster, Squads).
-    *   `financials/page.js`: **Financial Performance** (Margins, Forecasting, Commissions).
-    *   `market/page.js`: **Market Intelligence** (Geospatial Analysis).
-    *   `portal/page.js`: **Client Portal** (External facing view for clients like Fletcher).
+    *   `page.js`: **Predictive Command Center** (Main Dashboard) with Risk Control & Mission Control.
+    *   `bd/page.js`: **Business Development** ("The Hunter Deck") featuring The Bleed, Matchmaker, and Activity Pulse.
+    *   `crm/page.js`: **Client Management** with Tiered Boards and Action Boards.
+    *   `projects/page.js`: **Projects Database** with Geospatial Intelligence & Isochrone Mapping.
+    *   `candidates/page.js`: **Candidate Pool** with Squad Builder, Rosters, and Map Views.
+    *   `financials/page.js`: **Financial Command Center** with Ledger, Bench Liability, and Forecasting.
+    *   `market/page.js`: **Market Intelligence** (Placeholder for future reports).
+    *   `portal/page.js`: **Stellar Connect** (Client Portal) for Project History, Candidates, and Timesheets.
+    *   `help/page.js`: **Help Desk** & Documentation.
+*   **`app/api/`**: Backend Logic.
+    *   `nudges/`: Logic for "Churn Interceptor", "Rainmaker", and "Client Stalker".
+    *   `geo/`: Mapbox Isochrone proxy.
+    *   `crews/`: Squad deployment logic.
+    *   `webhooks/`: BCI Ingest and Project Signals.
 *   **`components/`**: Reusable UI Components.
     *   **Core:** `Sidebar.js`, `Card.js`, `StatCard.js`.
     *   **Complex Widgets:**
@@ -36,42 +44,48 @@ The application uses the Next.js App Router architecture.
         *   `RealMap.js` & `GeospatialMap.js`: Map visualizations.
         *   `ProjectIntelligencePanel.js`: Detailed site analytics.
         *   `EnhancedClientDetailsModal.js`: Comprehensive client management.
+        *   `ActivityPulseWidget`: Visualizes calls/sms/email volume.
 *   **`context/`**:
     *   `data-context.js`: Hydrates state, handles data sanitization, and manages "Cloud Sync" simulation.
+    *   `crew-context.js`: Manages squad deployment state.
 
 ## 4. Key Features
 
 ### A. Predictive Command Center
 *   **The Scoreboard:** Live metrics for Billings, Margins, and Active Headcount.
-*   **Mission Control:** Activity feeds, urgent alerts, and project watchlists.
-*   **Territory Map:** Visualizes active sites and candidate locations.
+*   **Risk Control:** Visual Redeployment Radar for upcoming finish dates.
+*   **Mission Control:** Deal Flow summary and Client Demand widgets.
+*   **Nudge Engine:** Proactive alerts ("Focus Feed") for critical actions.
 
 ### B. Business Development (The Hunter)
-*   **The Matchmaker:** Algorithmic matching of candidates to upcoming project phases.
+*   **The Matchmaker:** Algorithmic matching of candidates to upcoming project phases (Civil -> Structure -> Fitout).
+*   **Activity Pulse:** Visual heatmaps of daily/weekly call volume.
 *   **Golden Hour Mode:** Distraction-free interface for high-volume call blocks.
-*   **Tender Radar:** Tracks upcoming project opportunities.
+*   **The Bleed:** Real-time calculation of margin at risk from finishing candidates.
 
 ### C. Projects & Sites
-*   **Phase Tracking:** detailed construction lifecycle tracking (Civil -> Structure -> Fitout).
-*   **Workforce Planning:** Gap analysis between required trades and deployed staff.
-*   **Site Intelligence:** Manage site managers, H&S requirements, and access details.
+*   **Geospatial Intelligence:** Isochrone mapping (commute times) and project clustering.
+*   **Phase Tracking:** Detailed construction lifecycle tracking.
+*   **Market Intel:** "Pre-Emptive Strike" logic based on BCI/Cordell data signals.
 
 ### D. Candidate & Workforce Management
 *   **Squad Builder:** Group candidates into functional teams for bulk deployment.
-*   **Redeployment Radar:** Visualizes when workers are finishing to prevent bench time.
-*   **Active Bench:** Monitoring of available candidates with guaranteed hours liability.
+*   **Bench Roster:** Visual management of available vs. deployed talent.
+*   **SharePoint Mirror:** Widgets reflecting live spreadsheet data (Finishing Soon, Client Demand).
 
 ### E. Financials
-*   **Commission Dashboard:** Tracks individual and team performance.
-*   **Margin Analysis:** Real-time visibility into weekly gross profit and revenue at risk.
-*   **Forecasting:** Projecting future revenue based on pipeline probability.
+*   **The Ledger:** Real-time P&L visualization (Revenue, Payroll, Net Profit).
+*   **Liability Watchlist:** Tracking guaranteed hours costs for unassigned workers.
+*   **Commission Dashboard:** Individual performance tracking.
 
 ## 5. Recent Changes & Fixes
-*   **Duplicate ID Resolution:** Fixed critical rendering errors caused by duplicate `assignedCompanyIds` (e.g., `CL043`) in the Project List and Client Modals. Implemented `Set` based filtering in `app/projects/page.js` and `enhanced-client-details-modal.js` to ensure key uniqueness.
-*   **State hardening:** Improved data sanitization in `DataContext` to handle string/number ID mismatches.
+*   **API Layer:** Added dedicated routes for Nudges, Geo, and Webhooks.
+*   **Hunter Deck:** Enhanced BD page with Activity Pulse and improved Matchmaker logic.
+*   **Projects:** Added Geospatial Map with Isochrone commute analysis.
+*   **Help Desk:** Comprehensive documentation added.
 
 ## 6. Next Steps
-1.  **API Integration:** Fully replace mock data with live endpoints (JobAdder, Google Sheets).
-2.  **Authentication:** Implement actual user/client login for the Portal.
-3.  **Data Persistence:** Connect `write` operations (Add/Edit) to a backend database.
-4.  **Mobile Optimization:** Refine complex tables and grids for mobile responsiveness.
+1.  **Stellar-Jarvis Integration:** Deploying the "Desk Architect" agent to orchestrate nudges and strategy.
+2.  **Live Data Sync:** Connect `google-sheets.js` to real API keys.
+3.  **Authentication:** Implement NextAuth for Client Portal.
+4.  **Mobile Polish:** Optimize complex grids for iPad/Phone views.

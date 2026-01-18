@@ -2,7 +2,7 @@
 
 import { X, User, Phone, Mail, MapPin, Calendar, Clock } from "lucide-react";
 
-export default function ActiveBenchModal({ candidates, onClose }) {
+export default function ActiveBenchModal({ candidates, onClose, onViewCandidate }) {
     if (!candidates) return null;
 
     return (
@@ -26,7 +26,7 @@ export default function ActiveBenchModal({ candidates, onClose }) {
                         {candidates.map(candidate => (
                             <div key={candidate.id} className="bg-slate-800/40 border border-slate-700 p-4 rounded-lg flex items-start gap-4 hover:border-secondary/50 transition-colors group">
                                 <div className="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center text-secondary font-bold text-xl">
-                                    {candidate.firstName[0]}{candidate.lastName[0]}
+                                    {candidate.firstName?.[0]}{candidate.lastName?.[0]}
                                 </div>
                                 <div className="flex-1">
                                     <div className="flex justify-between items-start">
@@ -37,7 +37,7 @@ export default function ActiveBenchModal({ candidates, onClose }) {
                                             <p className="text-slate-400 text-sm">{candidate.role}</p>
                                         </div>
                                         <div className="text-right">
-                                            <div className="text-emerald-400 font-mono font-bold">${candidate.chargeOutRate || '45'}/hr</div>
+                                            <div className="text-emerald-400 font-mono font-bold">${candidate.chargeRate || '65'}/hr</div>
                                             <div className="text-[10px] uppercase text-slate-500 font-bold">Charge Rate</div>
                                         </div>
                                     </div>
@@ -57,8 +57,11 @@ export default function ActiveBenchModal({ candidates, onClose }) {
                                         <button className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded font-medium text-sm transition-colors flex items-center justify-center gap-2">
                                             <Phone size={14} /> Call
                                         </button>
-                                        <button className="flex-1 py-2 bg-secondary/10 hover:bg-secondary/20 text-secondary border border-secondary/30 rounded font-medium text-sm transition-colors">
-                                            View Profile
+                                        <button
+                                            className="flex-1 py-2 bg-secondary/10 hover:bg-secondary/20 text-secondary border border-secondary/30 rounded font-medium text-sm transition-colors"
+                                            onClick={() => onViewCandidate && onViewCandidate(candidate)}
+                                        >
+                                            Float
                                         </button>
                                     </div>
                                 </div>

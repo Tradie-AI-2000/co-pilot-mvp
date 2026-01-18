@@ -36,7 +36,7 @@ export default function FinancialsPage() {
         <div className="financials-container">
             <header className="page-header">
                 <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-                    <DollarSign className="text-emerald-400" /> Financial Command Center
+                    <DollarSign className="text-emerald-400" /> Financial Command Centre
                 </h1>
                 <div className="header-meta">
                     <span className="text-muted text-sm">Week ending: Jan 7, 2026</span>

@@ -24,7 +24,7 @@ export default function BenchLiabilityWidget({ candidates, onViewBench }) {
             <div className="card-header">
                 <div className="title-row">
                     <AlertOctagon size={20} />
-                    <h3>Bench Risk (Guaranteed Hours)</h3>
+                    <h3>Bench Risk</h3>
                 </div>
                 <span className="count-badge">{benchCandidates.length} Workers</span>
             </div>

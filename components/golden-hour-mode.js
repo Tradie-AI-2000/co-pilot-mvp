@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useData } from "../context/data-context.js";
-import { Phone, CheckCircle, XCircle, Clock, Zap, Calendar, MessageSquare, ArrowRight, Trophy, Flame, History, Mail, MessageCircle, Play, Send, FileText, Coffee, HardHat, Users } from "lucide-react";
+import { Phone, CheckCircle, XCircle, Clock, Zap, Calendar, MessageSquare, ArrowRight, Trophy, Flame, History, Mail, MessageCircle, Play, Send, FileText, Coffee, HardHat, Users, ChevronDown, ChevronUp, ClipboardList } from "lucide-react";
 import { mockLeads } from "../services/enhanced-mock-data.js";
 import { generateCallScript } from "../services/growth-logic.js";
 
@@ -39,7 +39,7 @@ export const RECOVERY_CONTEXTS = [
 ];
 
 export default function GoldenHourMode(props) {
-    const { clients, logActivity } = useData();
+    const { clients, logActivity, updateClient } = useData();
 
     // Session State
     const [sessionStatus, setSessionStatus] = useState("lobby");
@@ -48,11 +48,16 @@ export default function GoldenHourMode(props) {
 
     // Action State
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [callState, setCallState] = useState("idle"); // idle, calling, recovery, drafting, logged
+    const [callState, setCallState] = useState("idle"); // idle, success_input, recovery, drafting, logged
+    const [isScriptExpanded, setIsScriptExpanded] = useState(false);
 
     // Drafting State
     const [draftingMode, setDraftingMode] = useState(null); // 'sms' or 'email'
     const [draftMessage, setDraftMessage] = useState("");
+
+    // Success Input State
+    const [callNote, setCallNote] = useState("");
+    const [followUpTask, setFollowUpTask] = useState("");
 
     // Metrics
     const [streak, setStreak] = useState(0);
@@ -144,17 +149,62 @@ export default function GoldenHourMode(props) {
 
     // FIX: Safeguard these lookups so they don't crash when 'entity' is undefined (Lobby Mode)
     const contactName = entity ? (isClient ? (entity.keyContacts?.[0]?.name || "there") : entity.contactName) : "there";
+    const contactPhone = entity ? (isClient ? (entity.keyContacts?.[0]?.phone || entity.phone || "No Phone") : entity.phone) : "";
+    const contactRole = entity ? (isClient ? (entity.keyContacts?.[0]?.role || "Key Contact") : entity.contactRole) : "";
+
     const recruiterName = "Joe";
     const projectName = "the site";
 
-    const handleCallStart = () => setCallState("calling");
-
-    const handleOutcome = (outcome) => {
-        if (outcome === 'fail') {
+    const handleInitialOutcome = (outcome) => {
+        if (outcome === 'success') {
+            setCallState("success_input");
+        } else if (outcome === 'fail') {
             setCallState("recovery");
-            return;
         }
-        processLog(outcome);
+    };
+
+    const handleCompleteSuccess = () => {
+        if (isClient && entity) {
+            // 1. Prepare Note
+            const noteText = callNote || "Call successful (Logged via Golden Hour)";
+            const newNote = {
+                id: `n-${Date.now()}`,
+                text: noteText,
+                date: new Date().toISOString(),
+                author: recruiterName
+            };
+
+            // 2. Prepare Task (if any)
+            let newTask = null;
+            if (followUpTask) {
+                newTask = {
+                    id: `t-${Date.now()}`,
+                    text: followUpTask,
+                    dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // Default 1 week
+                    completed: false
+                };
+            }
+
+            // 3. Update Client Logic
+            const updatedClient = {
+                ...entity,
+                notes: [newNote, ...(entity.notes || [])],
+                tasks: newTask ? [...(entity.tasks || []), newTask] : (entity.tasks || []),
+                lastContact: new Date().toISOString().split('T')[0], // Update Last Contact Date
+                lastActivityType: 'call', // For UI cues
+                lastActivityNote: noteText
+            };
+
+            updateClient(updatedClient);
+            processLog('contact', { notes: noteText, taskId: newTask?.id });
+        } else {
+            // Fallback for Leads (Activity Log only)
+            processLog('contact', { notes: callNote });
+        }
+
+        // Cleanup
+        setCallNote("");
+        setFollowUpTask("");
     };
 
     const handleRecoverySelection = (mode) => {
@@ -183,11 +233,11 @@ export default function GoldenHourMode(props) {
     };
 
     const handleSendDraft = () => {
-        processLog(draftingMode);
+        processLog(draftingMode, { notes: draftMessage });
         setDraftingMode(null);
     };
 
-    const processLog = (actionType) => {
+    const processLog = (actionType, additionalDetails = {}) => {
         setCallState("logged");
 
         // Log to Global Context
@@ -195,13 +245,13 @@ export default function GoldenHourMode(props) {
             entityId: entity?.id,
             entityName: isClient ? entity.name : entity.companyName,
             contactName,
-            notes: draftMessage || `Logged via Golden Hour (${selectedMode})`
+            ...additionalDetails
         });
 
-        if (['meeting', 'deal'].includes(actionType)) {
+        if (['meeting', 'deal', 'contact'].includes(actionType)) {
             setStreak(s => s + 1);
             setSessionScore(s => s + 50 + (streak * 10));
-        } else if (['contact', 'sms', 'email'].includes(actionType)) {
+        } else if (['sms', 'email'].includes(actionType)) {
             setSessionScore(s => s + 10);
         } else {
             setStreak(0);
@@ -212,6 +262,7 @@ export default function GoldenHourMode(props) {
                 setCurrentIndex(c => c + 1);
                 setCallState("idle");
                 setDraftMessage(""); // Cleanup
+                setIsScriptExpanded(false);
             } else {
                 setSessionStatus("finished");
             }
@@ -327,7 +378,12 @@ export default function GoldenHourMode(props) {
     }
 
     // --- RENDER: ACTIVE SESSION ---
-    const script = callState === 'calling' || callState === 'recovery' ? generateCallScript(entity, currentTarget?.intent) : '';
+
+    // Generate AI Script
+    const script = generateCallScript(entity, currentTarget?.intent);
+
+    // Example Script Lead
+    const scriptPreview = "Gidday " + contactName.split(' ')[0] + ", Joe Ward here from Stellar... Just ringing to see if you require any temp labour workers for [Project] this week?";
 
     return (
         <div className="golden-hour-mode">
@@ -359,9 +415,9 @@ export default function GoldenHourMode(props) {
                         <div className="contact-info">
                             <div className="text-right">
                                 <div className="name text-lg font-bold text-white">{contactName}</div>
-                                <div className="role text-sm text-slate-400">{isClient ? (entity.keyContacts?.[0]?.role || "Key Contact") : entity.contactRole}</div>
+                                <div className="role text-sm text-slate-400">{contactRole}</div>
                             </div>
-                            <div className="avatar">{(isClient ? (entity.keyContacts?.[0]?.name || entity.name) : entity.contactName)?.[0]}</div>
+                            <div className="avatar">{contactName?.[0]}</div>
                         </div>
                     </div>
 
@@ -389,24 +445,44 @@ export default function GoldenHourMode(props) {
                                     />
                                 </div>
                             </div>
-                        ) : callState === "calling" || callState === "recovery" ? (
-                            <div className="in-call-ui">
-                                {callState === "recovery" ? (
-                                    <div className="recovery-message">
-                                        <XCircle size={48} className="text-rose-500 mb-4" />
-                                        <h3 className="text-rose-400 font-bold uppercase text-xl mb-2">No Answer?</h3>
-                                        <p className="text-slate-400 text-sm">Don't lose momentum. Select a follow-up action below.</p>
+                        ) : callState === "success_input" ? (
+                            <div className="success-input-ui w-full">
+                                <h2 className="text-emerald-400 font-bold text-lg mb-4 flex items-center gap-2">
+                                    <CheckCircle size={20} /> Good Chat! What's the update?
+                                </h2>
+
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">Call Note (Added to Activity)</label>
+                                        <textarea
+                                            className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-3 text-white focus:border-emerald-500 focus:outline-none placeholder-slate-600 text-sm"
+                                            rows={3}
+                                            placeholder="e.g. Needs 2 guys next Monday..."
+                                            value={callNote}
+                                            onChange={(e) => setCallNote(e.target.value)}
+                                            autoFocus
+                                        />
                                     </div>
-                                ) : (
-                                    <div className="script-box">
-                                        <div className="text-xs font-bold text-secondary uppercase tracking-widest mb-2 flex items-center gap-2">
-                                            <Zap size={12} /> Ai Script Generator
-                                        </div>
-                                        <div className="whitespace-pre-wrap text-left font-medium text-lg leading-relaxed text-slate-200">
-                                            {script}
+                                    <div>
+                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">Quick Task (Optional)</label>
+                                        <div className="relative">
+                                            <ClipboardList size={16} className="absolute left-3 top-3 text-slate-500" />
+                                            <input
+                                                type="text"
+                                                className="w-full bg-slate-800/50 border border-slate-700 rounded-lg py-2 pl-9 pr-3 text-white focus:border-emerald-500 focus:outline-none placeholder-slate-600 text-sm"
+                                                placeholder="e.g. Send CVs tonight"
+                                                value={followUpTask}
+                                                onChange={(e) => setFollowUpTask(e.target.value)}
+                                            />
                                         </div>
                                     </div>
-                                )}
+                                </div>
+                            </div>
+                        ) : callState === "recovery" ? (
+                            <div className="recovery-message">
+                                <XCircle size={48} className="text-rose-500 mb-4" />
+                                <h3 className="text-rose-400 font-bold uppercase text-xl mb-2">No Answer?</h3>
+                                <p className="text-slate-400 text-sm">Don't lose momentum. Select a follow-up action below.</p>
                             </div>
                         ) : callState === "logged" ? (
                             <div className="success-ui">
@@ -416,23 +492,56 @@ export default function GoldenHourMode(props) {
                             </div>
                         ) : (
                             <div className="pre-call-ui">
-                                <div className="intel-grid">
+                                {/* NEW: CONTACT INFO CARD */}
+                                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Contact Details</span>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                        <Phone size={20} className="text-emerald-500" />
+                                        <div>
+                                            <div className="text-2xl font-black text-white tracking-wide">{contactPhone}</div>
+                                            <div className="text-xs text-slate-500">M: {entity?.mobile || "Not Listed"}</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* NEW: SCRIPT CARD (COLLAPSIBLE) */}
+                                <div
+                                    className="bg-slate-800/50 rounded-xl p-4 border border-slate-700 cursor-pointer hover:bg-slate-800 transition-colors"
+                                    onClick={() => setIsScriptExpanded(!isScriptExpanded)}
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <Zap size={16} className="text-yellow-400" />
+                                            <span className="font-bold text-white">Call Purpose & Script</span>
+                                        </div>
+                                        {isScriptExpanded ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
+                                    </div>
+
+                                    {isScriptExpanded && (
+                                        <div className="mt-4 pt-4 border-t border-slate-700/50 animate-in fade-in slide-in-from-top-1">
+                                            <div className="mb-3">
+                                                <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest block mb-1">Opening Line</span>
+                                                <p className="text-slate-300 italic text-sm">"{scriptPreview}"</p>
+                                            </div>
+                                            <div>
+                                                <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest block mb-1">AI Context</span>
+                                                <p className="text-slate-400 text-xs leading-relaxed">{script}</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
                                     <div className="intel-item">
                                         <label>Last Contact</label>
                                         <span>{getDaysSilence(isClient ? entity.lastContact : entity.lastContacted)} Days</span>
                                     </div>
                                     <div className="intel-item">
-                                        <label>Status</label>
-                                        <span>{isClient ? entity.tier : 'Lead'}</span>
-                                    </div>
-                                    <div className="intel-item">
                                         <label>Location</label>
-                                        <span className="text-emerald-400">{isClient ? (entity.location || 'NZ') : (entity.location || 'NZ')}</span>
+                                        <span className="text-emerald-400 truncate w-full">{isClient ? (entity.region || 'National') : (entity.location || 'NZ')}</span>
                                     </div>
-                                </div>
-                                <div className="notes-preview">
-                                    <label>Last Interaction:</label>
-                                    <p>"{isClient ? (entity.notes?.[0]?.text || entity.lastNote || "No recent notes.") : (entity.notes || "No notes.")}"</p>
                                 </div>
                             </div>
                         )}
@@ -452,20 +561,31 @@ export default function GoldenHourMode(props) {
                                     <Send size={18} /> Send & Log
                                 </button>
                             </div>
+                        ) : callState === "success_input" ? (
+                            <div className="success-actions flex gap-4 w-full">
+                                <button className="outcome-btn skip-action w-1/3" onClick={() => setCallState("idle")}>
+                                    Back
+                                </button>
+                                <button
+                                    className="outcome-btn success flex-1"
+                                    onClick={handleCompleteSuccess}
+                                >
+                                    <CheckCircle size={18} /> Complete & Next
+                                </button>
+                            </div>
                         ) : callState === "idle" ? (
-                            <button className="call-btn" onClick={handleCallStart}>
-                                <Phone size={24} /> DIAL NOW
-                            </button>
-                        ) : callState === "calling" ? (
-                            <div className="outcome-buttons">
-                                <button className="outcome-btn success" onClick={() => handleOutcome('meeting')}>
-                                    <Calendar size={20} /> Meeting Booked
-                                </button>
-                                <button className="outcome-btn neutral" onClick={() => handleOutcome('contact')}>
-                                    <MessageSquare size={20} /> Spoke / VM
-                                </button>
-                                <button className="outcome-btn fail" onClick={() => handleOutcome('fail')}>
+                            <div className="idle-actions grid grid-cols-2 gap-4 w-full">
+                                <button
+                                    className="outcome-btn fail flex items-center justify-center gap-2 py-4 text-base"
+                                    onClick={() => handleInitialOutcome('fail')}
+                                >
                                     <XCircle size={20} /> No Answer
+                                </button>
+                                <button
+                                    className="outcome-btn success flex items-center justify-center gap-2 py-4 text-base"
+                                    onClick={() => handleInitialOutcome('success')}
+                                >
+                                    <Phone size={20} /> Call Success
                                 </button>
                             </div>
                         ) : callState === "recovery" ? (
@@ -519,7 +639,7 @@ export default function GoldenHourMode(props) {
                 .contact-info { display: flex; align-items: center; gap: 1rem; }
                 .avatar { width: 56px; height: 56px; border-radius: 50%; background: #0f172a; color: white; border: 2px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.5rem; }
 
-                .lead-body { min-height: 250px; display: flex; align-items: center; justify-content: center; }
+                .lead-body { min-height: 250px; display: flex; align-items: center; justify-content: center; width: 100%; }
                 .in-call-ui { width: 100%; display: flex; flex-direction: column; align-items: center; }
                 .recovery-message { text-align: center; display: flex; flex-direction: column; align-items: center; padding: 2rem; }
                 .script-box { background: rgba(0,0,0,0.3); padding: 1.5rem; border-radius: 12px; width: 100%; border: 1px solid rgba(255,255,255,0.05); }

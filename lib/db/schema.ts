@@ -3,8 +3,8 @@ import { pgTable, uuid, text, timestamp, pgEnum, integer, doublePrecision, jsonb
 // Enums
 export const placementStatusEnum = pgEnum('placement_status', ['draft', 'active', 'completed', 'cancelled']);
 export const candidateStatusEnum = pgEnum('candidate_status', ['available', 'on_job', 'placed', 'unavailable']);
-export const projectStageEnum = pgEnum('project_stage', ['Won', 'Tender', 'Pipeline', 'Construction', 'Underway', 'Planning']);
-export const projectStatusEnum = pgEnum('project_status', ['Active', 'Planning', 'Tender', 'At Risk']);
+export const projectStageEnum = pgEnum('project_stage', ['Won', 'Tender', 'Pipeline', 'Construction', 'Underway', 'Planning', 'Civil', 'Structure', 'Fitout', 'Concept', 'Foundations', 'Signal']);
+export const projectStatusEnum = pgEnum('project_status', ['Active', 'Planning', 'Tender', 'At Risk', 'Lead', 'Construction']);
 export const tierEnum = pgEnum('tier', ['1', '2', '3']);
 export const nudgeTypeEnum = pgEnum('nudge_type', [
     'PRE_EMPTIVE_STRIKE', // New Project
@@ -30,6 +30,17 @@ export const clients = pgTable('clients', {
     industry: text('industry').default('Construction'),
     status: text('status'), // Lead, Active, Dormant
     tier: tierEnum('tier').default('3'),
+    region: text('region'),
+    activeJobs: integer('active_jobs').default(0),
+    lastContact: timestamp('last_contact', { withTimezone: true }),
+    pipelineStage: text('pipeline_stage'),
+    contractStatus: text('contract_status'),
+    financials: jsonb('financials'), // { ytdRevenue, avgFee, lastActivity }
+    keyContacts: jsonb('key_contacts'), // Array of contact objects
+    siteLogistics: jsonb('site_logistics'), // { ppe, induction, parking }
+    hiringInsights: jsonb('hiring_insights'), // { avgTimeToHire, mostHiredRole, commonFeedback }
+    actionAlerts: jsonb('action_alerts'), // Array of alert objects
+    network: jsonb('network'), // Array of related entities
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
@@ -46,6 +57,27 @@ export const projects = pgTable('projects', {
     startDate: timestamp('start_date', { withTimezone: true }),
     completionDate: timestamp('completion_date', { withTimezone: true }),
     phases: jsonb('phases').$type<any[]>(),
+    // New fields from Growth Engine / Enhanced Data
+    description: text('description'),
+    assetOwner: text('asset_owner'),
+    address: text('address'),
+    type: text('type'),
+    funding: text('funding'),
+    sitePresence: integer('site_presence').default(0),
+    projectDirector: text('project_director'),
+    seniorQS: text('senior_qs'),
+    siteManager: text('site_manager'),
+    safetyOfficer: text('safety_officer'),
+    incumbentAgency: text('incumbent_agency'),
+    parking: text('parking'),
+    publicTransport: text('public_transport'),
+    ppe: jsonb('ppe').$type<string[]>(),
+    induction: text('induction'),
+    gateCode: text('gate_code'),
+    labourPrediction: jsonb('labour_prediction'),
+    packages: jsonb('packages'),
+    phaseSettings: jsonb('phase_settings'),
+    assignedCompanyIds: jsonb('assigned_company_ids').$type<number[]>(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
@@ -64,10 +96,12 @@ export const candidates = pgTable('candidates', {
     lng: doublePrecision('lng'),
     status: candidateStatusEnum('status').default('available'),
     role: text('role'),
+    trade: text('trade'), // e.g. Carpenter, Electrician (can mirror role)
     chargeOutRate: text('charge_out_rate'),
     internalRating: doublePrecision('internal_rating'),
     finishDate: timestamp('finish_date', { withTimezone: true }),
     compliance: jsonb('compliance').$type<string[]>(),
+    notes: text('notes'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 

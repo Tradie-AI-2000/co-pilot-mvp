@@ -4,20 +4,20 @@ import { useState, useEffect } from 'react';
 import { useData } from "../context/data-context.js";
 import StatCard from "../components/stat-card.js";
 import FocusFeedCard from "../components/focus-feed-card.js";
-import GeospatialMap from "../components/geospatial-map.js";
-import ActivityFeedWidget from "../components/activity-feed-widget.js";
 import ProjectIntelligencePanel from "../components/project-intelligence-panel.js";
 import AddProjectModal from "../components/add-project-modal.js";
 import { useCrew } from "../context/crew-context.js";
-import CrewBuilderPanel from "../components/crew-builder-panel.js";
 import WhatsAppBlaster from "../components/whatsapp-blaster.js";
 import BenchLiabilityWidget from "../components/bench-liability-widget.js";
 import RedeploymentRadar from "../components/redeployment-radar.js";
 import ClientSidePanel from "../components/client-side-panel.js";
-import PlacementsPipeline from "../components/placements-pipeline.js";
 import ActivePlacementsModal from "../components/active-placements-modal.js";
 import ActionDrawer from "../components/action-drawer.js";
 import ActiveBenchModal from "../components/active-bench-modal.js";
+import CandidateModal from "../components/candidate-modal.js";
+import DealFlowSummary from "../components/deal-flow-summary.js";
+import DealFlowModal from "../components/deal-flow-modal.js";
+import ClientDemandWidget from "../components/client-demand-widget.js";
 
 export default function PredictiveCommandCenter() {
   return (
@@ -26,50 +26,24 @@ export default function PredictiveCommandCenter() {
 }
 
 function DashboardContent() {
-  const { candidates, projects, clients, selectedProject, setSelectedProject, updateProject, addProject, moneyMoves, weeklyRevenue, revenueAtRisk } = useData();
+  const { candidates, projects, clients, selectedProject, setSelectedProject, updateProject, addProject, updateCandidate, moneyMoves, weeklyRevenue, revenueAtRisk } = useData();
   const [watchlist, setWatchlist] = useState([]);
-  const [isochroneData, setIsochroneData] = useState(null);
-  const [isCommuteLoading, setIsCommuteLoading] = useState(false);
-  const [commuteMinutes, setCommuteMinutes] = useState(20);
 
   // Edit Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [viewActivePlacements, setViewActivePlacements] = useState(false);
-  const [viewBenchList, setViewBenchList] = useState(false); // New State
+  const [viewBenchList, setViewBenchList] = useState(false);
+  const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [editingProject, setEditingProject] = useState(null);
   const [selectedClient, setSelectedClient] = useState(null);
-  const [selectedNudge, setSelectedNudge] = useState(null); // New State for Nudges
+  const [selectedNudge, setSelectedNudge] = useState(null);
+
+  // New: Deal Flow State
+  const [dealFlowTab, setDealFlowTab] = useState(null); // 'floats' or 'placements', null = closed
 
   useEffect(() => {
     setWatchlist(projects.filter(p => p.status === 'Active' || p.status === 'Planning').slice(0, 5));
   }, [projects]);
-
-  // --- Isochrone Logic ---
-  const fetchIsochrone = async (project, mins = commuteMinutes) => {
-    if (!project || !project.coordinates) return;
-
-    setIsCommuteLoading(true);
-    try {
-      const { lat, lng } = project.coordinates;
-      const res = await fetch(`/api/geo/isochrone?lat=${lat}&lng=${lng}&minutes=${mins}`);
-      if (res.ok) {
-        const data = await res.json();
-        setIsochroneData(data);
-      }
-    } catch (err) {
-      console.error("Failed to fetch isochrone:", err);
-    } finally {
-      setIsCommuteLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (selectedProject) {
-      fetchIsochrone(selectedProject, commuteMinutes);
-    } else {
-      setIsochroneData(null);
-    }
-  }, [selectedProject, commuteMinutes]);
 
   const handleEditFromPanel = (project) => {
     setSelectedProject(null);
@@ -84,6 +58,11 @@ function DashboardContent() {
       addProject(projectData);
     }
     setIsModalOpen(false);
+  };
+
+  const handleSaveCandidate = (updatedCandidate) => {
+    updateCandidate(updatedCandidate);
+    setSelectedCandidate(updatedCandidate);
   };
 
   const handleFocusCardClick = (item) => {
@@ -132,34 +111,6 @@ function DashboardContent() {
     { title: "Fill Rate", value: `${fillRate}%`, subtext: "Demand vs Supply", progress: fillRate, status: fillRate > 80 ? "success" : "warning", trend: fillRate > 80 ? "up" : "down" }
   ];
 
-  const handleMapMarkerClick = (marker) => {
-    if (marker.type === 'project') {
-      const project = projects.find(p => p.id === marker.id || p.name === marker.title);
-      setSelectedProject(project);
-    } else if (marker.type === 'candidate') {
-      console.log("Candidate click:", marker);
-    }
-  };
-
-  const mapMarkers = [
-    ...projects.map(p => ({
-      id: p.id,
-      title: p.name,
-      name: p.name,
-      coordinates: p.coordinates || { lat: p.lat, lng: p.lng },
-      type: 'project',
-      color: 'blue',
-      status: p.status
-    })),
-    ...candidates.map(c => ({
-      id: c.id,
-      title: `${c.firstName} ${c.lastName}`,
-      name: `${c.firstName} ${c.lastName}`,
-      coordinates: { lat: c.lat, lng: c.lng },
-      type: 'candidate',
-      status: c.status
-    }))
-  ];
   const { deployedData, setDeployedData } = useCrew();
 
   return (
@@ -167,17 +118,20 @@ function DashboardContent() {
       <div className="dashboard-container">
         {/* Zone 1: The Scoreboard */}
         <section className="scoreboard">
-          {stats.map((stat, index) => (
+          {stats.slice(0, 1).map((stat, index) => (
             <StatCard key={index} {...stat} />
+          ))}
+          <BenchLiabilityWidget
+            candidates={candidates}
+            onViewBench={() => setViewBenchList(true)}
+          />
+          {stats.slice(1).map((stat, index) => (
+            <StatCard key={index + 1} {...stat} />
           ))}
         </section>
 
         {/* Zone 1.5: Risk Control Center */}
         <section className="risk-control">
-          <BenchLiabilityWidget
-            candidates={candidates}
-            onViewBench={() => setViewBenchList(true)} // Pass handler
-          />
           <RedeploymentRadar candidates={candidates} />
         </section>
 
@@ -189,75 +143,57 @@ function DashboardContent() {
             </div>
 
             <div className="control-panel">
-              {/* Section A: Placements Pipeline */}
+              {/* Section A: Deal Flow */}
               <div className="panel-column">
-                <h3 className="column-title">Deal Flow (Draft Placements)</h3>
-                <PlacementsPipeline />
+                <h3 className="column-title">Deal Flow</h3>
+                <DealFlowSummary
+                  floats={candidates.filter(c => c.status === "Floated" || c.status === "Interviewing")}
+                  placements={candidates.filter(c => c.status === "On Job")}
+                  onOpenDetail={setDealFlowTab}
+                />
               </div>
 
-              {/* Section B: Urgent Actions */}
+              {/* Section B: Client Demand */}
               <div className="panel-column">
-                <h3 className="column-title">Nudge Engine (Priority Actions)</h3>
-                <div className="urgent-list">
-                  {moneyMoves.map((action) => {
-                    let cardType = action.type;
-                    if (action.type === 'signal') {
-                      if (action.urgency === 'Critical') cardType = 'risk';
-                      else if (action.urgency === 'High') cardType = 'urgent';
-                      else cardType = 'lead';
-                    }
-
-                    return (
-                      <FocusFeedCard
-                        key={action.id}
-                        type={cardType}
-                        title={action.title}
-                        subtitle={action.description}
-                        meta={action.projectName || (action.candidateId ? "Candidate Alert" : "Client Alert")}
-                        onAction={() => handleFocusCardClick(action)}
-                      />
-                    );
-                  })}
-                  {moneyMoves.length === 0 && (
-                    <div className="text-muted text-sm italic p-4">No urgent actions required. Good job!</div>
-                  )}
-                </div>
+                <h3 className="column-title">Client Demand</h3>
+                <ClientDemandWidget
+                  projects={projects}
+                  onOpenProject={handleEditFromPanel}
+                />
               </div>
             </div>
           </section>
 
           {/* Zone 3: Context & Territory */}
           <section className="context-sidebar">
-            <div className="sidebar-widget map-widget">
+            <div className="sidebar-widget nudge-widget">
               <div className="widget-header">
-                <h3 className="widget-title">Territory Map</h3>
-                {selectedProject && (
-                  <div className="commute-toggle">
-                    <span className="text-xs text-muted mr-2">Commute:</span>
-                    {[15, 30, 45].map(m => (
-                      <button
-                        key={m}
-                        className={`mins-btn ${commuteMinutes === m ? 'active' : ''}`}
-                        onClick={() => setCommuteMinutes(m)}
-                      >
-                        {m}m
-                      </button>
-                    ))}
-                  </div>
+                <h3 className="widget-title">Nudge Engine</h3>
+              </div>
+              <div className="urgent-list custom-scrollbar">
+                {moneyMoves.map((action) => {
+                  let cardType = action.type;
+                  if (action.type === 'signal') {
+                    if (action.urgency === 'Critical') cardType = 'risk';
+                    else if (action.urgency === 'High') cardType = 'urgent';
+                    else cardType = 'lead';
+                  }
+
+                  return (
+                    <FocusFeedCard
+                      key={action.id}
+                      type={cardType}
+                      title={action.title}
+                      subtitle={action.description}
+                      meta={action.projectName || (action.candidateId ? "Candidate Alert" : "Client Alert")}
+                      onAction={() => handleFocusCardClick(action)}
+                    />
+                  );
+                })}
+                {moneyMoves.length === 0 && (
+                  <div className="text-muted text-sm italic p-4 text-center">All clear. Zero gravity achieved.</div>
                 )}
               </div>
-              <div className="map-wrapper">
-                <GeospatialMap
-                  markers={mapMarkers}
-                  polygonData={isochroneData}
-                  onMarkerClick={handleMapMarkerClick}
-                  activeMarkerId={selectedProject?.id}
-                />
-              </div>
-            </div>
-
-            <div className="sidebar-widget feed-widget">
-              <ActivityFeedWidget />
             </div>
           </section>
         </div>
@@ -285,6 +221,26 @@ function DashboardContent() {
           <ActiveBenchModal
             candidates={candidates.filter(c => c.status === "Available")}
             onClose={() => setViewBenchList(false)}
+            onViewCandidate={setSelectedCandidate}
+          />
+        )}
+
+        {dealFlowTab && (
+          <DealFlowModal
+            isOpen={!!dealFlowTab}
+            onClose={() => setDealFlowTab(null)}
+            candidates={candidates}
+            initialTab={dealFlowTab}
+          />
+        )}
+
+        {selectedCandidate && (
+          <CandidateModal
+            candidate={selectedCandidate}
+            projects={projects}
+            squads={[]} // Pass empty squads or fetch if needed
+            onClose={() => setSelectedCandidate(null)}
+            onSave={handleSaveCandidate}
           />
         )}
 
@@ -315,12 +271,13 @@ function DashboardContent() {
 
       <style jsx>{`
         .dashboard-container {
-          height: 100vh;
+          min-height: 100vh;
+          height: auto;
           display: flex;
           flex-direction: column;
           gap: 1rem;
           padding: 1rem;
-          overflow: hidden; /* Prevent body scroll */
+          overflow-y: auto; 
           background: var(--background);
         }
 
@@ -332,14 +289,14 @@ function DashboardContent() {
           flex-shrink: 0;
         }
 
-        /* Zone 1.5: Risk Control (FIXED HERE) */
+        /* Zone 1.5: Risk Control (increased height) */
         .risk-control {
             display: grid;
-            grid-template-columns: 1fr 2fr;
+            grid-template-columns: 1fr;
             gap: 1rem;
             flex-shrink: 0;
-            max-height: 250px; /* Keep strict height */
-            height: 250px;     /* Force height */
+            max-height: 300px; /* Increased by 20% */
+            height: 300px;     
         }
         
         /* THIS IS THE FIX: Target the widgets directly */
@@ -358,13 +315,13 @@ function DashboardContent() {
             border-radius: 4px;
         }
 
-        /* Main Grid Layout */
+        /* Main Grid Layout (increased height) */
         .main-grid {
           display: grid;
           grid-template-columns: 65fr 35fr;
           gap: 1rem;
           flex: 1; 
-          min-height: 0; 
+          min-height: 650px; /* Set a base height to allow growth */
         }
 
         /* Zone 2: Mission Control */
@@ -375,7 +332,7 @@ function DashboardContent() {
           display: flex;
           flex-direction: column;
           overflow: hidden; 
-          height: 100%; 
+          height: 15%; 
         }
 
         .section-header {
@@ -429,10 +386,10 @@ function DashboardContent() {
           padding-right: 0.5rem;
         }
         
-        .urgent-list::-webkit-scrollbar {
+        .custom-scrollbar::-webkit-scrollbar {
             width: 4px;
         }
-        .urgent-list::-webkit-scrollbar-thumb {
+        .custom-scrollbar::-webkit-scrollbar-thumb {
             background-color: rgba(255,255,255,0.1);
             border-radius: 4px;
         }
@@ -447,24 +404,17 @@ function DashboardContent() {
         }
 
         .sidebar-widget {
-          flex: 1;
           display: flex;
           flex-direction: column;
           min-height: 0;
         }
 
-        .map-widget {
+        .nudge-widget {
+          flex: 1; /* Match Mission Control height */
           background: rgba(15, 23, 42, 0.3);
           border: 1px solid var(--border);
           border-radius: var(--radius-lg);
           padding: 1rem;
-        }
-
-        .map-wrapper {
-          flex: 1;
-          border-radius: var(--radius-md);
-          overflow: hidden;
-          border: 1px solid var(--border);
         }
 
         .widget-title {
@@ -479,29 +429,6 @@ function DashboardContent() {
           justify-content: space-between;
           align-items: center;
           margin-bottom: 0.5rem;
-        }
-
-        .commute-toggle {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-        }
-
-        .mins-btn {
-          background: rgba(255,255,255,0.05);
-          border: 1px solid var(--border);
-          color: var(--text-muted);
-          font-size: 10px;
-          padding: 2px 6px;
-          border-radius: 4px;
-          cursor: pointer;
-        }
-
-        .mins-btn.active {
-          background: var(--secondary);
-          color: #0f172a;
-          border-color: var(--secondary);
-          font-weight: 600;
         }
       `}</style>
     </>

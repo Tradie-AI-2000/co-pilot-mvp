@@ -11,6 +11,7 @@ import { useData } from "../context/data-context";
 
 const navItems = [
   { name: "Dashboard", href: "/" },
+  { name: "Command Centre", href: "/command-centre" },
   { name: "Projects", href: "/projects" },
   { name: "CRM", href: "/crm" },
   { name: "Candidates", href: "/candidates" },
