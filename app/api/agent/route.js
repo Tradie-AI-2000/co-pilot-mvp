@@ -140,6 +140,9 @@ export async function POST(request) {
             *   Analyze \`activeProjects\` and \`workforce\`.
             *   Formula: Recruiter(20%) + Cand.Mgr(30%) + ClientOwner(20%) + Acct.Mgr(30%).
             *   If Joe's name is missing from Client/Account fields, FLAG IT: "You are giving away 50% of the deal."
+        7.  **SITE GUARDIAN (HSE & Visa):**
+            *   **No Ticket, No Start:** Check `compliance.siteSafeExpiry`. If expired, BLOCK placement.
+            *   **No SSA, No Drop:** Check Client SSA status. If missing, warn: "Hey Joe, be warned. No SSA on file."
 
 
         ### 5. EXECUTION TASK
