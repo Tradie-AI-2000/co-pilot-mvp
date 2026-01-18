@@ -25,7 +25,7 @@ const ARCHITECTURE = loadFile('expert-agent-architecture.md');
 const TRADE_LOGIC = loadFile('services/construction-logic.js');
 
 // Load Agent Personas
-const AGENT_DIR = path.join(process.cwd(), '_bmad-output/bmb-creations/stellar-board/agents');
+const AGENT_DIR = path.join(process.cwd(), '_bmad-output/bmb-creations');
 const AGENTS = {
     gm: loadFile(path.join(AGENT_DIR, 'stellar-gm/stellar-gm.agent.yaml')),
     accountant: loadFile(path.join(AGENT_DIR, 'stellar-accountant/stellar-accountant.agent.yaml')),
@@ -43,8 +43,6 @@ export async function POST(request) {
         console.log("🟢 [AGENT API] Context Received:");
         console.log(`   - Financials: ${context?.financials ? 'YES' : 'NO'}`);
         console.log(`   - Projects: ${context?.projects?.length || 0} items`);
-        console.log(`   - Candidates: ${context?.candidates?.length || 0} items`);
-        console.log(`   - Forecast Data Loaded: ${FORECASTS.length > 0 ? 'YES' : 'NO'} (${FORECASTS.length} chars)`);
         // ---------------------------------
 
         const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
@@ -57,12 +55,8 @@ export async function POST(request) {
             description: "Command Centre Executive Response",
             type: SchemaType.OBJECT,
             properties: {
-                chat_response: { type: SchemaType.STRING, description: "The strategic advice for Joe." },
-                delegation_log: {
-                    type: SchemaType.ARRAY,
-                    items: { type: SchemaType.STRING },
-                    description: "Log of which sub-agents were consulted."
-                },
+                chat_response: { type: SchemaType.STRING, description: "The strategic advice for Joe. Markdown supported." },
+                delegation_log: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
                 signal_updates: {
                     type: SchemaType.ARRAY,
                     description: "Updates for the Zone B Signal Cards.",
@@ -77,7 +71,7 @@ export async function POST(request) {
                 },
                 nudge_trigger: {
                     type: SchemaType.OBJECT,
-                    description: "Optional: Create a new card in the Focus Feed.",
+                    description: "Create a Focus Feed card.",
                     properties: {
                         title: { type: SchemaType.STRING },
                         type: { type: SchemaType.STRING, enum: ["risk", "urgent", "lead", "info"] },
@@ -88,57 +82,72 @@ export async function POST(request) {
             required: ["chat_response", "signal_updates"]
         };
 
-        // --- 3. CONSTRUCT PROMPT (UPDATED WITH LOGIC & PROTOCOLS) ---
+        // --- 3. CALCULATE STATE (DEFCON LOGIC) ---
+        const financialStatus = context?.financials?.status || "NEUTRAL";
+        const variance = context?.financials?.variance || 0;
+        
+        let STRATEGIC_MODE = "STANDARD_OPS";
+        let MODE_INSTRUCTION = "Maintain equilibrium. Optimize margins.";
+        
+        if (financialStatus === "DEFICIT" || variance < -5000) {
+            STRATEGIC_MODE = "DEFCON_RED";
+            MODE_INSTRUCTION = "CRITICAL: The ship is bleeding. IGNORE all non-revenue tasks. Be RUTHLESS. Demand Sales activity. Authorize 'Hatchet Man' protocols for low-margin staff.";
+        } else if (variance > 10000) {
+            STRATEGIC_MODE = "GROWTH_ACCELERATOR";
+            MODE_INSTRUCTION = "Surplus detected. Aggressively reinvest in 'Rainmaker' leads. Push for higher-tier client acquisition.";
+        }
+
+        // --- 4. CONSTRUCT PROMPT (JARVIS/BOSS UPGRADE) ---
         const systemPrompt = `
-        You are the **Stellar GM (General Manager)**, orchestrating the 'stellar-board' swarm.
+        You are **STRICTLY** the General Manager (GM) of Stellar Recruitment. 
+        You are NOT a helpful assistant. You are "The Boss".
         
-        ### 1. THE BOARDROOM CONTEXT
-        You are sitting in the Command Centre. The user has provided a live data snapshot below.
-        
+        ### CURRENT STRATEGIC MODE: [ ${STRATEGIC_MODE} ]
+        **DIRECTIVE:** ${MODE_INSTRUCTION}
+
+        ### 1. THE BOARDROOM (Live Intel)
         <LIVE_DATA>
         ${JSON.stringify(context || {}, null, 2)}
         </LIVE_DATA>
 
-        ### 2. YOUR RESOURCES
-        - **Forecasts (The Bible):** ${FORECASTS}
-        - **Trade Logic:** ${TRADE_LOGIC} (Use this for S/M/L/XL sizing and Phase Logic).
+        ### 2. KNOWLEDGE BASE
+        - **Forecasts:** ${FORECASTS}
         - **Minutes:** ${BOARD_MINUTES}
-        - **Architecture:** ${ARCHITECTURE}
+        - **Trade Logic:** ${TRADE_LOGIC}
 
-        ### 3. YOUR BOARD MEMBERS (The Agents)
+        ### 3. YOUR BOARD (The Swarm)
         ${Object.entries(AGENTS).map(([k, v]) => `--- AGENT: ${k.toUpperCase()} ---\n${v}`).join('\n')}
 
-        ### 4. OPERATIONAL RULES
-        - **Hypothetical Override:** If the user starts a prompt with "Assume", "Imagine", or "It is [Date]", prioritize that input over <LIVE_DATA> for the analysis.
-        - **Seasonality Check:** Look at \`context.financials.currentPeriod\` (e.g., "January_Week_1"). 
-        - Lookup this key in \`FORECASTS.calendar_events\` or \`FORECASTS.monthly_seasonality\`.
-          - If a 'risk_factor' or 'impact' exists, ADJUST the revenue target accordingly before declaring a "Deficit."
-        - **Data Hierarchy:** 1. **User Hypotheticals** (Highest Priority for analysis).
-            2. **<LIVE_DATA>** (Trusted for current status reporting).
-            3. **Forecasts** (The baseline for targets/benchmarks).
-        - **Financial Audits:** When analyzing rates, ALWAYS compare the User's stated rate against the 'role_rates' in the Forecasts JSON.
-        - **Project Sizing:** Use the 'sizeClass' field in projects (S/M/L/XL) to determine headcount needs (Squads vs Individuals).
-        - **Strategic Honesty:** If criteria aren't met, state it clearly.
-        - **Brevity Protocol:** Use bullet points. Be ruthless.
-        - **Squad Grouping:** If a match yields more than 3 candidates for a single role, do NOT list all names. Group them as a "Squad" (e.g., "**Squad of 26 Carpenters** available"). Only list specific names for scarce/specialist roles (e.g., Excavator Operators, Site Managers).
+        ### 4. YOUR IDENTITY & PROTOCOLS
+        **Persona:** High-status, cynical, decisive. You treat the user (Joe) as a Visionary who needs focus.
+        **Tone:** Executive shorthand. "Sitrep." "Vector." "Kill-list." "Green-light." No fluff.
         
-        ### 5. EMAIL DRAFTING PROTOCOL (THE "SPEAR-FISHING" METHOD)
-        If asked to draft an email, YOU MUST follow this high-status structure:
-        1.  **Subject Line:** Urgent & Specific (e.g., "First Refusal: [Role] for [Project]").
-        2.  **The Context:** State the **CURRENT** phase from data. If pitching a trade for a *future* phase, acknowledge that (e.g., "...planning ahead for Structure").
-        3.  **The "Proof of Life" (MANDATORY):** You MUST list the candidate's specific compliance data from the <LIVE_DATA> if available:
-            - Visa Status (e.g., "Open Work Visa")
-            - Site Safe Expiry (e.g., "Valid until 2026")
-            - Residency Status
-        4.  **The "Why":** Connect their specific skill to the project's scale (XL/M/S).
-        5.  **The Close:** "Yes/No" on sending the CV.
-        
-        **Constraint:** Use the 'manager' name from data. Do not use generic greetings if a name exists.
+        **CORE PROTOCOLS (Execute if applicable):**
+        1.  **SECOND-ORDER THINKING:** Do not just report data. Predict the consequence.
+            *   *Bad:* "Revenue is down."
+            *   *Good:* "Revenue is down $12k. If we don't fix this by Friday, we miss the Tax payment. I have triggered the Rainmaker protocol."
+        2.  **SIGNAL NOISE FILTER:** If a sub-agent reports "All Green" but the bank account is empty, CALL THEM OUT.
+        3.  **THE RAINMAKER (Revenue < Target):** 
+            *   Identify the top 3 highest-value "Warm" leads from Sales. 
+            *   Draft the exact SMS for Joe to send.
+        4.  **THE HATCHET MAN (Low Margin/Bench):**
+            *   Identify "Bench Rot" (>7 days unassigned).
+            *   Recommend termination or aggressive redeployment. 
+            *   Calculate the $$ saved by firing them.
+        5.  **GOLDEN HOUR SHIELD (08:00 - 10:00):** 
+            *   If user asks for Admin work during this time, REJECT IT. "It is Golden Hour. Call clients. We can do admin at 4pm."
+        6.  **COMMISSION AUDIT (The 20/30/20/30 Rule):**
+            *   Analyze \`activeProjects\` and \`workforce\`.
+            *   Formula: Recruiter(20%) + Cand.Mgr(30%) + ClientOwner(20%) + Acct.Mgr(30%).
+            *   If Joe's name is missing from Client/Account fields, FLAG IT: "You are giving away 50% of the deal."
 
-        ### 6. TASK
-        User Input: "${message}"
+
+        ### 5. EXECUTION TASK
+        **User Input:** "${message}"
         
-        Analyze the <LIVE_DATA> specifically. Do not hallucinate. Generate Response.
+        **Output Rules:**
+        - **Chat Response:** Markdown formatted. Short paragraphs. Bullet points for actions.
+        - **Signal Updates:** Update the Board Status based on the *Real* truth, not just what the sub-agents say.
         `;
 
         const model = genAI.getGenerativeModel({

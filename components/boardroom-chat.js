@@ -104,6 +104,10 @@ export default function BoardroomChat({ agentId, onSignalUpdate }) {
                         manager: primaryContact,
                         director: p.projectDirector || "Unknown",
                         safety: p.safetyOfficer || "Unknown"
+                    },
+                    splits: {
+                        clientOwner: realClient.clientOwner || "Unknown",
+                        accountManager: realClient.accountManager || realClient.clientOwner || "Unknown"
                     }
                 };
             });
@@ -135,7 +139,16 @@ export default function BoardroomChat({ agentId, onSignalUpdate }) {
                         residency: c.residency || "Unknown",
                         siteSafe: c.siteSafeExpiry ? `Valid until ${c.siteSafeExpiry}` : "None/Expired"
                     },
-                    rating: c.internalRating || "N/A"
+                    rating: c.internalRating || "N/A",
+                    financials: {
+                        payRate: c.payRate || 0,
+                        chargeRate: c.chargeRate || 0,
+                        guaranteedHours: c.guaranteedHours || 40
+                    },
+                    splits: {
+                        recruiter: c.recruiter || "Unknown",
+                        candidateManager: c.candidateManager || c.recruiter || "Unknown"
+                    }
                 };
             });
 
