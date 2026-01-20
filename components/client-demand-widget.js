@@ -3,10 +3,65 @@
 import { Briefcase, Calendar, ChevronRight } from "lucide-react";
 
 export default function ClientDemandWidget({ projects = [], onOpenProject }) {
+    // Helper to get effective start date
+    const getStartDate = (p) => {
+        if (p.startDate) return new Date(p.startDate);
+        
+        const possibleDates = [];
+
+        // 1. Direct Demands
+        if (p.clientDemands && p.clientDemands.length > 0) {
+            p.clientDemands.forEach(d => {
+                if (d.startDate) possibleDates.push(new Date(d.startDate));
+            });
+        }
+
+        // 2. Phase Settings (from Strategy)
+        if (p.phaseSettings) {
+            Object.values(p.phaseSettings).forEach(setting => {
+                if (setting.startDate && !setting.skipped) {
+                    possibleDates.push(new Date(setting.startDate));
+                }
+            });
+        }
+
+        if (possibleDates.length > 0) {
+            return new Date(Math.min(...possibleDates));
+        }
+
+        return new Date(8640000000000000); // Far future if no date, so it falls to bottom
+    };
+
+    // Helper to calculate total demand count
+    const getDemandCount = (p) => {
+        let count = 0;
+        
+        // 1. Direct Demands
+        if (p.clientDemands) {
+            count += p.clientDemands.reduce((acc, d) => acc + (d.quantity || 1), 0);
+        }
+
+        // 2. Strategy Packages
+        if (p.packages) {
+            Object.values(p.packages).forEach(pkg => {
+                if (pkg.laborRequirements) {
+                    count += pkg.laborRequirements.reduce((acc, req) => acc + (req.requiredCount || 0), 0);
+                }
+            });
+        }
+
+        // 3. Legacy Fallback
+        if (count === 0 && p.roles) {
+            count = p.roles.length;
+        }
+
+        return count;
+    };
+
     // Filter for Active or Planning projects
     const demandList = projects
         .filter(p => p.status === 'Active' || p.status === 'Planning')
-        .sort((a, b) => new Date(a.startDate || Date.now()) - new Date(b.startDate || Date.now()))
+        .sort((a, b) => getStartDate(a) - getStartDate(b))
         .slice(0, 5); // Limit to top 5
 
     return (
@@ -37,11 +92,15 @@ export default function ClientDemandWidget({ projects = [], onOpenProject }) {
 
                             <div className="meta-info text-right">
                                 <div className="role-badge">
-                                    {project.roles ? `${project.roles.length} Roles` : 'Needs Review'}
+                                    {getDemandCount(project)} Roles
                                 </div>
                                 <div className="start-date">
                                     <Calendar size={10} className="inline mr-1" />
-                                    {project.startDate ? new Date(project.startDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : 'TBD'}
+                                    {(() => {
+                                        const d = getStartDate(project);
+                                        // Check if it's the "far future" placeholder
+                                        return d.getFullYear() > 3000 ? 'TBD' : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                                    })()}
                                 </div>
                             </div>
 

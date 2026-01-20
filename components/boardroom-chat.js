@@ -100,6 +100,7 @@ export default function BoardroomChat({ agentId, onSignalUpdate }) {
                     currentPhase: phaseName,
                     tier: formattedTier,
                     region: p.region || p.location || "Auckland",
+                    demands: p.clientDemands || [], // <--- NEW: Direct Demands
                     contacts: {
                         manager: primaryContact,
                         director: p.projectDirector || "Unknown",

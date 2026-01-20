@@ -1,10 +1,245 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { EyeOff, Trash2, Plus, Calendar, Layers, Truck, Users, MapPin, Building2, Save, ChevronDown, ChevronUp, Clock, Info, AlertCircle, X, RotateCcw, TrendingUp } from 'lucide-react';
-import { PHASE_TEMPLATES, WORKFORCE_MATRIX, RELATED_ROLES, PHASE_MAP } from '../services/construction-logic.js';
+import { EyeOff, Trash2, Plus, Calendar, Layers, Truck, Users, MapPin, Building2, Save, ChevronDown, ChevronUp, Clock, Info, AlertCircle, X, RotateCcw, TrendingUp, ArrowRight } from 'lucide-react';
+import { PHASE_TEMPLATES, WORKFORCE_MATRIX, RELATED_ROLES, PHASE_MAP, COMMON_TICKETS } from '../services/construction-logic.js';
 import { useData } from "../context/data-context.js";
 import CandidateModal from "./candidate-modal.js";
+
+// --- Micro-Component: Client Demand Builder (Direct Requests) ---
+const ClientDemandBuilder = ({ demands = [], onChange, availableRoles = [] }) => {
+    const [role, setRole] = useState("");
+    const [qty, setQty] = useState("");
+    const [startDate, setStartDate] = useState("");
+    const [finishDate, setFinishDate] = useState("");
+    const [selectedTickets, setSelectedTickets] = useState([]);
+    const [isCustomRole, setIsCustomRole] = useState(false);
+
+    const handleAdd = () => {
+        if (!role || !qty || !startDate) return;
+        const newItem = {
+            id: `dem-${Date.now()}`,
+            role,
+            quantity: parseInt(qty),
+            startDate,
+            finishDate,
+            tickets: selectedTickets
+        };
+        onChange([...demands, newItem]);
+        setRole("");
+        setQty("");
+        setStartDate("");
+        setFinishDate("");
+        setSelectedTickets([]);
+        setIsCustomRole(false);
+    };
+
+    const handleRemove = (id) => {
+        onChange(demands.filter(d => d.id !== id));
+    };
+
+    const toggleTicket = (ticket) => {
+        if (selectedTickets.includes(ticket)) {
+            setSelectedTickets(prev => prev.filter(t => t !== ticket));
+        } else {
+            setSelectedTickets(prev => [...prev, ticket]);
+        }
+    };
+
+    return (
+        <div className="demand-builder">
+            <div className="demand-list">
+                {demands.length === 0 && <div className="empty-demand">No client demands recorded yet.</div>}
+                {demands.map(item => (
+                    <div key={item.id} className="demand-item-card">
+                        <div className="d-header">
+                            <span className="d-role">{item.quantity}x {item.role}</span>
+                            <button type="button" onClick={() => handleRemove(item.id)} className="btn-icon-danger">
+                                <Trash2 size={14} />
+                            </button>
+                        </div>
+                        <div className="d-dates">
+                            <span>{item.startDate}</span>
+                            <ArrowRight size={12} className="text-slate-500" />
+                            <span>{item.finishDate || "Ongoing"}</span>
+                        </div>
+                        {item.tickets.length > 0 && (
+                            <div className="d-tickets">
+                                {item.tickets.map(t => <span key={t} className="d-ticket-tag">{t}</span>)}
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+
+            <div className="add-demand-form">
+                <div className="form-title">Add New Demand</div>
+                
+                <div className="demand-row">
+                    <div className="flex-1">
+                        <label>Role / Trade</label>
+                        {isCustomRole ? (
+                            <div className="flex gap-1">
+                                <input 
+                                    type="text" 
+                                    value={role} 
+                                    onChange={(e) => setRole(e.target.value)} 
+                                    className="input-sm w-full" 
+                                    placeholder="Enter Role..." 
+                                    autoFocus
+                                />
+                                <button type="button" onClick={() => setIsCustomRole(false)} className="btn-icon-danger"><X size={14} /></button>
+                            </div>
+                        ) : (
+                            <select 
+                                value={role} 
+                                onChange={(e) => e.target.value === "__CUSTOM__" ? setIsCustomRole(true) : setRole(e.target.value)} 
+                                className="input-sm w-full"
+                            >
+                                <option value="">Select Role...</option>
+                                {availableRoles.map(r => <option key={r} value={r}>{r}</option>)}
+                                <option value="__CUSTOM__">+ Custom Role</option>
+                            </select>
+                        )}
+                    </div>
+                    <div className="w-20">
+                        <label>Qty</label>
+                        <input type="number" value={qty} onChange={(e) => setQty(e.target.value)} className="input-sm w-full text-center" />
+                    </div>
+                </div>
+
+                <div className="demand-row">
+                    <div className="flex-1">
+                        <label>Start Date</label>
+                        <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="input-sm w-full date-input" />
+                    </div>
+                    <div className="flex-1">
+                        <label>Finish Date (Opt)</label>
+                        <input type="date" value={finishDate} onChange={(e) => setFinishDate(e.target.value)} className="input-sm w-full date-input" />
+                    </div>
+                </div>
+
+                <div className="demand-tickets-section">
+                    <label>Required Tickets / Quals</label>
+                    <div className="ticket-cloud">
+                        {COMMON_TICKETS.map(t => (
+                            <button
+                                key={t}
+                                type="button"
+                                className={`ticket-chip ${selectedTickets.includes(t) ? 'selected' : ''}`}
+                                onClick={() => toggleTicket(t)}
+                            >
+                                {t}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                <button type="button" onClick={handleAdd} disabled={!role || !qty || !startDate} className="btn-add-demand">
+                    <Plus size={16} /> Add Requirement
+                </button>
+            </div>
+
+            <style jsx>{`
+                .demand-builder { display: flex; gap: 2rem; height: 100%; overflow: hidden; }
+                .demand-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; padding-right: 0.5rem; }
+                .empty-demand { 
+                    padding: 2rem; text-align: center; color: var(--text-muted); 
+                    border: 2px dashed rgba(255,255,255,0.05); border-radius: 12px; font-style: italic;
+                }
+                .demand-item-card {
+                    background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+                    border-radius: 8px; padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem;
+                }
+                .d-header { display: flex; justify-content: space-between; align-items: center; }
+                .d-role { font-weight: 800; color: white; font-size: 1rem; }
+                .d-dates { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: var(--secondary); font-family: monospace; }
+                .d-tickets { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.25rem; }
+                .d-ticket-tag { 
+                    font-size: 0.65rem; background: rgba(59, 130, 246, 0.15); color: #60a5fa; 
+                    padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(59, 130, 246, 0.3);
+                }
+
+                .add-demand-form {
+                    width: 380px; 
+                    background: rgba(255, 255, 255, 0.03); 
+                    border: 1px solid var(--border);
+                    border-radius: 16px; 
+                    padding: 1.5rem; 
+                    display: flex; 
+                    flex-direction: column; 
+                    gap: 1.25rem;
+                    backdrop-filter: blur(10px);
+                    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+                }
+                .form-title { 
+                    font-size: 0.7rem; 
+                    font-weight: 900; 
+                    color: var(--secondary); 
+                    text-transform: uppercase; 
+                    letter-spacing: 0.2em; 
+                    border-bottom: 1px solid var(--border); 
+                    padding-bottom: 0.75rem; 
+                    margin-bottom: 0.5rem; 
+                }
+                .demand-row { display: flex; gap: 1rem; }
+                .demand-row label { display: block; font-size: 0.65rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
+                
+                .input-sm { 
+                    padding: 10px 14px; 
+                    background: rgba(15, 23, 42, 0.6); 
+                    border: 1px solid var(--border); 
+                    border-radius: 8px; 
+                    color: white; 
+                    font-size: 0.85rem;
+                    font-weight: 500;
+                    outline: none;
+                    transition: all 0.2s;
+                }
+                .input-sm:focus { 
+                    border-color: var(--secondary); 
+                    background: rgba(30, 41, 59, 0.8); 
+                    box-shadow: 0 0 15px rgba(0, 242, 255, 0.1); 
+                }
+
+                .ticket-cloud { 
+                    display: flex; 
+                    flex-wrap: wrap; 
+                    gap: 0.4rem; 
+                    max-height: 180px; 
+                    overflow-y: auto; 
+                    padding: 1rem;
+                    background: rgba(0, 0, 0, 0.2);
+                    border-radius: 8px;
+                    border: 1px solid rgba(255,255,255,0.05);
+                }
+                .ticket-chip {
+                    background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text-muted);
+                    padding: 5px 10px; border-radius: 6px; font-size: 0.65rem; cursor: pointer; transition: all 0.2s;
+                    font-weight: 600;
+                }
+                .ticket-chip:hover { background: rgba(255,255,255,0.1); color: white; border-color: var(--secondary); }
+                .ticket-chip.selected { 
+                    background: var(--secondary); 
+                    color: #0f172a; 
+                    font-weight: 800; 
+                    border-color: var(--secondary);
+                    box-shadow: 0 0 15px rgba(0, 242, 255, 0.3); 
+                }
+
+                .btn-add-demand {
+                    background: var(--secondary); color: #0f172a; border: none; padding: 12px;
+                    border-radius: 8px; font-weight: 900; text-transform: uppercase; font-size: 0.75rem;
+                    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.75rem;
+                    margin-top: auto; transition: all 0.3s;
+                    letter-spacing: 0.1em;
+                }
+                .btn-add-demand:hover { transform: translateY(-2px); background: white; box-shadow: 0 8px 25px rgba(0, 242, 255, 0.4); }
+                .btn-add-demand:disabled { opacity: 0.3; cursor: not-allowed; transform: none; box-shadow: none; }
+            `}</style>
+        </div>
+    );
+};
 
 // --- Micro-Component: Labor Requirement Builder ---
 const LaborRequirementBuilder = ({ requirements = [], phaseId, onChange, candidates, projectId, availableRoles = [], onAddRole }) => {
@@ -290,6 +525,7 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
         projectDirector: "", seniorQS: "", siteManager: "", additionalSiteManagers: [], safetyOfficer: "", gateCode: "",
         engagementType: "confirmed", // 'confirmed' | 'speculative'
         phaseSettings: {},
+        clientDemands: [], // NEW: Direct Client Demands
         packages: {
             civilWorks: { name: "", status: "Tendering", phase: "01_civil", label: "Civil & Excavation" },
             piling: { name: "", status: "Tendering", phase: "01_civil", label: "Piling" },
@@ -317,6 +553,7 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
         ...initialData,
         packages: { ...defaultFormData.packages, ...(initialData?.packages || {}) },
         phaseSettings: { ...defaultFormData.phaseSettings, ...(initialData?.phaseSettings || {}) },
+        clientDemands: initialData?.clientDemands || [],
         ppe: initialData?.ppe || defaultFormData.ppe
     });
 
@@ -344,6 +581,7 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
 
     const tabs = [
         { id: "core", label: "The Core", icon: Building2 },
+        { id: "client-demand", label: "Client Demand", icon: AlertCircle }, // NEW TAB
         { id: "intel", label: "Intelligence", icon: TrendingUp },
         { id: "contacts", label: "Key Contacts", icon: Users },
         { id: "packages", label: "Workforce Strategy", icon: Layers },
@@ -388,7 +626,7 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                 <div className="modal-header">
                     <div className="flex flex-col">
                         <h2 className="text-xl font-black text-white tracking-tight">
-                            {initialData ? "RECONFIGURE PROJECT" : "INITIALIZE NEW PROJECT"}
+                            {initialData ? (formData.name || "RECONFIGURE PROJECT").toUpperCase() : "INITIALIZE NEW PROJECT"}
                         </h2>
                         <span className="text-[10px] text-secondary font-bold uppercase tracking-widest mt-1">Antigravity Command Console</span>
                     </div>
@@ -513,6 +751,27 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                                         </select>
                                     </div>
                                 </div>
+                            </div>
+                        )}
+
+                        {activeTab === "client-demand" && (
+                            <div className="tab-pane">
+                                <div className="info-block mb-4 p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+                                    <div className="flex gap-3 items-start">
+                                        <Info size={20} className="text-secondary mt-1 shrink-0" />
+                                        <div className="text-sm text-slate-300">
+                                            <strong className="text-white block mb-1">Direct Demand Mode</strong>
+                                            Use this tab for simple, transactional requests (e.g., "I need 3 carpenters next Tuesday"). 
+                                            For complex, long-term project planning, use the <strong>Workforce Strategy</strong> tab.
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <ClientDemandBuilder 
+                                    demands={formData.clientDemands || []} 
+                                    onChange={(demands) => updateFormData("clientDemands", demands)}
+                                    availableRoles={availableRoles}
+                                />
                             </div>
                         )}
 

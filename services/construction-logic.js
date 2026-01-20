@@ -170,6 +170,24 @@ export const MASTER_ROLES = [
     "Scaffolder" // Kept for logic
 ];
 
+export const COMMON_TICKETS = [
+    "Site Safe (Passport)",
+    "ConstructSafe",
+    "First Aid L1",
+    "First Aid L2",
+    "EWP (Scissor)",
+    "EWP (Boom)",
+    "Working at Heights",
+    "Confined Space",
+    "WTR Endorsement",
+    "Forklift (F)",
+    "Traffic Control (TC)",
+    "STMS",
+    "LBP",
+    "Electrical Reg",
+    "Plumbing Reg"
+];
+
 export const WORKFORCE_MATRIX = {
     "01_civil": {
         "Excavator Operator": { S: "1-2", M: "2-4", L: "4-8", XL: "10+" },

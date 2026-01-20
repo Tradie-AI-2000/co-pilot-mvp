@@ -124,7 +124,7 @@ export function DataProvider({ children }) {
         // AA: Pay Rate
         // AB: Charge Rate
         // AC: Guaranteed Hours
-        // AW: Finish Date
+        // AW: startDate (Previously Finish Date)
         // P: Residency
         // R: Visa Expiry
 
@@ -135,6 +135,8 @@ export function DataProvider({ children }) {
 
         const role = candidate['Role'] || candidate.role || "Candidate";
         const finishDate = parseFlexibleDate(candidate['Finish Date'] || candidate.finishDate);
+        // Explicitly map the new 'startDate' column (Column AW)
+        const startDate = parseFlexibleDate(candidate['startDate'] || candidate['Start Date'] || candidate.startDate);
         const residency = candidate['Residency'] || candidate.residency || "Unknown";
         const visaExpiry = parseFlexibleDate(candidate['Visa Expiry'] || candidate.visaExpiry);
 
@@ -155,13 +157,14 @@ export function DataProvider({ children }) {
             payRate,
             guaranteedHours,
             finishDate,
+            startDate, // Add mapped start date
             residency,
             visaExpiry,
             country,
             isMobile, // NEW: Mobility Flag
             // Keep other fields
             siteSafeExpiry: parseFlexibleDate(candidate['Site Safe Expiry'] || candidate.siteSafeExpiry),
-            startDate: parseFlexibleDate(candidate['Start Date'] || candidate.startDate)
+            // startDate: parseFlexibleDate(candidate['Start Date'] || candidate.startDate) // Removed redundancy
         };
     };
 
@@ -270,7 +273,13 @@ export function DataProvider({ children }) {
         // 2. Map Site Manager Phone
         const siteManagerPhone = project.siteManagerPhone || project['Site Manager Phone'] || project['Site Manager Mobile'] || "";
 
-        // 3. Generate 'phases' array for UI
+        // 3. Map Client Demands (Handle various column names)
+        let clientDemands = project.clientDemands || project['Client Demands'] || [];
+        if (typeof clientDemands === 'string') {
+            try { clientDemands = JSON.parse(clientDemands); } catch (e) { clientDemands = []; }
+        }
+
+        // 4. Generate 'phases' array for UI
         let phases = [];
         let hiringSignals = [];
         let contactTriggers = [];
@@ -322,6 +331,7 @@ export function DataProvider({ children }) {
             assignedCompanyIds: Array.isArray(project.assignedCompanyIds) ? project.assignedCompanyIds : [],
             phases,
             phaseSettings,
+            clientDemands, // Explicitly mapped
             hiringSignals,
             subContractors: [],
             contactTriggers,
@@ -378,7 +388,27 @@ export function DataProvider({ children }) {
 
             // Only update if we got valid arrays with content
             if (Array.isArray(projRes) && projRes.length > 0) {
-                const processedProjects = sanitizeData(projRes, 'P').map(p => enrichProjectData(p));
+                // Fetch local state directly to avoid stale closure issues during sync
+                let localMap = {};
+                try {
+                    const localStr = localStorage.getItem('stellar_projects_v4');
+                    if (localStr) {
+                        const parsed = JSON.parse(localStr);
+                        parsed.forEach(p => { localMap[p.id] = p; });
+                    }
+                } catch (e) { console.warn("Failed to read local projects for merge", e); }
+
+                const processedProjects = sanitizeData(projRes, 'P').map(p => {
+                    const rich = enrichProjectData(p);
+                    // MERGE STRATEGY: Preserve clientDemands from local storage if missing in remote
+                    // This handles cases where the backend/sheet lacks the column or failed to save
+                    const localP = localMap[rich.id];
+                    if (localP && localP.clientDemands && (!rich.clientDemands || rich.clientDemands.length === 0)) {
+                        rich.clientDemands = localP.clientDemands;
+                    }
+                    return rich;
+                });
+                
                 setProjects(processedProjects);
                 currentProjects = processedProjects;
             }
@@ -890,13 +920,25 @@ export function DataProvider({ children }) {
         const id = newProject.id || `P-${Date.now()}`;
         const richProject = enrichProjectData({ ...newProject, id });
         setProjects(prev => [...prev, richProject]);
-        saveToSheets('Projects', id, richProject);
+        saveToSheets('Projects', id, prepareProjectForSave(richProject));
+    };
+
+    const prepareProjectForSave = (project) => {
+        return {
+            ...project,
+            // Map camelCase keys back to Sheet Headers
+            'Client Demands': project.clientDemands,
+            'Civil Start': project.phaseSettings?.['01_civil']?.startDate || "",
+            'Structure Start': project.phaseSettings?.['02a_concrete']?.startDate || "",
+            'Fitout Start': project.phaseSettings?.['05a_linings_stopping']?.startDate || "",
+            'Site Manager Phone': project.siteManagerPhone || ""
+        };
     };
 
     const updateProject = (updatedProject) => {
         const richProject = enrichProjectData(updatedProject);
         setProjects(prev => prev.map(p => p.id === updatedProject.id ? richProject : p));
-        saveToSheets('Projects', updatedProject.id, richProject);
+        saveToSheets('Projects', updatedProject.id, prepareProjectForSave(richProject));
     };
 
     const updateCandidate = (updatedCandidate) => {
@@ -932,6 +974,11 @@ export function DataProvider({ children }) {
     const floatCandidate = (candidateId, projectId, details) => {
         const newPlacement = { id: `pl-${Date.now()}`, candidateId, projectId, status: 'Floated', floatedDate: new Date().toISOString(), weeklyCheckins: [], ...details };
         setPlacements(prev => [...prev, newPlacement]);
+        
+        // Update Candidate Status to "Floated" so it appears in Mission Control
+        setCandidates(prevCands => prevCands.map(c => 
+            c.id === candidateId ? { ...c, status: "Floated" } : c
+        ));
     };
 
     const updatePlacementStatus = (placementId, newStatus) => {

@@ -11,6 +11,7 @@ import {
 import ActionDrawer from "../../components/action-drawer.js";
 import ClientSidePanel from "../../components/client-side-panel.js";
 import FloatCandidateModal from "../../components/float-candidate-modal.js";
+import MatchListModal from "../../components/match-list-modal.js";
 import GoldenHourMode from "../../components/golden-hour-mode.js";
 import RelationshipDecayWidget from "../../components/relationship-decay-widget.js";
 import RelationshipActionModal from "../../components/relationship-action-modal.js";
@@ -113,8 +114,57 @@ const MatchmakerWidget = ({ candidates, projects, onPitch }) => {
             return false;
         });
 
-        // 2. Iterate Projects via phaseSettings
+        // 2. Iterate Projects (Phase Settings + Direct Demands)
         projects.forEach(p => {
+            // A. Direct Client Demands (High Priority)
+            if (p.clientDemands && p.clientDemands.length > 0) {
+                p.clientDemands.forEach(demand => {
+                    const role = demand.role;
+                    const start = new Date(demand.startDate);
+                    if (!isValid(start)) return;
+
+                    const diff = differenceInDays(start, today);
+                    // Direct demands are usually urgent or specific, so we match them if they are future or recent
+                    if (diff >= -7 && diff <= 60) {
+                         const matchingCandidates = supply.filter(c => {
+                            // Role Match
+                            const roleMatch = c.role === role || (RELATED_ROLES[role] && RELATED_ROLES[role].includes(c.role));
+                            if (!roleMatch) return false;
+                            
+                            // Ticket Match (Optional but good)
+                            if (demand.tickets && demand.tickets.length > 0) {
+                                // For now, we don't hard filter on tickets, just prioritize, but let's keep it open
+                            }
+
+                            // Location Match
+                            const isMobile = c.isMobile || c.residency === 'Work Visa' || c.country === 'Philippines';
+                            if (isMobile) return true;
+                            return p.region && c.state && (p.region === c.state || p.address?.includes(c.state));
+                        });
+
+                        if (matchingCandidates.length > 0) {
+                            results.push({
+                                id: `${p.id}-direct-${demand.id}`,
+                                project: p.name,
+                                projectId: p.id,
+                                client: p.assetOwner || p.client || "Direct Client",
+                                clientId: p.assignedCompanyIds?.[0],
+                                phase: "Client Demand", // Special label
+                                currentPhase: "client_demand",
+                                role: role,
+                                count: demand.quantity || matchingCandidates.length,
+                                candidates: matchingCandidates, // Pass ALL candidates
+                                candidate: matchingCandidates[0], // Keep for backward compat if needed, but primary is list
+                                startsIn: Math.ceil(diff),
+                                isMobile: matchingCandidates.some(c => c.isMobile || c.residency === 'Work Visa'),
+                                isDirect: true // Flag for styling
+                            });
+                        }
+                    }
+                });
+            }
+
+            // B. Phase Settings (Inferred Demand)
             if (!p.phaseSettings) return;
 
             Object.entries(p.phaseSettings).forEach(([phaseId, settings]) => {
@@ -160,6 +210,7 @@ const MatchmakerWidget = ({ candidates, projects, onPitch }) => {
                                     currentPhase: phaseId, // Passthrough for Modal logic
                                     role: role,
                                     count: matchingCandidates.length,
+                                    candidates: matchingCandidates, // Pass ALL candidates
                                     candidate: matchingCandidates[0], // Prime candidate for modal pre-fill
                                     startsIn: Math.ceil(diff),
                                     isMobile: matchingCandidates.some(c => c.isMobile || c.residency === 'Work Visa')
@@ -415,6 +466,7 @@ const ActivityPulseWidget = () => {
 export default function BusinessDevPage() {
     const { candidates, clients, projects, updateClient, logActivity } = useData();
     const [selectedClient, setSelectedClient] = useState(null);
+    const [matchListTarget, setMatchListTarget] = useState(null); // New Match List State
     const [floatTarget, setFloatTarget] = useState(null);
     const [isPowerMode, setIsPowerMode] = useState(false);
     const [directPowerHourTarget, setDirectPowerHourTarget] = useState(null);
@@ -450,15 +502,7 @@ export default function BusinessDevPage() {
     }, [candidates]);
 
     const handlePitch = (match) => {
-        setFloatTarget({
-            candidate: match.candidate,
-            clientId: match.clientId,
-            clientName: match.client,
-            projectId: match.projectId,
-            projectName: match.project,
-            currentPhase: match.phase,
-            siteManagerName: "Site Manager"
-        });
+        setMatchListTarget(match);
     };
 
     if (isPowerMode) {
@@ -585,6 +629,14 @@ export default function BusinessDevPage() {
                     client={selectedClient}
                     onClose={() => setSelectedClient(null)}
                     onUpdate={(updated) => updateClient(updated)}
+                />
+            )}
+
+            {matchListTarget && (
+                <MatchListModal
+                    isOpen={!!matchListTarget}
+                    matchData={matchListTarget}
+                    onClose={() => setMatchListTarget(null)}
                 />
             )}
 
