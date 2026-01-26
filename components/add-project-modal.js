@@ -74,26 +74,26 @@ const ClientDemandBuilder = ({ demands = [], onChange, availableRoles = [] }) =>
 
             <div className="add-demand-form">
                 <div className="form-title">Add New Demand</div>
-                
+
                 <div className="demand-row">
                     <div className="flex-1">
                         <label>Role / Trade</label>
                         {isCustomRole ? (
                             <div className="flex gap-1">
-                                <input 
-                                    type="text" 
-                                    value={role} 
-                                    onChange={(e) => setRole(e.target.value)} 
-                                    className="input-sm w-full" 
-                                    placeholder="Enter Role..." 
+                                <input
+                                    type="text"
+                                    value={role}
+                                    onChange={(e) => setRole(e.target.value)}
+                                    className="input-sm w-full"
+                                    placeholder="Enter Role..."
                                     autoFocus
                                 />
                                 <button type="button" onClick={() => setIsCustomRole(false)} className="btn-icon-danger"><X size={14} /></button>
                             </div>
                         ) : (
-                            <select 
-                                value={role} 
-                                onChange={(e) => e.target.value === "__CUSTOM__" ? setIsCustomRole(true) : setRole(e.target.value)} 
+                            <select
+                                value={role}
+                                onChange={(e) => e.target.value === "__CUSTOM__" ? setIsCustomRole(true) : setRole(e.target.value)}
                                 className="input-sm w-full"
                             >
                                 <option value="">Select Role...</option>
@@ -370,7 +370,7 @@ const LaborRequirementBuilder = ({ requirements = [], phaseId, onChange, candida
                     <Plus size={16} /> Check Availability
                 </button>
             </div>
-            
+
             <style jsx>{`
                 .labor-builder { display: flex; flex-direction: column; gap: 1rem; width: 100%; border-top: 1px solid var(--border); padding-top: 1.5rem; }
                 .req-list { display: flex; flex-direction: column; gap: 0.75rem; }
@@ -728,7 +728,7 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                                 <div className="form-row">
                                     <div className="form-group">
                                         <label>Project Type</label>
-                                        <select className="appearance-none" value={formData.type} onChange={(e) => updateFormData("type", e.target.value)}>
+                                        <select className="appearance-none" value={formData.type || ""} onChange={(e) => updateFormData("type", e.target.value)}>
                                             <option>Healthcare</option><option>Commercial High-Rise</option><option>Industrial/Shed</option><option>Social Housing</option><option>Education</option>
                                         </select>
                                     </div>
@@ -740,13 +740,13 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                                 <div className="form-row">
                                     <div className="form-group">
                                         <label>Funding Source</label>
-                                        <select className="appearance-none" value={formData.funding} onChange={(e) => updateFormData("funding", e.target.value)}>
+                                        <select className="appearance-none" value={formData.funding || ""} onChange={(e) => updateFormData("funding", e.target.value)}>
                                             <option>Government/Public</option><option>Private Developer</option><option>PPP</option>
                                         </select>
                                     </div>
                                     <div className="form-group">
                                         <label>Current Status</label>
-                                        <select className="appearance-none" value={formData.status} onChange={(e) => updateFormData("status", e.target.value)}>
+                                        <select className="appearance-none" value={formData.status || ""} onChange={(e) => updateFormData("status", e.target.value)}>
                                             <option>Planning</option><option>Tender</option><option>Construction</option><option>Fitout</option><option>Handover</option>
                                         </select>
                                     </div>
@@ -761,14 +761,14 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                                         <Info size={20} className="text-secondary mt-1 shrink-0" />
                                         <div className="text-sm text-slate-300">
                                             <strong className="text-white block mb-1">Direct Demand Mode</strong>
-                                            Use this tab for simple, transactional requests (e.g., "I need 3 carpenters next Tuesday"). 
+                                            Use this tab for simple, transactional requests (e.g., "I need 3 carpenters next Tuesday").
                                             For complex, long-term project planning, use the <strong>Workforce Strategy</strong> tab.
                                         </div>
                                     </div>
                                 </div>
-                                
-                                <ClientDemandBuilder 
-                                    demands={formData.clientDemands || []} 
+
+                                <ClientDemandBuilder
+                                    demands={formData.clientDemands || []}
                                     onChange={(demands) => updateFormData("clientDemands", demands)}
                                     availableRoles={availableRoles}
                                 />
@@ -985,7 +985,7 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                                                                     <div className="card-input">
                                                                         <label>Status</label>
                                                                         <select
-                                                                            value={pkg.status}
+                                                                            value={pkg.status || ""}
                                                                             onChange={(e) => {
                                                                                 const val = e.target.value;
                                                                                 updateFormData("packages", (prev) => ({
@@ -1161,7 +1161,7 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                                 <div className="form-row">
                                     <div className="form-group">
                                         <label>Parking & Access</label>
-                                        <select value={formData.parking} onChange={(e) => updateFormData("parking", e.target.value)}>
+                                        <select value={formData.parking || ""} onChange={(e) => updateFormData("parking", e.target.value)}>
                                             <option>On-site (Free)</option>
                                             <option>Street Only (Free)</option>
                                             <option>Paid Parking (Reimbursed)</option>
@@ -1171,7 +1171,7 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                                     </div>
                                     <div className="form-group">
                                         <label>Public Transport</label>
-                                        <select value={formData.publicTransport} onChange={(e) => updateFormData("publicTransport", e.target.value)}>
+                                        <select value={formData.publicTransport || ""} onChange={(e) => updateFormData("publicTransport", e.target.value)}>
                                             <option>Yes - Easy Access</option>
                                             <option>Yes - Limited/Far</option>
                                             <option>No - Vehicle Required</option>
@@ -1216,6 +1216,7 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                     candidate={candidates.find(c => c.id === selectedCandidateId)}
                     squads={[]}
                     projects={[]}
+                    clients={clients}
                     onClose={() => setSelectedCandidateId(null)}
                     onSave={() => setSelectedCandidateId(null)}
                 />

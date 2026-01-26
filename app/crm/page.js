@@ -16,24 +16,35 @@ export default function CRMPage() {
   const { clients, addClient, updateClient, placements } = useData();
   const [selectedClient, setSelectedClient] = useState(null);
   const [selectedPlacement, setSelectedPlacement] = useState(null);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   // Navigation State
   const [viewState, setViewState] = useState('regions'); // regions | types | clients
   const [filters, setFilters] = useState({ region: null, industry: null });
 
-  const handleClientClick = (client) => {
-    setSelectedClient(client);
+  const handleAddClient = () => {
+    // Open the FULL modal in "New Mode" by setting a blank client with ID 'new'
+    setSelectedClient({
+      id: 'new',
+      name: "",
+      industry: "",
+      region: "Auckland",
+      tier: "3",
+      status: "Active",
+      keyContacts: [],
+      notes: []
+    });
   };
 
-  const handleUpdateClient = (updatedClient) => {
-    updateClient(updatedClient);
-    setSelectedClient(updatedClient);
-  };
-
-  const handleAddClient = (newClient) => {
-    addClient(newClient);
-    setIsAddModalOpen(false);
+  const handleSaveClient = (clientData) => {
+    if (clientData.id === 'new') {
+      // Create new
+      const { id, ...newClient } = clientData; // Remove 'new' ID
+      addClient(newClient);
+    } else {
+      // Update existing
+      updateClient(clientData);
+    }
+    setSelectedClient(null);
   };
 
   const handleViewDeal = (placementId) => {
@@ -69,7 +80,7 @@ export default function CRMPage() {
           <Users className="text-secondary" /> Client Management
         </h1>
         <div className="header-actions">
-          <button className="action-btn primary" onClick={() => setIsAddModalOpen(true)}>
+          <button className="action-btn primary" onClick={handleAddClient}>
             <Plus size={18} /> Add Client
           </button>
           <button className="action-btn">
@@ -127,7 +138,7 @@ export default function CRMPage() {
             clients={clients}
             region={filters.region}
             industry={filters.industry}
-            onClientClick={handleClientClick}
+            onClientClick={setSelectedClient}
           />
         )}
       </div>
@@ -141,7 +152,7 @@ export default function CRMPage() {
         <EnhancedClientDetailsModal
           client={selectedClient}
           onClose={() => setSelectedClient(null)}
-          onUpdate={handleUpdateClient}
+          onUpdate={handleSaveClient}
         />
       )}
 
@@ -149,13 +160,6 @@ export default function CRMPage() {
         <PlacementTicketModal
           placement={selectedPlacement}
           onClose={() => setSelectedPlacement(null)}
-        />
-      )}
-
-      {isAddModalOpen && (
-        <AddClientModal
-          onClose={() => setIsAddModalOpen(false)}
-          onSave={handleAddClient}
         />
       )}
 

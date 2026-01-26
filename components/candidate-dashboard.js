@@ -5,7 +5,9 @@ import { Users, AlertCircle, Clock, Briefcase, TrendingUp } from "lucide-react";
 export default function CandidateDashboard({ candidates = [], onStatusClick }) {
     // 1. Calculate Metrics
     const totalCandidates = candidates.length;
-    const availableCandidates = candidates.filter(c => c.status === "Available").length;
+    const availableCandidates = candidates.filter(c =>
+        c.status?.toLowerCase() === "available" || c.status?.toLowerCase() === "on bench"
+    ).length;
 
     // Logic for "Finishing Soon" (Orange Alert) - within 14 days
     const today = new Date();
@@ -13,7 +15,8 @@ export default function CandidateDashboard({ candidates = [], onStatusClick }) {
     twoWeeksFromNow.setDate(today.getDate() + 14);
 
     const finishingSoon = candidates.filter(c => {
-        if (!c.finishDate || c.status === "Available") return false;
+        const status = c.status?.toLowerCase();
+        if (!c.finishDate || status === "available" || status === "on bench") return false;
         const finishDate = new Date(c.finishDate);
         return finishDate >= today && finishDate <= twoWeeksFromNow;
     }).length;

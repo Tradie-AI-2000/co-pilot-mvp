@@ -6,7 +6,7 @@ import { RELATED_ROLES } from '../services/construction-logic.js';
 import { useData } from "../context/data-context.js";
 import FloatCandidateModal from "./float-candidate-modal.js";
 
-export default function CandidateModal({ candidate, squads, projects, onClose, onSave }) {
+export default function CandidateModal({ candidate, squads, projects, clients, onClose, onSave }) {
     const { assignCandidateToProject } = useData();
     const isNew = !candidate.firstName;
     const [isEditing, setIsEditing] = useState(isNew);
@@ -44,8 +44,52 @@ export default function CandidateModal({ candidate, squads, projects, onClose, o
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
+    const formatDateForInput = (dateStr) => {
+        if (!dateStr) return "";
+        try {
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return "";
+            return d.toISOString().split('T')[0];
+        } catch (e) {
+            return "";
+        }
+    };
+
     const handleSave = () => {
-        onSave({ ...formData, cvFile });
+        // Prepare payload for API/DB Schema (Drizzle uses camelCase)
+        const payload = {
+            ...formData,
+            // Ensure schema keys are present and correctly types
+            chargeOutRate: String(formData.chargeOutRate || formData.chargeRate || 0),
+            candidateManager: formData.candidateManager || "",
+            currentEmployer: formData.currentEmployer || "Available",
+
+            // Date Cleaning (Supabase expects YYYY-MM-DD or ISO)
+            visaExpiry: formData.visaExpiry ? new Date(formData.visaExpiry).toISOString().split('T')[0] : null,
+            startDate: formData.startDate ? new Date(formData.startDate).toISOString().split('T')[0] : null,
+            finishDate: formData.finishDate ? new Date(formData.finishDate).toISOString().split('T')[0] : null,
+
+            // Ensure required fields
+            lastName: formData.lastName || '-',
+            internalRating: formData.internalRating || formData.satisfactionRating || 0,
+
+            // Pack JSONB columns
+            compliance: {
+                ...(formData.compliance || {}),
+                siteSafeExpiry: formData.siteSafeExpiry ? new Date(formData.siteSafeExpiry).toISOString().split('T')[0] : null,
+                tickets: formData.tickets || []
+            },
+        };
+
+        // Remove UI-only or duplicate-mapped fields to stay clean
+        delete payload.chargeRate;
+        delete payload.candidate_manager; // Old snake_case
+        delete payload.current_employer;   // Old snake_case
+        delete payload.satisfactionRating;
+        delete payload.siteSafeExpiry;
+        delete payload.tickets;
+
+        onSave(payload);
         setIsEditing(false);
     };
 
@@ -304,6 +348,41 @@ export default function CandidateModal({ candidate, squads, projects, onClose, o
                             <h3>Employment & Financials</h3>
                             <div className="info-grid">
                                 <div className="info-field">
+                                    <span className="field-label">Trade / Role</span>
+                                    {isEditing ? (
+                                        <RoleSelector
+                                            value={formData.role}
+                                            onChange={(val) => handleChange('role', val)}
+                                        />
+                                    ) : (
+                                        <span className="field-value highlight">{formData.role || '-'}</span>
+                                    )}
+                                </div>
+
+                                <div className="info-field">
+                                    <span className="field-label">Current Employer</span>
+                                    {isEditing ? (
+                                        <select
+                                            className="edit-input"
+                                            value={formData.currentEmployer || formData.current_employer || ""}
+                                            onChange={(e) => handleChange('currentEmployer', e.target.value)}
+                                        >
+                                            <option value="">Select Employer...</option>
+                                            <option value="Available">Available (On Bench)</option>
+                                            {clients?.map(client => (
+                                                <option key={client.id} value={client.name}>{client.name}</option>
+                                            ))}
+                                            {/* Fallback for projects if clients list is missing */}
+                                            {!clients?.length && projects?.map(p => (
+                                                <option key={p.id} value={p.client || p.name}>{p.client || p.name}</option>
+                                            ))}
+                                        </select>
+                                    ) : (
+                                        <span className="field-value">{formData.currentEmployer || formData.current_employer || 'Available'}</span>
+                                    )}
+                                </div>
+
+                                <div className="info-field">
                                     <span className="field-label">Candidate Pay Rate ($/hr)</span>
                                     {isEditing ? (
                                         <input
@@ -323,11 +402,12 @@ export default function CandidateModal({ candidate, squads, projects, onClose, o
                                         <input
                                             type="number"
                                             className="edit-input"
-                                            value={formData.chargeRate || 0}
-                                            onChange={(e) => handleChange('chargeRate', parseFloat(e.target.value))}
+                                            value={formData.chargeOutRate || formData.chargeRate || 0}
+                                            onChange={(e) => handleChange('chargeOutRate', e.target.value)}
+                                            step="1"
                                         />
                                     ) : (
-                                        <span className="field-value highlight">${formData.chargeRate || 0}/hr</span>
+                                        <span className="field-value highlight">${formData.chargeOutRate || formData.chargeRate || 0}/hr</span>
                                     )}
                                 </div>
 
@@ -345,13 +425,13 @@ export default function CandidateModal({ candidate, squads, projects, onClose, o
                                     )}
                                 </div>
 
-                                {!isEditing && formData.chargeRate > 0 && (
+                                {!isEditing && (parseFloat(formData.chargeOutRate || formData.chargeRate || 0) > 0) && (
                                     <div className="info-field margin-preview">
                                         <span className="field-label">Gross Margin (Est)</span>
                                         <span className="field-value text-emerald-400">
-                                            ${(formData.chargeRate - (formData.payRate * 1.3)).toFixed(2)}/hr
+                                            ${(parseFloat(formData.chargeOutRate || formData.chargeRate || 0) - (formData.payRate * 1.3)).toFixed(2)}/hr
                                             <small className="ml-2 text-xs text-muted">
-                                                ({Math.round(((formData.chargeRate - (formData.payRate * 1.3)) / formData.chargeRate) * 100)}%)
+                                                ({Math.round(((parseFloat(formData.chargeOutRate || formData.chargeRate || 0) - (formData.payRate * 1.3)) / parseFloat(formData.chargeOutRate || formData.chargeRate || 1)) * 100)}%)
                                             </small>
                                         </span>
                                     </div>
@@ -367,13 +447,13 @@ export default function CandidateModal({ candidate, squads, projects, onClose, o
                                     {isEditing ? (
                                         <select
                                             className="edit-input"
-                                            value={formData.status}
+                                            value={formData.status?.toLowerCase()}
                                             onChange={(e) => handleChange('status', e.target.value)}
                                         >
-                                            <option value="Available">Available (On Bench)</option>
-                                            <option value="On Job">On Job</option>
-                                            <option value="Placed">Placed (Permanent)</option>
-                                            <option value="Unavailable">Unavailable</option>
+                                            <option value="available">Available (On Bench)</option>
+                                            <option value="on_job">On Job</option>
+                                            <option value="placed">Placed (Permanent)</option>
+                                            <option value="unavailable">Unavailable</option>
                                         </select>
                                     ) : (
                                         <span className={`status-badge ${formData.status?.toLowerCase().replace(' ', '-')}`}>
@@ -382,7 +462,7 @@ export default function CandidateModal({ candidate, squads, projects, onClose, o
                                     )}
                                 </div>
 
-                                {(formData.status === "On Job" || formData.status === "Placed") && (
+                                {(formData.status === "on_job" || formData.status === "placed") && (
                                     <>
                                         <div className="info-field">
                                             <span className="field-label">Start Date</span>
@@ -390,7 +470,7 @@ export default function CandidateModal({ candidate, squads, projects, onClose, o
                                                 <input
                                                     type="date"
                                                     className="edit-input"
-                                                    value={formData.startDate || ""}
+                                                    value={formatDateForInput(formData.startDate)}
                                                     onChange={(e) => handleChange('startDate', e.target.value)}
                                                 />
                                             ) : (
@@ -404,7 +484,7 @@ export default function CandidateModal({ candidate, squads, projects, onClose, o
                                                 <input
                                                     type="date"
                                                     className="edit-input"
-                                                    value={formData.finishDate || ""}
+                                                    value={formatDateForInput(formData.finishDate)}
                                                     onChange={(e) => handleChange('finishDate', e.target.value)}
                                                 />
                                             ) : (
@@ -412,7 +492,7 @@ export default function CandidateModal({ candidate, squads, projects, onClose, o
                                             )}
                                         </div>
 
-                                        {formData.status === "On Job" && (
+                                        {formData.status === "on_job" && (
                                             <div className="info-field">
                                                 <span className="field-label">Current Project</span>
                                                 {isEditing ? (
@@ -426,6 +506,7 @@ export default function CandidateModal({ candidate, squads, projects, onClose, o
                                                                 setFormData(prev => ({
                                                                     ...prev,
                                                                     projectId: projectId,
+                                                                    status: 'on_job', // Ensure status is synced
                                                                     currentEmployer: project.client || project.name,
                                                                     lat: project.coordinates?.lat || -36.8485,
                                                                     lng: project.coordinates?.lng || 174.7633,
@@ -553,28 +634,7 @@ export default function CandidateModal({ candidate, squads, projects, onClose, o
                             </div>
                         </div>
 
-                        <div className="info-section">
-                            <h3>Employment & Financials</h3>
-                            <div className="info-grid">
-                                <InfoField label="Current Employer" field="currentEmployer" value={formData.currentEmployer} isEditing={isEditing} onChange={handleChange} />
-                                <InfoField label="Current Position" field="currentPosition" value={formData.currentPosition} isEditing={isEditing} onChange={handleChange} />
-                                <div className="info-field">
-                                    <span className="field-label">Trade / Role</span>
-                                    {isEditing ? (
-                                        <RoleSelector
-                                            value={formData.role}
-                                            onChange={(val) => handleChange('role', val)}
-                                        />
-                                    ) : (
-                                        <span className="field-value highlight">{formData.role || '-'}</span>
-                                    )}
-                                </div>
-                                <InfoField label="Current Work Type" field="currentWorkType" value={formData.currentWorkType} isEditing={isEditing} onChange={handleChange} />
-                                <InfoField label="Current Salary" field="currentSalary" value={formData.currentSalary} isEditing={isEditing} onChange={handleChange} />
-                                <InfoField label="Charge Out Rate" field="chargeOutRate" value={formData.chargeOutRate} highlight isEditing={isEditing} onChange={handleChange} />
-                                <InfoField label="Notice Period" field="noticePeriod" value={formData.noticePeriod} isEditing={isEditing} onChange={handleChange} />
-                            </div>
-                        </div>
+
 
                         <div className="info-section">
                             <h3>Ideal Role Preferences</h3>
@@ -609,7 +669,7 @@ export default function CandidateModal({ candidate, squads, projects, onClose, o
                             <h3>Internal Info</h3>
                             <div className="info-grid">
                                 <InfoField label="Recruiter" field="recruiter" value={formData.recruiter} isEditing={isEditing} onChange={handleChange} />
-                                <InfoField label="Candidate Manager" field="candidateManager" value={formData.candidateManager} isEditing={isEditing} onChange={handleChange} />
+                                <InfoField label="Candidate Manager" field="candidateManager" value={formData.candidateManager || formData.candidate_manager} isEditing={isEditing} onChange={handleChange} />
                                 <InfoField label="Branch" field="branch" value={formData.branch} isEditing={isEditing} onChange={handleChange} />
                                 <InfoField label="Division" field="division" value={formData.division} isEditing={isEditing} onChange={handleChange} />
                                 <InfoField label="Internal Rating" field="internalRating" value={formData.internalRating} isEditing={isEditing} onChange={handleChange} />
@@ -1159,7 +1219,7 @@ function RoleSelector({ value, onChange }) {
                 }}
             >
                 <option value="">Select Role...</option>
-                {availableRoles.map(role => (
+                {availableRoles?.map(role => (
                     <option key={role} value={role}>{role}</option>
                 ))}
                 <option value="__NEW__">+ Add New Role...</option>

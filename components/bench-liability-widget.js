@@ -2,19 +2,14 @@
 
 import { AlertOctagon, DollarSign, Users } from "lucide-react";
 
-export default function BenchLiabilityWidget({ candidates, onViewBench }) {
+export default function BenchLiabilityWidget({ candidates, liability, onViewBench }) {
     // 1. Filter for 'Bench' candidates (Available)
-    // In a real scenario, we might have a specific 'Guaranteed Hours' flag.
-    // For now, we assume ALL 'Available' candidates are costing us money.
-    const benchCandidates = candidates.filter(c => c.status === "Available");
+    const benchCandidates = candidates.filter(c => c.status === "available");
 
-    // 2. Calculate Liability
-    // Liability = Pay Rate * Guaranteed Hours (30)
-    const totalWeeklyLiability = benchCandidates.reduce((acc, c) => {
-        const payRate = c.payRate || 30; // Default fallback to $30 if missing
-        const hours = c.guaranteedHours || 30; // Default to 30 if missing
-
-        return acc + (payRate * hours);
+    const totalWeeklyLiability = liability ?? benchCandidates.reduce((acc, c) => {
+        const payRate = c.payRate || 30;
+        const hours = c.guaranteedHours || 0;
+        return acc + (payRate * 1.20 * hours);
     }, 0);
 
     const isCritical = totalWeeklyLiability > 0;

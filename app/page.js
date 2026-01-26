@@ -26,7 +26,7 @@ export default function PredictiveCommandCenter() {
 }
 
 function DashboardContent() {
-  const { candidates, projects, clients, selectedProject, setSelectedProject, updateProject, addProject, updateCandidate, moneyMoves, weeklyRevenue, revenueAtRisk } = useData();
+  const { candidates, projects, clients, selectedProject, setSelectedProject, updateProject, addProject, updateCandidate, moneyMoves, weeklyRevenue, revenueAtRisk, benchLiability, isSyncing } = useData();
   const [watchlist, setWatchlist] = useState([]);
 
   // Edit Modal State
@@ -42,7 +42,7 @@ function DashboardContent() {
   const [dealFlowTab, setDealFlowTab] = useState(null); // 'floats' or 'placements', null = closed
 
   useEffect(() => {
-    setWatchlist(projects.filter(p => p.status === 'Active' || p.status === 'Planning').slice(0, 5));
+    setWatchlist(projects.filter(p => p.status === 'Active' || p.status === 'Planning' || p.status === 'Construction').slice(0, 5));
   }, [projects]);
 
   const handleEditFromPanel = (project) => {
@@ -62,7 +62,7 @@ function DashboardContent() {
 
   const handleSaveCandidate = (updatedCandidate) => {
     updateCandidate(updatedCandidate);
-    setSelectedCandidate(updatedCandidate);
+    setSelectedCandidate(null);
   };
 
   const handleFocusCardClick = (item) => {
@@ -70,9 +70,9 @@ function DashboardContent() {
   };
 
   // --- LIVE METRICS ---
-  const activePlacements = candidates.filter(c => c.status === "On Job");
+  const activePlacements = candidates.filter(c => c.status === "on_job");
 
-  const totalOpenRoles = moneyMoves.filter(m => m.type === 'signal').length;
+  const totalOpenRoles = moneyMoves.filter(m => m.type === 'lead' || m.type === 'signal').length;
   const fillRate = totalOpenRoles + activePlacements.length > 0
     ? Math.round((activePlacements.length / (activePlacements.length + totalOpenRoles)) * 100)
     : 100;
@@ -113,6 +113,15 @@ function DashboardContent() {
 
   const { deployedData, setDeployedData } = useCrew();
 
+  if (isSyncing && projects.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-slate-950 text-slate-400 gap-4">
+        <div className="w-12 h-12 border-4 border-secondary/20 border-t-secondary rounded-full animate-spin"></div>
+        <div className="text-xl font-bold tracking-widest uppercase">Establishing Uplink...</div>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="dashboard-container">
@@ -123,6 +132,7 @@ function DashboardContent() {
           ))}
           <BenchLiabilityWidget
             candidates={candidates}
+            liability={benchLiability}
             onViewBench={() => setViewBenchList(true)}
           />
           {stats.slice(1).map((stat, index) => (
@@ -148,7 +158,7 @@ function DashboardContent() {
                 <h3 className="column-title">Deal Flow</h3>
                 <DealFlowSummary
                   floats={candidates.filter(c => c.status === "Floated" || c.status === "Interviewing")}
-                  placements={candidates.filter(c => c.status === "On Job")}
+                  placements={candidates.filter(c => c.status === "on_job")}
                   onOpenDetail={setDealFlowTab}
                 />
               </div>
@@ -172,12 +182,7 @@ function DashboardContent() {
               </div>
               <div className="urgent-list custom-scrollbar">
                 {moneyMoves.map((action) => {
-                  let cardType = action.type;
-                  if (action.type === 'signal') {
-                    if (action.urgency === 'Critical') cardType = 'risk';
-                    else if (action.urgency === 'High') cardType = 'urgent';
-                    else cardType = 'lead';
-                  }
+                  const cardType = action.type; // already mapped in context to lead, risk, urgent, task
 
                   return (
                     <FocusFeedCard
@@ -219,7 +224,7 @@ function DashboardContent() {
 
         {viewBenchList && (
           <ActiveBenchModal
-            candidates={candidates.filter(c => c.status === "Available")}
+            candidates={candidates.filter(c => c.status === "available")}
             onClose={() => setViewBenchList(false)}
             onViewCandidate={setSelectedCandidate}
           />
@@ -238,6 +243,7 @@ function DashboardContent() {
           <CandidateModal
             candidate={selectedCandidate}
             projects={projects}
+            clients={clients}
             squads={[]} // Pass empty squads or fetch if needed
             onClose={() => setSelectedCandidate(null)}
             onSave={handleSaveCandidate}
@@ -332,7 +338,10 @@ function DashboardContent() {
           display: flex;
           flex-direction: column;
           overflow: hidden; 
-          height: 15%; 
+          /* FIX: Removed rigid height constraint */
+          min-height: 400px; /* Give it real space to render the list */
+          height: auto;      /* Allow it to grow based on content if needed */
+          flex: 1;           /* Allow it to fill the grid cell */ 
         }
 
         .section-header {

@@ -15,7 +15,10 @@ export default function StatCard({ title, value, subtext, progress, status = "ne
     const color = colors[status] || colors.neutral;
     const radius = 30;
     const circumference = 2 * Math.PI * radius;
-    const strokeDashoffset = circumference - (progress / 100) * circumference;
+    
+    // Ensure progress is a valid number to prevent NaN in SVG attributes
+    const validProgress = typeof progress === 'number' && !isNaN(progress) ? progress : 0;
+    const strokeDashoffset = circumference - (validProgress / 100) * circumference;
 
     return (
         <div 
@@ -33,7 +36,7 @@ export default function StatCard({ title, value, subtext, progress, status = "ne
                 </div>
             </div>
 
-            {progress !== undefined && (
+            {progress !== undefined && !isNaN(progress) && (
                 <div className="chart">
                     <svg width="80" height="80" viewBox="0 0 80 80">
                         <circle
@@ -64,7 +67,7 @@ export default function StatCard({ title, value, subtext, progress, status = "ne
                             fontSize="14"
                             fontWeight="bold"
                         >
-                            {progress}%
+                            {Math.round(validProgress)}%
                         </text>
                     </svg>
                 </div>

@@ -7,18 +7,16 @@ export default function TradeGrid({ clients, candidates, region, onSelectTrade, 
     const industries = [
         { name: "Builder", icon: Hammer },
         { name: "Formwork", icon: Grid },
-        { name: "Glazier", icon: Box },
+        { name: "Civil", icon: Truck },  // Moved up for visibility
+        { name: "Electrical", icon: ZapIcon },
+        { name: "Plumber", icon: WrenchIcon },
         { name: "Flooring", icon: Grid },
         { name: "Interior", icon: PaintBucket },
-        { name: "Door & Windows", icon: Box },
+        { name: "Glazier", icon: Box },
         { name: "Landscaping", icon: Home },
-        { name: "Passive Fire", icon: Shield },
-        { name: "Gib Installation", icon: HardHat },
         { name: "Demolition", icon: Scissors },
-        { name: "Civil", icon: Truck },
-        { name: "Carpenter", icon: Hammer }, // Common candidate role
-        { name: "Electrician", icon: ZapIcon }, // Common candidate role
-        { name: "Plumber", icon: WrenchIcon } // Common candidate role
+        { name: "Fire", icon: Shield }, // Renamed from "Passive Fire" to match Modal option short-code
+        { name: "Carpenter", icon: Hammer },
     ];
 
     // Helper icons for dynamic roles
@@ -32,8 +30,8 @@ export default function TradeGrid({ clients, candidates, region, onSelectTrade, 
     const clickHandler = onSelectTrade || onTradeClick;
 
     // Filter by Region
-    const regionItems = activeRegion === "National" 
-        ? data 
+    const regionItems = activeRegion === "National"
+        ? data
         : data.filter(item => {
             const itemRegion = isClients ? item.region : item.state;
             return itemRegion === activeRegion;
@@ -55,17 +53,15 @@ export default function TradeGrid({ clients, candidates, region, onSelectTrade, 
             .filter(role => role && typeof role === 'string' && role.trim() !== "")
     ));
 
-    const allOptions = isClients 
-        ? industries 
-        : [
-            ...industries,
-            ...activeDataRoles
-                .filter(role => !industries.some(ind => ind.name.toLowerCase() === role.toLowerCase()))
-                .map(role => ({ name: role, icon: HardHat }))
-        ];
+    const allOptions = [
+        ...industries,
+        ...activeDataRoles
+            .filter(role => !industries.some(ind => ind.name.toLowerCase() === role.toLowerCase()))
+            .map(role => ({ name: role, icon: HardHat })) // Fallback icon
+    ];
 
     // Ensure absolute uniqueness by name (case-insensitive)
-    const displayedIndustries = allOptions.filter((v, i, a) => 
+    const displayedIndustries = allOptions.filter((v, i, a) =>
         a.findIndex(t => t.name.toLowerCase() === v.name.toLowerCase()) === i
     );
 
@@ -80,7 +76,7 @@ export default function TradeGrid({ clients, candidates, region, onSelectTrade, 
                 if (!isClients && !isActive) return null;
 
                 return (
-                    <div 
+                    <div
                         key={ind.name}
                         className={`trade-card ${isActive ? 'active' : 'inactive'}`}
                         onClick={() => isActive && clickHandler && clickHandler(ind.name)}
@@ -96,7 +92,7 @@ export default function TradeGrid({ clients, candidates, region, onSelectTrade, 
                 );
             })}
 
-             <style jsx>{`
+            <style jsx>{`
                 .trade-grid {
                     display: grid;
                     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));

@@ -10,7 +10,7 @@ export default function DealFlowModal({ isOpen, onClose, candidates, initialTab 
 
     // Filter Logic
     const floats = candidates.filter(c => c.status === "Floated" || c.status === "Interviewing");
-    const placements = candidates.filter(c => c.status === "On Job");
+    const placements = candidates.filter(c => c.status === "on_job");
 
     const currentList = activeTab === 'floats' ? floats : placements;
 

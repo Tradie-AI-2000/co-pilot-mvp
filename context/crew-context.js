@@ -26,7 +26,7 @@ export function CrewProvider({ children }) {
         const headcount = draftSquad.length;
         const totalCost = draftSquad.reduce((sum, c) => {
             // Extract numeric value from chargeOutRate (e.g. "$65/hr" -> 65)
-            const rate = parseFloat(c.chargeOutRate?.replace(/[^0-9.]/g, '') || 0);
+            const rate = parseFloat(String(c.chargeOutRate || 0).replace(/[^0-9.]/g, '')) || 0;
             return sum + rate;
         }, 0);
 

@@ -4,7 +4,7 @@ import { MapPin } from "lucide-react";
 
 export default function RegionGrid({ clients, candidates, onSelectRegion, onRegionClick }) {
     const regions = ["National", "Auckland", "Waikato", "BoP", "Northland", "Hawkes Bay"];
-    
+
     // Normalize props
     const data = clients || candidates || [];
     const isClients = !!clients;
@@ -14,20 +14,20 @@ export default function RegionGrid({ clients, candidates, onSelectRegion, onRegi
     const getStats = (region) => {
         if (!data || data.length === 0) return { active: 0, total: 0 };
 
-        const relevantItems = region === "National" 
-            ? data 
+        const relevantItems = region === "National"
+            ? data
             : data.filter(item => {
                 // Clients use 'region', Candidates use 'state' (legacy field name for region)
                 const itemRegion = isClients ? item.region : item.state;
                 return itemRegion === region;
             });
-        
+
         let activeCount = 0;
         if (isClients) {
             activeCount = relevantItems.filter(c => c.activeJobs > 0).length;
         } else {
-            // Candidates: 'On Job' or 'Deployed' implies active
-            activeCount = relevantItems.filter(c => c.status === 'On Job' || c.status === 'Deployed').length;
+            // Candidates: 'on_job' or 'deployed' implies active
+            activeCount = relevantItems.filter(c => c.status?.toLowerCase() === 'on_job' || c.status?.toLowerCase() === 'deployed').length;
         }
 
         return { active: activeCount, total: relevantItems.length };
@@ -40,14 +40,14 @@ export default function RegionGrid({ clients, candidates, onSelectRegion, onRegi
                 const isActive = stats.total > 0;
 
                 return (
-                    <div 
-                        key={region} 
+                    <div
+                        key={region}
                         className={`region-card ${isActive ? 'active' : 'inactive'}`}
                         onClick={() => isActive && clickHandler && clickHandler(region)}
                     >
                         <div className="card-bg-icon"><MapPin size={100} /></div>
                         <h3 className="region-title">{region}</h3>
-                        
+
                         <div className="stats">
                             <div className="stat-row">
                                 <span className="stat-val text-green-400">{stats.active}</span>

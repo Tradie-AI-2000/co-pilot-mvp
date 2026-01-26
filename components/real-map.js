@@ -48,8 +48,12 @@ export default function RealMap({
 
     // Safe coordinate accessor
     const getCoords = (m) => {
-        if (m.coordinates && typeof m.coordinates.lat !== 'undefined') return [m.coordinates.lat, m.coordinates.lng];
-        if (typeof m.lat !== 'undefined') return [m.lat, m.lng];
+        if (m.coordinates && m.coordinates.lat != null && m.coordinates.lng != null) {
+            return [Number(m.coordinates.lat), Number(m.coordinates.lng)];
+        }
+        if (m.lat != null && m.lng != null) {
+            return [Number(m.lat), Number(m.lng)];
+        }
         return [-36.8485, 174.7633]; // Fallback to Auckland
     };
 
@@ -86,7 +90,7 @@ export default function RealMap({
                     />
                 )}
 
-                {markers.map((marker) => (
+                {markers.filter(m => m && m.id).map((marker) => (
                     <DraggableMarker
                         key={marker.id}
                         marker={marker}
@@ -130,6 +134,8 @@ export default function RealMap({
                 .status-badge.active { background: #dbeafe; color: #1e40af; }
                 .status-badge.planning { background: #fef3c7; color: #92400e; }
                 .status-badge.tender { background: #f3e8ff; color: #6b21a8; }
+                .status-badge.on_job { background: #fee2e2; color: #dc2626; }
+                .status-badge.available { background: #d1fae5; color: #047857; }
             `}</style>
         </div>
     );
@@ -140,13 +146,13 @@ function DraggableMarker({ marker, getCoords, polygonData, onMarkerClick, render
     let isInside = false;
     let color = marker.color || 'blue';
 
-    if (polygonData && marker.type !== 'project') {
+    if (polygonData && marker.type !== 'project' && position[0] != null && position[1] != null) {
         const pt = point([position[1], position[0]]); // Turf expects [lng, lat]
         isInside = polygonData.features ?
             polygonData.features.some(feature => booleanPointInPolygon(pt, feature)) :
             booleanPointInPolygon(pt, polygonData);
         color = isInside ? 'green' : 'gold';
-        if (marker.status === 'On Job' || marker.status === 'Unavailable') {
+        if (marker.status?.toLowerCase() === 'on_job' || marker.status?.toLowerCase() === 'unavailable') {
             color = 'red';
         }
     }

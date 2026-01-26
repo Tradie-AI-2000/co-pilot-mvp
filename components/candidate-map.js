@@ -12,8 +12,10 @@ export default function CandidateMap({ candidates = [], projects = [], onCandida
             let color = "blue"; // Default
             const today = new Date();
 
-            if (c.status === "Available") {
-                color = "red"; // On Bench
+            if (c.status?.toLowerCase() === "on_job") {
+                color = "#f87171"; // Red
+            } else if (c.status?.toLowerCase() === "available") {
+                color = "#1fb6ff"; // Blue/Secondary
             } else if (c.finishDate) {
                 const finish = new Date(c.finishDate);
                 const diffTime = Math.abs(finish - today);
@@ -40,7 +42,7 @@ export default function CandidateMap({ candidates = [], projects = [], onCandida
         const c = marker.candidate;
         // Find project name if linked
         const project = projects.find(p => p.id === c.projectId);
-        const projectName = project ? project.name : (c.status === 'On Job' ? c.currentEmployer : null);
+        const projectName = project ? project.name : (c.status?.toLowerCase() === 'on_job' ? c.currentEmployer : null);
 
         return (
             <div className="candidate-popup">
@@ -63,7 +65,7 @@ export default function CandidateMap({ candidates = [], projects = [], onCandida
                             <Briefcase size={12} /> {projectName}
                         </div>
                     )}
-                    {c.status === "On Job" && (
+                    {c.status?.toLowerCase() === "on_job" && (
                         <div className="popup-row">
                             <Calendar size={12} /> Finishes: {c.finishDate || "Unknown"}
                         </div>

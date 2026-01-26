@@ -1,36 +1,73 @@
-# API Contracts - JobAdder Integration
+# API Contracts: Co-Pilot
 
-Stellar Co-Pilot integrates with the **JobAdder V2 API** to manage recruitment data. This document outlines the primary endpoints and contracts used or planned for integration.
+This document outlines the internal API endpoints available in Co-Pilot.
 
-## Authentication
-JobAdder uses **OAuth 2.0** (Authorization Code Flow).
-- **Authorization URL**: `https://id.jobadder.com/connect/authorize`
-- **Scopes required**: `read`, `write`, `read_contact`, `read_job`, `read_candidate`
+## Base URL
+`/api`
 
-## Primary Endpoints
+---
 
-### 1. Candidates API
-Used for fetching and managing candidate profiles.
-- **GET** `/candidates`: Search for candidates.
-- **POST** `/candidates`: Add a new candidate.
-- **GET** `/candidates/{candidateId}`: Get detailed candidate information.
+## 1. Candidates API
+**Path**: `/api/candidates`
 
-### 2. Jobs API
-Used for managing job orders and placements.
-- **GET** `/jobs`: Find active job orders.
-- **GET** `/jobs/{jobId}`: Get job details and statistics.
-- **POST** `/jobs`: Create a new job order.
+### GET
+**Description**: Fetches all candidates with their qualifications and status.
+**Response**: `Array<Candidate>`
+- **Example**: `[{ "id": "uuid", "firstName": "John", "lastName": "Doe", "status": "available", ... }]`
 
-### 3. Companies & Contacts API (CRM)
-Used for client relationship management.
-- **GET** `/companies`: Search for companies/clients.
-- **GET** `/contacts`: Find key contacts within client organizations.
+### POST
+**Description**: Creates a new candidate or updates an existing one (Mock Echo).
+**Body**: `Candidate Object`
+**Response**: `{ "success": true, "data": Candidate }`
 
-### 4. Placements API
-Used for tracking successful recruitment matches.
-- **GET** `/placements`: Search placements.
-- **POST** `/placements`: Record a new placement.
+---
 
-## Integration Patterns
-- **Syncing**: The application caches JobAdder data in local state (`DataContext.js`) for rapid UI responsiveness.
-- **Mapping**: JobAdder addresses are geocoded for display on the `GeospatialMap` component.
+## 2. Sync API
+**Path**: `/api/sync`
+
+### GET
+**Description**: Fetches raw data from a specific Google Sheets tab.
+**Parameters**: `tab` (string, required) - e.g., "Projects", "Candidates", "Clients"
+**Response**: `Array<Object>` - Array of rows from the sheet.
+
+### POST
+**Description**: Updates a specific row in a Google Sheets tab.
+**Body**:
+```json
+{
+  "tab": "Projects",
+  "id": "project_id_or_row_index",
+  "data": { "status": "Active", "notes": "Updated via API" }
+}
+```
+**Response**: `{ "success": true, "updatedRow": Object }`
+
+---
+
+## 3. Nudges API
+**Path**: `/api/nudges`
+
+### GET
+**Description**: Retrieves active alerts and proactive tasks for the current user.
+**Response**: `Array<Nudge>`
+- **Example**: `[{ "type": "ZOMBIE_HUNTER", "priority": "HIGH", "title": "Dormant Candidate", ... }]`
+
+---
+
+## 4. Geospatial API
+**Path**: `/api/geo`
+
+### GET
+**Description**: Performs geocoding or retrieves spatial data for mapping.
+**Parameters**: `address` or `bounds`
+**Response**: GeoJSON or Lat/Lng objects.
+
+---
+
+## 5. Agent API
+**Path**: `/api/agent`
+
+### POST
+**Description**: Entry point for AI agents to trigger actions or request data analysis.
+**Body**: `{ "query": string, "context": object }`
+**Response**: `{ "response": string, "actions": Array }`

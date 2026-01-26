@@ -1,41 +1,43 @@
-# UI Component Inventory - Stellar Co-Pilot
+# Component Inventory: Co-Pilot
 
-## Overview
-The application uses a modular React component library focused on data visualization, recruitment workflows, and geospatial analysis.
+Co-Pilot features a rich library of specialized React components designed for data visualization and workflow management.
 
-## Core Components
+## Component Categories
 
-| Component | Description |
-| :--- | :--- |
-| `sidebar.js` | Main navigation shell with route links and global branding. |
-| `real-map.js` | Leaflet-based map for visualizing candidate and project density. |
-| `geospatial-map.js` | Advanced mapping with filtering and clustering capabilities. |
-| `stat-card.js` | High-level metric display (e.g., Active Jobs, Placements). |
-| `candidate-dashboard.js` | Specialized view for candidate search and vetting. |
-| `squad-builder.js` | Interactive tool for assembling teams for projects. |
+### 1. Dashboard & Visualization
+- **`stat-card.js`**: Reusable card for displaying key performance indicators (KPIs).
+- **`activity-feed-widget.js`**: Real-time stream of events and updates.
+- **`financial-forecast-widget.js`**: Visualization of projected revenue and costs.
+- **`relationship-decay-widget.js`**: Heatmap or chart showing client interaction frequency.
 
-## Modals & Interactions
+### 2. Geospatial (Mapping)
+- **`real-map.js`**: Primary Leaflet implementation for project visualization.
+- **`candidate-map.js`**: Specialized map showing candidate proximity to project sites.
+- **`geospatial-map.js`**: Generic wrapper for various mapping views.
 
-| Component | Purpose |
-| :--- | :--- |
-| `candidate-modal.js` | Detailed candidate profile view and editing. |
-| `client-details-modal.js` | Comprehensive client profile and associated project list. |
-| `add-project-modal.js` | Form for initializing new construction projects with intelligent phase detection. |
-| `add-client-modal.js` | Client onboarding interface. |
-| `enhanced-client-details-modal.js` | Advanced version of client details with tabbed views. |
+### 3. Modals & Interaction
+- **`candidate-modal.js`**: Detailed view and edit form for candidate profiles.
+- **`client-details-modal.js`**: Deep-dive view for client history and contacts.
+- **`active-bench-modal.js`**: List of available candidates (the "Bench").
+- **`add-project-modal.js`**: Form for initializing new projects.
 
-## Specialized Widgets
+### 4. Workflow & Planning
+- **`placements-pipeline.js`**: Kanban or list view of current placement stages.
+- **`project-timeline.js`**: Gantt-style or linear visualization of project phases.
+- **`client-tier-board.js`**: Strategic visualization of clients sorted by tier (1, 2, 3).
+- **`squad-builder.js`**: Drag-and-drop interface for forming project teams.
 
-| Component | Description |
-| :--- | :--- |
-| `activity-feed-widget.js` | Real-time stream of placements and project triggers. |
-| `project-timeline.js` | Gantt-style visualization of construction phases. |
-| `trade-grid.js` | Matrix view of workforce requirements across projects. |
-| `region-grid.js` | Geographic performance and demand heat map. |
-| `focus-feed-card.js` | Card for displaying urgent actions in mission control. |
-| `project-watchlist-card.js` | Card for displaying projects in the dashboard watchlist. |
+### 5. Specialized Tools
+- **`whatsapp-blaster.js`**: UI for bulk communication with candidates.
+- **`nudge-logic/`**: Components related to the Nudge Engine display.
+- **`golden-hour-mode.js`**: Focused view for high-priority morning tasks.
 
-## Design Principles
-- **Visualization**: Heavy use of maps and grids for data-dense information.
-- **Urgency-Driven**: Visual markers for "Urgent" jobs or "High" priority signals.
-- **Contextual**: Components are tightly coupled with the `DataContext` for real-time updates.
+### 6. General Layout
+- **`sidebar.js`**: Primary navigation and user profile.
+- **`card.js`**: Standard layout container with "glass-panel" styling.
+- **`action-drawer.js`**: Side-sliding panel for quick actions.
+
+## Design System Patterns
+- **Styling**: Tailwind CSS with custom `glass-panel` and `neon-gradient` utility classes.
+- **Icons**: Lucide React for consistent iconography.
+- **Interactivity**: DnD Kit for drag-and-drop operations in the Squad Builder.

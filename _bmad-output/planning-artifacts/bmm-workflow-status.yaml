@@ -1,0 +1,21 @@
+# Workflow Status - Phase 2 Professional Planning
+generated: "2026-01-22"
+project: "Co-Pilot"
+project_type: "brownfield"
+selected_track: "method"
+field_type: "brownfield"
+user_description: "Completed Phase 1 with core features and aesthetic; now moving to a professional Phase 2. Goal is to analyze existing codebase/docs and build new features, database integrations, and enhancements with organized, professional development following proper BMM steps."
+workflow_path: "{project-root}/_bmad/bmm/workflows/workflow-status/paths/method-brownfield.yaml"
+
+workflow_status:
+  document-project: "docs/index.md"
+  brainstorm-project: "required"
+  research: "optional"
+  product-brief: "optional"
+  prd: "required"
+  create-ux-design: "conditional"
+  create-architecture: "required"
+  create-epics-and-stories: "required"
+  test-design: "recommended"
+  implementation-readiness: "required"
+  sprint-planning: "required"

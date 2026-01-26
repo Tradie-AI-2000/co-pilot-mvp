@@ -6,9 +6,9 @@ import { useData } from "../context/data-context.js";
 export default function ActivePlacementsModal({ onClose }) {
     const { placements, candidates, projects } = useData();
 
-    // Filter candidates who are explicitly "On Job"
+    // Filter candidates who are explicitly "on_job"
     // This ensures alignment with the Dashboard counter and catches manual edits
-    const onJobCandidates = candidates.filter(c => c.status === 'On Job');
+    const onJobCandidates = candidates.filter(c => c.status === 'on_job');
 
     return (
         <div className="modal-overlay" onClick={onClose}>
@@ -30,8 +30,8 @@ export default function ActivePlacementsModal({ onClose }) {
                 <div className="placements-list">
                     {onJobCandidates.map(candidate => {
                         // Try to find the linked placement for extra metadata (like start date)
-                        const placement = placements.find(p => p.candidateId === candidate.id && p.status === 'Deployed');
-                        
+                        const placement = placements.find(p => p.candidateId === candidate.id && p.status === 'active');
+
                         // Resolve Project Name
                         let projectName = candidate.currentEmployer || "Unknown Project";
                         if (candidate.projectId) {
@@ -43,14 +43,16 @@ export default function ActivePlacementsModal({ onClose }) {
                         }
 
                         // Calculate margin
-                        const margin = candidate.chargeRate && candidate.payRate 
+                        const margin = candidate.chargeRate && candidate.payRate
                             ? ((candidate.chargeRate - candidate.payRate) / candidate.chargeRate * 100).toFixed(1)
                             : "0.0";
 
                         // Determine Start Date
-                        const startDate = placement?.floatedDate 
-                            ? new Date(placement.floatedDate).toLocaleDateString() 
-                            : "N/A";
+                        const startDate = candidate.startDate
+                            ? new Date(candidate.startDate).toLocaleDateString()
+                            : placement?.floatedDate
+                                ? new Date(placement.floatedDate).toLocaleDateString()
+                                : "N/A";
 
                         return (
                             <div key={candidate.id} className="placement-card">

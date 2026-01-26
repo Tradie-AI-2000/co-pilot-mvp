@@ -8,13 +8,13 @@ import { formatWhatsAppLink, generateSiteManagerWhatsAppMessage, CONSTRUCTION_LI
 import FloatCandidateModal from "./float-candidate-modal.js";
 
 export default function EnhancedClientDetailsModal({ client, onClose, onUpdate }) {
-    const { projects: availableProjectsMetadata, updateProject, candidates, placements } = useData(); 
+    const { projects: availableProjectsMetadata, updateProject, candidates, placements } = useData();
     const [activeTab, setActiveTab] = useState("projects");
     const [recruitmentFilter, setRecruitmentFilter] = useState("active"); // active, pipeline, history
     const [newNote, setNewNote] = useState("");
     const [newTask, setNewTask] = useState("");
     const [localClient, setLocalClient] = useState(client);
-    const [isEditing, setIsEditing] = useState(false);
+    const [isEditing, setIsEditing] = useState(client.id === 'new');
     const router = useRouter();
 
     const [isLinking, setIsLinking] = useState(false);
@@ -25,7 +25,12 @@ export default function EnhancedClientDetailsModal({ client, onClose, onUpdate }
     if (!client) return null;
 
     const handleSave = () => {
-        onUpdate(localClient);
+        if (localClient.id === 'new') {
+            const { id, ...newClient } = localClient;
+            onUpdate(newClient);
+        } else {
+            onUpdate(localClient);
+        }
         setIsEditing(false);
     };
 
@@ -64,7 +69,7 @@ export default function EnhancedClientDetailsModal({ client, onClose, onUpdate }
         setLocalClient({ ...localClient, keyContacts: updatedContacts });
     };
     const handleAddKeyContact = () => {
-        const newContact = { name: "", role: "", phone: "", influence: "Neutral" };
+        const newContact = { name: "", role: "", email: "", phone: "", linkedProjectId: "", influence: "Neutral" };
         setLocalClient({ ...localClient, keyContacts: [...(localClient.keyContacts || []), newContact] });
     };
     const handleDeleteKeyContact = (index) => {
@@ -126,8 +131,8 @@ export default function EnhancedClientDetailsModal({ client, onClose, onUpdate }
     const getProjectPlacements = (projectId) => {
         return (placements || []).filter(p => {
             if (p.projectId !== projectId) return false;
-            
-            if (recruitmentFilter === 'active') return ['Deployed', 'On Job'].includes(p.status);
+
+            if (recruitmentFilter === 'active') return ['deployed', 'on_job'].includes(p.status?.toLowerCase());
             if (recruitmentFilter === 'pipeline') return ['Floated', 'Interviewing', 'Offer', 'Unconfirmed'].includes(p.status);
             if (recruitmentFilter === 'history') return ['Completed', 'Terminated', 'Resigned'].includes(p.status);
             return false;
@@ -143,10 +148,42 @@ export default function EnhancedClientDetailsModal({ client, onClose, onUpdate }
                             <div className="space-y-2">
                                 <input className="edit-input font-bold text-2xl w-full" value={localClient.name} onChange={(e) => setLocalClient({ ...localClient, name: e.target.value })} />
                                 <div className="flex gap-2">
-                                    <input className="edit-input text-sm" value={localClient.industry} onChange={(e) => setLocalClient({ ...localClient, industry: e.target.value })} placeholder="Industry" />
-                                    <input className="edit-input text-sm" value={localClient.region || ""} onChange={(e) => setLocalClient({ ...localClient, region: e.target.value })} placeholder="Region" />
-                                    <select className="bg-slate-900 border border-slate-700 text-white text-sm rounded-md px-2 outline-none" value={localClient.tier || "Standard Client"} onChange={(e) => setLocalClient({ ...localClient, tier: e.target.value })}>
-                                        <option value="1">Tier 1</option><option value="2">Tier 2</option><option value="3">Tier 3</option><option value="Standard Client">Standard Client</option>
+                                    <select
+                                        className="edit-input text-sm"
+                                        value={localClient.industry}
+                                        onChange={(e) => setLocalClient({ ...localClient, industry: e.target.value })}
+                                    >
+                                        <option value="">Select Industry...</option>
+                                        <option value="Builder">Builder (General)</option>
+                                        <option value="Formwork">Formwork & Concrete</option>
+                                        <option value="Civil">Civil Infrastructure</option>
+                                        <option value="Electrical">Electrical</option>
+                                        <option value="Plumber">Plumbing / HVAC</option>
+                                        <option value="Flooring">Flooring & Tiling</option>
+                                        <option value="Interior">Interiors (Gib/Paint)</option>
+                                        <option value="Glazier">Glazing (Windows/Doors)</option>
+                                        <option value="Landscaping">Landscaping</option>
+                                        <option value="Demolition">Demolition</option>
+                                        <option value="Fire">Passive Fire</option>
+                                        <option value="Other">Other / General</option>
+                                    </select>
+                                    <select
+                                        className="edit-input text-sm"
+                                        value={localClient.region || ""}
+                                        onChange={(e) => setLocalClient({ ...localClient, region: e.target.value })}
+                                    >
+                                        <option value="National">National</option>
+                                        <option value="Auckland">Auckland</option>
+                                        <option value="Waikato">Waikato</option>
+                                        <option value="BoP">BoP</option>
+                                        <option value="Northland">Northland</option>
+                                        <option value="Hawkes Bay">Hawkes Bay</option>
+                                        <option value="Wellington">Wellington</option>
+                                        <option value="Christchurch">Christchurch</option>
+                                        <option value="South Island">South Island</option>
+                                    </select>
+                                    <select className="bg-slate-900 border border-slate-700 text-white text-sm rounded-md px-2 outline-none" value={localClient.tier || "3"} onChange={(e) => setLocalClient({ ...localClient, tier: e.target.value })}>
+                                        <option value="1">Tier 1</option><option value="2">Tier 2</option><option value="3">Tier 3</option>
                                     </select>
                                 </div>
                             </div>
@@ -229,17 +266,17 @@ export default function EnhancedClientDetailsModal({ client, onClose, onUpdate }
                                                 {projectPlacements.map(placement => {
                                                     // Debug Log
                                                     console.log(`[Recruitment] Rendering placement ${placement.id} for project ${pid}. Status: ${placement.status}`);
-                                                    
+
                                                     // Loose equality check or string conversion to handle ID type mismatches (Sheet String vs Mock Number)
                                                     const candidate = candidates.find(c => String(c.id) === String(placement.candidateId));
-                                                    
+
                                                     // Debug Log
                                                     if (!candidate) {
                                                         console.warn(`[Recruitment] Candidate not found for ID: ${placement.candidateId}. Available candidates:`, candidates.map(c => c.id));
                                                         return (
                                                             <div key={placement.id} className="p-4 border border-red-500/50 bg-red-500/10 rounded-lg text-red-400 text-xs font-mono">
-                                                                DATA ERROR: Candidate #{placement.candidateId} not found.<br/>
-                                                                Placement Status: {placement.status}<br/>
+                                                                DATA ERROR: Candidate #{placement.candidateId} not found.<br />
+                                                                Placement Status: {placement.status}<br />
                                                                 Pool Size: {candidates.length}
                                                             </div>
                                                         );
@@ -250,12 +287,12 @@ export default function EnhancedClientDetailsModal({ client, onClose, onUpdate }
                                                     const isFilipino = candidate.country?.toLowerCase() === 'philippines' || candidate.nationality?.toLowerCase() === 'filipino';
                                                     const isApprovedRegion = approvedRegions.some(region => projectRegion.toLowerCase().includes(region.toLowerCase()));
                                                     const visaStatus = isFilipino ? (isApprovedRegion ? 'compliant' : 'violation') : 'n/a';
-                                                    
+
                                                     // Financials
                                                     const charge = placement.chargeRate || candidate.chargeRate || 0;
                                                     const pay = placement.payRate || candidate.payRate || 0;
-                                                    const margin = charge - (pay * 1.2); 
-                                                    
+                                                    const margin = charge - (pay * 1.2);
+
                                                     // Dates
                                                     const rawStart = placement.startDate || placement.floatedDate;
                                                     const rawEnd = placement.endDate || candidate.finishDate;
@@ -274,12 +311,11 @@ export default function EnhancedClientDetailsModal({ client, onClose, onUpdate }
                                                                             <h5 className="font-bold text-white text-base leading-none">
                                                                                 {candidate.firstName} {candidate.lastName}
                                                                             </h5>
-                                                                            <span className={`text-[0.6rem] px-2 py-0.5 rounded-full uppercase font-black tracking-tighter border ${
-                                                                                placement.status === 'Deployed' || placement.status === 'On Job' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-                                                                                placement.status === 'Interviewing' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' :
-                                                                                placement.status === 'Completed' ? 'bg-slate-500/10 text-slate-400 border-slate-500/20' :
-                                                                                'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                                                                            }`}>{placement.status}</span>
+                                                                            <span className={`text-[0.6rem] px-2 py-0.5 rounded-full uppercase font-black tracking-tighter border ${placement.status?.toLowerCase() === 'deployed' || placement.status?.toLowerCase() === 'on_job' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                                                                                placement.status?.toLowerCase() === 'interviewing' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' :
+                                                                                    placement.status?.toLowerCase() === 'completed' ? 'bg-slate-500/10 text-slate-400 border-slate-500/20' :
+                                                                                        'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                                                                                }`}>{placement.status}</span>
                                                                         </div>
                                                                         <div className="text-xs text-slate-400 font-medium">
                                                                             {candidate.role} • {candidate.currentWorkType || 'Temp'}
@@ -367,7 +403,7 @@ export default function EnhancedClientDetailsModal({ client, onClose, onUpdate }
                                     const nextPhaseData = nextPhaseId ? CONSTRUCTION_LIFECYCLE[nextPhaseId] : null;
                                     const siteManager = project.siteManager || 'TBC';
                                     const siteManagerPhone = project.siteManagerPhone || project.siteManagerMobile;
-                                    const activePlacements = candidates.filter(c => c.projectId === pid && c.status === 'On Job').length;
+                                    const activePlacements = candidates.filter(c => c.projectId === pid && c.status?.toLowerCase() === 'on_job').length;
 
                                     return (
                                         <div key={pid} className="project-card modern-card group relative">
@@ -432,12 +468,15 @@ export default function EnhancedClientDetailsModal({ client, onClose, onUpdate }
                                     <div className="form-group">
                                         <label className="text-xs text-slate-400 uppercase font-bold block mb-1">Client Owner</label>
                                         {isEditing ? (
-                                            <input
+                                            <select
                                                 className="edit-input"
                                                 value={localClient.clientOwner || ""}
                                                 onChange={(e) => setLocalClient({ ...localClient, clientOwner: e.target.value })}
-                                                placeholder="Assign Owner..."
-                                            />
+                                            >
+                                                <option value="">Assign Owner...</option>
+                                                <option value="Joe Ward">Joe Ward</option>
+                                                <option value="Blair Stewart">Blair Stewart</option>
+                                            </select>
                                         ) : (
                                             <div className="flex items-center gap-2 text-white">
                                                 <User size={16} className="text-emerald-400" />
@@ -448,12 +487,15 @@ export default function EnhancedClientDetailsModal({ client, onClose, onUpdate }
                                     <div className="form-group">
                                         <label className="text-xs text-slate-400 uppercase font-bold block mb-1">Account Manager</label>
                                         {isEditing ? (
-                                            <input
+                                            <select
                                                 className="edit-input"
                                                 value={localClient.accountManager || ""}
                                                 onChange={(e) => setLocalClient({ ...localClient, accountManager: e.target.value })}
-                                                placeholder="Assign Account Manager..."
-                                            />
+                                            >
+                                                <option value="">Assign Account Manager...</option>
+                                                <option value="Joe Ward">Joe Ward</option>
+                                                <option value="Blair Stewart">Blair Stewart</option>
+                                            </select>
                                         ) : (
                                             <div className="flex items-center gap-2 text-white">
                                                 <Briefcase size={16} className="text-sky-400" />
@@ -464,7 +506,7 @@ export default function EnhancedClientDetailsModal({ client, onClose, onUpdate }
                                 </div>
                             </div>
 
-                            <div className="bg-slate-800/50 p-6 rounded-lg border border-slate-700"><h4 className="text-sm font-bold text-white mb-4">Site Logistics & Requirements</h4><div className="space-y-4"><div className="form-group"><label className="text-xs text-slate-400 uppercase font-bold block mb-1">PPE Requirements</label>{isEditing ? (<textarea className="edit-textarea" value={localClient.siteLogistics?.ppe || ""} onChange={(e) => setLocalClient({ ...localClient, siteLogistics: { ...localClient.siteLogistics, ppe: e.target.value }})} rows={2} />) : (<p className="text-sm text-slate-300">{localClient.siteLogistics?.ppe || "Standard PPE"}</p>)}</div><div className="form-group"><label className="text-xs text-slate-400 uppercase font-bold block mb-1">Induction Process</label>{isEditing ? (<textarea className="edit-textarea" value={localClient.siteLogistics?.induction || ""} onChange={(e) => setLocalClient({ ...localClient, siteLogistics: { ...localClient.siteLogistics, induction: e.target.value }})} rows={2} />) : (<p className="text-sm text-slate-300">{localClient.siteLogistics?.induction || "TBC"}</p>)}</div></div></div>
+                            <div className="bg-slate-800/50 p-6 rounded-lg border border-slate-700"><h4 className="text-sm font-bold text-white mb-4">Site Logistics & Requirements</h4><div className="space-y-4"><div className="form-group"><label className="text-xs text-slate-400 uppercase font-bold block mb-1">PPE Requirements</label>{isEditing ? (<textarea className="edit-textarea" value={localClient.siteLogistics?.ppe || ""} onChange={(e) => setLocalClient({ ...localClient, siteLogistics: { ...localClient.siteLogistics, ppe: e.target.value } })} rows={2} />) : (<p className="text-sm text-slate-300">{localClient.siteLogistics?.ppe || "Standard PPE"}</p>)}</div><div className="form-group"><label className="text-xs text-slate-400 uppercase font-bold block mb-1">Induction Process</label>{isEditing ? (<textarea className="edit-textarea" value={localClient.siteLogistics?.induction || ""} onChange={(e) => setLocalClient({ ...localClient, siteLogistics: { ...localClient.siteLogistics, induction: e.target.value } })} rows={2} />) : (<p className="text-sm text-slate-300">{localClient.siteLogistics?.induction || "TBC"}</p>)}</div></div></div>
                         </div>
                     )}
 
@@ -476,8 +518,62 @@ export default function EnhancedClientDetailsModal({ client, onClose, onUpdate }
                                 {localClient.keyContacts?.map((contact, idx) => (
                                     <div key={idx} className="contact-card">
                                         <div className="contact-header">
-                                            <div className="w-full">{isEditing ? (<div className="flex justify-between items-start"><div className="space-y-2 mb-2 flex-1"><input className="edit-input font-bold text-lg" value={contact.name} onChange={(e) => updateContact(idx, 'name', e.target.value)} placeholder="Name" /><input className="edit-input text-sm" value={contact.role} onChange={(e) => updateContact(idx, 'role', e.target.value)} placeholder="Role" /><input className="edit-input text-sm" value={contact.phone} onChange={(e) => updateContact(idx, 'phone', e.target.value)} placeholder="Phone" /></div><button onClick={() => handleDeleteKeyContact(idx)} className="text-slate-500 hover:text-red-400 p-2 ml-2"><Trash2 size={16} /></button></div>) : (<><div className="font-bold text-white text-lg">{contact.name}</div><div className="text-sm text-slate-400">{contact.role}</div></>)}</div>
-                                            {!isEditing && (<div className="flex items-center gap-3 ml-4">{contact.influence && (<span className={`influence-badge ${contact.influence.toLowerCase().replace(' ', '-')}`}>{contact.influence === 'Champion' && '❤️'}{contact.influence === 'Blocker' && '🛑'}{contact.influence === 'Gatekeeper' && '🛡️'}{contact.influence === 'Budget Holder' && '💰'}<span className="ml-1">{contact.influence}</span></span>)}<div className="text-sky-400 text-sm flex items-center gap-2 whitespace-nowrap"><Phone size={14} /> {contact.phone}</div></div>)}
+                                            <div className="w-full">
+                                                {isEditing ? (
+                                                    <div className="flex justify-between items-start">
+                                                        <div className="space-y-2 mb-2 flex-1">
+                                                            <input className="edit-input font-bold text-lg" value={contact.name} onChange={(e) => updateContact(idx, 'name', e.target.value)} placeholder="Name" />
+                                                            <div className="flex gap-2">
+                                                                <select
+                                                                    className="edit-input text-sm"
+                                                                    value={contact.role}
+                                                                    onChange={(e) => updateContact(idx, 'role', e.target.value)}
+                                                                >
+                                                                    <option value="">Select Role...</option>
+                                                                    <option value="Project Manager">Project Manager</option>
+                                                                    <option value="Site Manager">Site Manager</option>
+                                                                    <option value="HR">HR</option>
+                                                                    <option value="Director/Owner">Director/Owner</option>
+                                                                </select>
+                                                                <input className="edit-input text-sm" value={contact.email || ""} onChange={(e) => updateContact(idx, 'email', e.target.value)} placeholder="Email" />
+                                                            </div>
+                                                            <div className="flex gap-2">
+                                                                <input className="edit-input text-sm" value={contact.phone} onChange={(e) => updateContact(idx, 'phone', e.target.value)} placeholder="Phone" />
+                                                                <select
+                                                                    className="edit-input text-sm"
+                                                                    value={contact.linkedProjectId || ""}
+                                                                    onChange={(e) => updateContact(idx, 'linkedProjectId', e.target.value)}
+                                                                >
+                                                                    <option value="">Link to Project...</option>
+                                                                    {(availableProjectsMetadata || []).filter(p => localClient.projectIds?.includes(p.id)).map(p => (
+                                                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                                                    ))}
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <button onClick={() => handleDeleteKeyContact(idx)} className="text-slate-500 hover:text-red-400 p-2 ml-2"><Trash2 size={16} /></button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex justify-between items-start">
+                                                        <div>
+                                                            <div className="font-bold text-white text-lg">{contact.name}</div>
+                                                            <div className="text-sm text-slate-400">{contact.role}</div>
+                                                            {contact.linkedProjectId && (
+                                                                <div className="text-[10px] text-secondary uppercase font-bold mt-1">
+                                                                    Project: {availableProjectsMetadata.find(p => p.id === contact.linkedProjectId)?.name}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex flex-col items-end gap-1">
+                                                            <div className="flex items-center gap-3">
+                                                                {contact.influence && (<span className={`influence-badge ${contact.influence.toLowerCase().replace(' ', '-')}`}>{contact.influence === 'Champion' && '❤️'}{contact.influence === 'Blocker' && '🛑'}{contact.influence === 'Gatekeeper' && '🛡️'}{contact.influence === 'Budget Holder' && '💰'}<span className="ml-1">{contact.influence}</span></span>)}
+                                                                <div className="text-sky-400 text-sm flex items-center gap-2 whitespace-nowrap"><Phone size={14} /> {contact.phone}</div>
+                                                            </div>
+                                                            {contact.email && <div className="text-xs text-slate-500 flex items-center gap-2"><Mail size={12} /> {contact.email}</div>}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                         {contact.relationshipDNA && (<div className="dna-box mt-4"><div className="dna-header">RELATIONSHIP DNA</div><div className="dna-grid"><div className="dna-item"><span title="Beverage">☕</span> <span>{contact.relationshipDNA.beverage}</span></div><div className="dna-item"><span title="Comm Style">✉️</span> <span>{contact.relationshipDNA.commStyle}</span></div><div className="dna-item col-span-2"><span title="Ice Breaker">🧊</span> <span>{contact.relationshipDNA.iceBreaker}</span></div></div></div>)}
                                     </div>

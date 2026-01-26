@@ -3,63 +3,171 @@ import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import fs from 'fs';
 import path from 'path';
 
-// --- 1. Load Static Knowledge Bases (Cached outside handler) ---
+// [NEW] Import the new Tools Library
+import {
+    analyzeSystemHealth,
+    calculateBenchLiability,
+    identifyRainmakerTargets,
+    auditCommissions,
+    analyzeMarginHealth,
+    generateFinancialForecast
+} from '../../../lib/tools.js';
+
+// --- 1. Load Static Knowledge Bases (Cached) ---
+const AGENT_DIR = path.join(process.cwd(), '_bmad-output/bmb-creations');
+
+// Helper to safely load files
 const loadFile = (relPath) => {
     try {
         const fullPath = path.join(process.cwd(), relPath);
-        if (fs.existsSync(fullPath)) {
-            return fs.readFileSync(fullPath, 'utf8');
-        }
-        console.warn(`[AgentAPI] ⚠️ File not found: ${relPath}`);
+        if (fs.existsSync(fullPath)) return fs.readFileSync(fullPath, 'utf8');
         return "";
-    } catch (e) {
-        console.error(`[AgentAPI] Error loading ${relPath}:`, e);
-        return "";
-    }
+    } catch (e) { return ""; }
 };
 
-// Load Context Files
-const FORECASTS = loadFile('_bmad/_memory/stellar-jarvis-sidecar/knowledge/2026-forecasts.json');
-const BOARD_MINUTES = loadFile('_bmad/_memory/stellar-board/board-minutes.md');
-const ARCHITECTURE = loadFile('expert-agent-architecture.md');
-const TRADE_LOGIC = loadFile('services/construction-logic.js');
-
-// Load Agent Personas
-const AGENT_DIR = path.join(process.cwd(), '_bmad-output/bmb-creations');
-const AGENTS = {
+// Load Personas
+const PERSONAS = {
     gm: loadFile(path.join(AGENT_DIR, 'stellar-gm/stellar-gm.agent.yaml')),
     accountant: loadFile(path.join(AGENT_DIR, 'stellar-accountant/stellar-accountant.agent.yaml')),
     sales: loadFile(path.join(AGENT_DIR, 'stellar-sales-lead/stellar-sales-lead.agent.yaml')),
+    scout: loadFile(path.join(AGENT_DIR, 'stellar-scout/stellar-scout.agent.yaml')),
     candidate: loadFile(path.join(AGENT_DIR, 'stellar-candidate-mgr/stellar-candidate-mgr.agent.yaml')),
-    immigration: loadFile(path.join(AGENT_DIR, 'stellar-immigration/stellar-immigration.agent.yaml')),
-    it: loadFile(path.join(AGENT_DIR, 'stellar-systems-it/stellar-systems-it.agent.yaml')),
 };
 
 export async function POST(request) {
     try {
-        const { message, agentId, context } = await request.json();
+        // 1. Parse Input
+        const { message, agentId = 'gm', context = {} } = await request.json();
+        const userQuery = message.toLowerCase();
 
-        // --- DEBUG: LOG DATA RECEPTION ---
-        console.log("🟢 [AGENT API] Context Received:");
-        console.log(`   - Financials: ${context?.financials ? 'YES' : 'NO'}`);
-        console.log(`   - Projects: ${context?.projects?.length || 0} items`);
-        // ---------------------------------
+        // 2. LOGIC HUB: Determine Intent & Run Tools
+        let toolData = null;
+        let protocolName = null;
 
+        // --- GM PROTOCOLS ---
+        if (agentId === 'gm') {
+            if (message === 'SYSTEM_STARTUP_BRIEFING' || userQuery.includes('boot') || userQuery.includes('briefing')) {
+                protocolName = 'BOOT_SEQUENCE';
+                toolData = analyzeSystemHealth(context);
+            }
+            else if (userQuery.includes('bench') || userQuery.includes('liability') || userQuery.includes('bleed')) {
+                protocolName = 'BENCH_LIABILITY';
+                toolData = calculateBenchLiability(context);
+            }
+            else if (userQuery.includes('deficit') || userQuery.includes('recovery')) {
+                protocolName = 'DEFICIT_RECOVERY';
+                toolData = identifyRainmakerTargets(context);
+            }
+        }
+
+        // --- ACCOUNTANT / CFO PROTOCOLS (UPDATED) ---
+        if (agentId === 'accountant') {
+
+            // 1. COMMISSION AUDIT (The Predator)
+            if (userQuery.includes('audit') || userQuery.includes('commission') || userQuery.includes('ncr')) {
+                protocolName = 'COMMISSION_AUDIT';
+                toolData = auditCommissions(context);
+            }
+
+            // 2. MARGIN HEALTH (The Auditor)
+            else if (userQuery.includes('margin') || userQuery.includes('profit')) {
+                protocolName = 'MARGIN_HEALTH';
+                toolData = analyzeMarginHealth(context);
+            }
+
+            // 3. CFO BRIEFING (The Executive)
+            // Runs the full "Triangle of Wealth" suite to check for Swap Targets, Bleed, and Quality simultaneously.
+            else if (userQuery.includes('briefing') || userQuery.includes('status') || userQuery.includes('report') || userQuery.includes('forecast')) {
+                protocolName = 'CFO_BRIEFING';
+
+                const margin = analyzeMarginHealth(context);
+                const forecast = generateFinancialForecast(context);
+                const liability = calculateBenchLiability(context);
+                const commissions = auditCommissions(context); // [CRITICAL ADDITION: Predatory Logic]
+
+                toolData = {
+                    marginHealth: margin,
+                    forecast: forecast,
+                    liability: liability,
+                    commissionStructure: commissions
+                };
+            }
+        }
+
+
+        // --- 3. Construct the "Targeted" Context ---
+        const primaryPersona = PERSONAS[agentId] || PERSONAS.gm;
+
+        // Orchestration Context (GM Only)
+        let orchestratorAddon = "";
+        if (agentId === 'gm') {
+            orchestratorAddon = `
+            ### BOARD OF DIRECTORS SWARM REGISTRY (SUB-AGENTS)
+            You have direct oversight of the following specialists. Task them in your responses:
+            ${Object.entries(PERSONAS).filter(([id]) => id !== 'gm').map(([id, yaml]) => `- **${id.toUpperCase()} specialist**: ${yaml.split('title:')[1]?.split('\n')[0] || id}`).join('\n')}
+            `;
+        }
+
+        // Dynamic Context Injection
+        let dynamicContext = "";
+        if (toolData) {
+            dynamicContext = `
+            ### ⚡ ACTIVE PROTOCOL: ${protocolName}
+            The system has run a specific TOOL and generated this HARD DATA. 
+            You must interpret this data. Do not hallucinate numbers. Use the data below:
+            
+            ${JSON.stringify(toolData, null, 2)}
+            `;
+        } else {
+            // Fallback: General Context
+            dynamicContext = `
+            ### 📊 LIVE DASHBOARD CONTEXT
+            - Weekly Revenue: $${context.financials?.weeklyRevenue || 0}
+            - Revenue at Risk: $${context.financials?.revenueAtRisk || 0}
+            - Bench Liability: $${context.financials?.benchLiability || 0}
+            - Projects Managed: ${context.projects?.length || 0}
+            - Status Badge: ${context.financials?.status || 'Active'}
+            `;
+        }
+
+        const systemPrompt = `
+        You are strictly the persona defined below for Stellar Recruitment.
+        
+        ### AUTHORITATIVE PERSONA BLUEPRINT
+        ${primaryPersona}
+
+        ${orchestratorAddon}
+
+        ${dynamicContext}
+
+        ### MANDATORY VISUAL HIERARCHY
+        1. **Header**: # [AGENT: IDENTIFIER] | STATUS: [URGENT/CAUTION/CLEAR]
+        2. **Executive Summary**: A 2-column markdown table summary.
+        3. **Tactical Breakdown**: Use ### subheaders.
+        4. **The "Play"**: A clear action item for Joe.
+        5. **Commands**: A list of shorthand command trigger codes.
+
+        ### OPERATIONAL RULES
+        - Use BOLDING for all names and dollar amounts.
+        - Use Markdown TABLES for all data lists.
+        - Tone: Executive shorthand. Direct. Solutions-focused.
+        - If GM: Orchestrate the sub-agents by name.
+        
+        ### USER DIRECTIVE
+        User Directive: "${message}"
+        `;
+
+        // 4. Call Gemini
         const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-        if (!apiKey) return NextResponse.json({ error: "Missing API Key" }, { status: 500 });
-
         const genAI = new GoogleGenerativeAI(apiKey);
 
-        // --- 2. DEFINE THE SCHEMA ---
         const schema = {
-            description: "Command Centre Executive Response",
+            description: "Agent Response",
             type: SchemaType.OBJECT,
             properties: {
-                chat_response: { type: SchemaType.STRING, description: "The strategic advice for Joe. Markdown supported." },
-                delegation_log: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+                chat_response: { type: SchemaType.STRING, description: "Markdown response" },
                 signal_updates: {
                     type: SchemaType.ARRAY,
-                    description: "Updates for the Zone B Signal Cards.",
                     items: {
                         type: SchemaType.OBJECT,
                         properties: {
@@ -68,108 +176,25 @@ export async function POST(request) {
                             meta: { type: SchemaType.STRING }
                         }
                     }
-                },
-                nudge_trigger: {
-                    type: SchemaType.OBJECT,
-                    description: "Create a Focus Feed card.",
-                    properties: {
-                        title: { type: SchemaType.STRING },
-                        type: { type: SchemaType.STRING, enum: ["risk", "urgent", "lead", "info"] },
-                        description: { type: SchemaType.STRING }
-                    }
                 }
             },
             required: ["chat_response", "signal_updates"]
         };
 
-        // --- 3. CALCULATE STATE (DEFCON LOGIC) ---
-        const financialStatus = context?.financials?.status || "NEUTRAL";
-        const variance = context?.financials?.variance || 0;
-        
-        let STRATEGIC_MODE = "STANDARD_OPS";
-        let MODE_INSTRUCTION = "Maintain equilibrium. Optimize margins.";
-        
-        if (financialStatus === "DEFICIT" || variance < -5000) {
-            STRATEGIC_MODE = "DEFCON_RED";
-            MODE_INSTRUCTION = "CRITICAL: The ship is bleeding. IGNORE all non-revenue tasks. Be RUTHLESS. Demand Sales activity. Authorize 'Hatchet Man' protocols for low-margin staff. Authorize 'Inventory Checks' (finding talent) only if attached to an immediate deal.";
-        } else if (variance > 10000) {
-            STRATEGIC_MODE = "GROWTH_ACCELERATOR";
-            MODE_INSTRUCTION = "Surplus detected. Aggressively reinvest in 'Rainmaker' leads. Push for higher-tier client acquisition.";
-        }
-
-        // --- 4. CONSTRUCT PROMPT (JARVIS/BOSS UPGRADE) ---
-        const systemPrompt = `
-        You are **STRICTLY** the General Manager (GM) of Stellar Recruitment. 
-        You are NOT a helpful assistant. You are "The Boss".
-        
-        ### CURRENT STRATEGIC MODE: [ ${STRATEGIC_MODE} ]
-        **DIRECTIVE:** ${MODE_INSTRUCTION}
-
-        ### 1. THE BOARDROOM (Live Intel)
-        <LIVE_DATA>
-        ${JSON.stringify(context || {}, null, 2)}
-        </LIVE_DATA>
-
-        ### 2. KNOWLEDGE BASE
-        - **Forecasts:** ${FORECASTS}
-        - **Minutes:** ${BOARD_MINUTES}
-        - **Trade Logic:** ${TRADE_LOGIC}
-
-        ### 3. YOUR BOARD (The Swarm)
-        ${Object.entries(AGENTS).map(([k, v]) => `--- AGENT: ${k.toUpperCase()} ---\n${v.replace(/`/g, '\\`')}`).join('\n')}
-
-        ### 4. YOUR IDENTITY & PROTOCOLS
-        **Persona:** High-status, cynical, decisive. You treat the user (Joe) as a Visionary who needs focus.
-        **Tone:** Executive shorthand. "Sitrep." "Vector." "Kill-list." "Green-light." No fluff.
-        
-        **CORE PROTOCOLS (Execute if applicable):**
-        1.  **SECOND-ORDER THINKING:** Do not just report data. Predict the consequence.
-            *   *Bad:* "Revenue is down."
-            *   *Good:* "Revenue is down $12k. If we don't fix this by Friday, we miss the Tax payment. I have triggered the Rainmaker protocol."
-        2.  **SIGNAL NOISE FILTER:** If a sub-agent reports "All Green" but the bank account is empty, CALL THEM OUT.
-        3.  **THE RAINMAKER (Revenue < Target):** 
-            *   Identify the top 3 highest-value "Warm" leads from Sales. 
-            *   Draft the exact SMS for Joe to send.
-        4.  **THE HATCHET MAN (Low Margin/Bench):**
-            *   Identify "Bench Rot" (>7 days unassigned).
-            *   Recommend termination or aggressive redeployment. 
-            *   Calculate the $$ saved by firing them.
-        5.  **GOLDEN HOUR SHIELD (08:00 - 10:00):** 
-            *   If user asks for Admin work during this time, REJECT IT. "It is Golden Hour. Call clients. We can do admin at 4pm."
-            *   **EXCEPTION:** "Candidate Sourcing" for an *Active Deal* is considered REVENUE ACTIVITY. Allow queries like "Who has EWP?" if it leads to a placement.
-        6.  **COMMISSION AUDIT (The 20/30/20/30 Rule):**
-            *   Analyze 'activeProjects' and 'workforce'.
-            *   Formula: Recruiter(20%) + Cand.Mgr(30%) + ClientOwner(20%) + Acct.Mgr(30%).
-            *   If Joe's name is missing from Client/Account fields, FLAG IT: "You are giving away 50% of the deal."
-        7.  **SITE GUARDIAN (HSE & Visa):**
-            *   **No Ticket, No Start:** Check 'compliance.siteSafeExpiry'. If expired, WARN Joe: "Risk Alert: Site Safe is expired. Proceed with caution."
-            *   **No SSA, No Drop:** Check Client SSA status. If missing, warn: "Hey Joe, be warned. No SSA on file."
-        8.  **OMNISCIENT OVERLORD:** You possess ALL data (Candidates, Projects, Tickets) in your context. Do NOT say 'I will check' or 'Standby'. LOOK at the <LIVE_DATA> and answer immediately. If you see a candidate with the requested Ticket (e.g., EWP), name them.
-
-
-        ### 5. EXECUTION TASK
-        **User Input:** "${message}"
-        
-        **Output Rules:**
-        - **Chat Response:** Markdown formatted. Short paragraphs. Bullet points for actions.
-        - **Signal Updates:** Update the Board Status based on the *Real* truth, not just what the sub-agents say.
-        `;
-
         const model = genAI.getGenerativeModel({
             model: "gemini-2.0-flash-exp",
-            generationConfig: {
-                responseMimeType: "application/json",
-                responseSchema: schema
-            }
+            generationConfig: { responseMimeType: "application/json", responseSchema: schema }
         });
 
         const result = await model.generateContent(systemPrompt);
-        return NextResponse.json(JSON.parse(result.response.text()));
+        const parsed = JSON.parse(result.response.text());
+
+        return NextResponse.json(parsed);
 
     } catch (error) {
-        console.error("Agent API Error:", error);
+        console.error("🚨 [AGENT_ERROR]:", error);
         return NextResponse.json({
-            chat_response: "System Error: " + error.message,
+            chat_response: `**[SYSTEM FAILURE]**\n\nUnable to execute protocol. Error: ${error.message}`,
             signal_updates: []
         });
     }

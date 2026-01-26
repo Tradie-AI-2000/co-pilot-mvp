@@ -18,7 +18,7 @@ import { mockSharePointData } from "../../services/enhanced-mock-data.js";
 
 
 export default function CandidatesPage() {
-  const { candidates, addCandidate, updateCandidate, deploySquad, projects, isLoading } = useData(); // Consume context
+  const { candidates, addCandidate, updateCandidate, deploySquad, projects, clients, isLoading } = useData(); // Consume context
 
   // Local UI State
   const [selectedCandidate, setSelectedCandidate] = useState(null);
@@ -48,9 +48,9 @@ export default function CandidatesPage() {
   const filteredCandidates = useMemo(() => {
     return candidates.filter(c => {
       if (dashboardFilter) {
-        if (dashboardFilter === 'Available') return c.status === 'Available';
+        if (dashboardFilter === 'Available') return c.status === 'available';
         if (dashboardFilter === 'Finishing Soon') {
-          if (!c.finishDate || c.status === 'Available') return false;
+          if (!c.finishDate || c.status === 'available') return false;
           const today = new Date();
           const finish = new Date(c.finishDate);
           const diff = (finish - today) / (1000 * 60 * 60 * 24);
@@ -81,7 +81,7 @@ export default function CandidatesPage() {
     } else {
       addCandidate(updatedCandidate);
     }
-    setSelectedCandidate(updatedCandidate);
+    setSelectedCandidate(null);
   };
 
   const handleAddCandidate = () => {
@@ -254,9 +254,11 @@ export default function CandidatesPage() {
                     Array(4).fill(0).map((_, i) => <div key={i} className="skeleton-card"><div className="skeleton-avatar"></div><div className="skeleton-info"><div className="skeleton-line w-40"></div><div className="skeleton-line w-24"></div></div><div className="skeleton-meta"></div></div>)
                   ) : (
                     filteredCandidates.map((candidate) => {
-                      const isReady = candidate.status === "Available";
+                      const status = candidate.status?.toLowerCase();
+                      const isReady = status === "available" || status === "on bench";
                       let statusColorClass = "";
-                      if (candidate.status === "Available") statusColorClass = "status-red";
+
+                      if (isReady) statusColorClass = "status-red";
                       else if (candidate.finishDate) {
                         const diffDays = Math.ceil((new Date(candidate.finishDate) - new Date()) / (1000 * 60 * 60 * 24));
                         if (diffDays <= 14) statusColorClass = "status-orange";
@@ -281,9 +283,9 @@ export default function CandidatesPage() {
                                   <span className="label">Status:</span>
                                   <div className="flex flex-col">
                                     <span className={`value status-text ${statusColorClass}`}>
-                                      {candidate.status === "Available" ? "On Bench" : candidate.status}
+                                      {isReady ? "On Bench" : (candidate.status || "Unknown")}
                                     </span>
-                                    {candidate.finishDate && candidate.status !== "Available" && (
+                                    {candidate.finishDate && !isReady && (
                                       <span className="text-[0.65rem] text-orange-400 font-mono mt-0.5">
                                         Ends: {candidate.finishDate}
                                       </span>
@@ -291,7 +293,7 @@ export default function CandidatesPage() {
                                   </div>
                                 </div>
                                 <div className="detail-item"><span className="label">Pay:</span><span className="value">${candidate.payRate || 0}/hr</span></div>
-                                <div className="detail-item"><span className="label">Charge:</span><span className="value highlight">${candidate.chargeRate || 0}/hr</span></div>
+                                <div className="detail-item"><span className="label">Charge:</span><span className="value highlight">${candidate.chargeOutRate || candidate.chargeRate || 0}/hr</span></div>
                               </div>
                             </div>
                             <div className="candidate-meta">
@@ -315,6 +317,7 @@ export default function CandidatesPage() {
             candidate={selectedCandidate}
             squads={squads}
             projects={projects}
+            clients={clients}
             onClose={closeCandidateModal}
             onSave={(updatedCandidate) => {
               handleSaveCandidate(updatedCandidate);

@@ -3,77 +3,75 @@
 import { Briefcase, Calendar, ChevronRight } from "lucide-react";
 
 export default function ClientDemandWidget({ projects = [], onOpenProject }) {
-    // Helper to get effective start date
-    const getStartDate = (p) => {
-        if (p.startDate) return new Date(p.startDate);
-        
-        const possibleDates = [];
 
-        // 1. Direct Demands
-        if (p.clientDemands && p.clientDemands.length > 0) {
-            p.clientDemands.forEach(d => {
-                if (d.startDate) possibleDates.push(new Date(d.startDate));
-            });
-        }
-
-        // 2. Phase Settings (from Strategy)
-        if (p.phaseSettings) {
-            Object.values(p.phaseSettings).forEach(setting => {
-                if (setting.startDate && !setting.skipped) {
-                    possibleDates.push(new Date(setting.startDate));
-                }
-            });
-        }
-
-        if (possibleDates.length > 0) {
-            return new Date(Math.min(...possibleDates));
-        }
-
-        return new Date(8640000000000000); // Far future if no date, so it falls to bottom
+    // --- 1. ROBUST HELPERS (Keep these!) ---
+    const parseDate = (d) => {
+        if (!d) return null;
+        const dateObj = new Date(d);
+        return isNaN(dateObj.getTime()) ? null : dateObj;
     };
 
-    // Helper to calculate total demand count
-    const getDemandCount = (p) => {
-        let count = 0;
-        
-        // 1. Direct Demands
-        if (p.clientDemands) {
-            count += p.clientDemands.reduce((acc, d) => acc + (d.quantity || 1), 0);
+    const getStartDate = (p) => {
+        const pStart = parseDate(p.startDate);
+        if (pStart) return pStart;
+
+        const possibleDates = [];
+
+        // Check demands
+        if (Array.isArray(p.clientDemands)) {
+            p.clientDemands.forEach(d => {
+                const dDate = parseDate(d.startDate);
+                if (dDate) possibleDates.push(dDate);
+            });
         }
 
-        // 2. Strategy Packages
-        if (p.packages) {
-            Object.values(p.packages).forEach(pkg => {
-                if (pkg.laborRequirements) {
-                    count += pkg.laborRequirements.reduce((acc, req) => acc + (req.requiredCount || 0), 0);
+        // Check phases
+        if (p.phaseSettings) {
+            Object.values(p.phaseSettings).forEach(s => {
+                if (!s.skipped) {
+                    const sDate = parseDate(s.startDate);
+                    if (sDate) possibleDates.push(sDate);
                 }
             });
         }
 
-        // 3. Legacy Fallback
-        if (count === 0 && p.roles) {
-            count = p.roles.length;
-        }
+        if (possibleDates.length > 0) return new Date(Math.min(...possibleDates));
+        return new Date(8640000000000000); // Far future for sorting
+    };
 
+    const getDemandCount = (p) => {
+        let count = 0;
+        if (Array.isArray(p.clientDemands)) {
+            count += p.clientDemands.reduce((acc, d) => acc + (Number(d.quantity) || 1), 0);
+        }
         return count;
     };
 
-    // Filter for Active or Planning projects
+    // --- 2. PRODUCTION FILTER ---
     const demandList = projects
-        .filter(p => p.status === 'Active' || p.status === 'Planning')
+        .filter(p => {
+            // Case-Insensitive Status Check
+            if (!p.status) return false;
+            const s = p.status.toLowerCase();
+            return s !== 'completed' && s !== 'archived'; // Show everything except dead projects
+        })
+        .filter(p => getDemandCount(p) > 0) // Only show projects with demand
         .sort((a, b) => getStartDate(a) - getStartDate(b))
-        .slice(0, 5); // Limit to top 5
+        .slice(0, 10);
 
     return (
         <div className="client-demand-widget h-full flex flex-col">
-            <div className="widget-header">
+            <div className="widget-header flex justify-between items-center mb-3">
                 <h3 className="uppercase text-xs font-bold text-slate-500 tracking-wider">Upcoming Starts</h3>
+                <span className="text-[10px] text-slate-400 bg-slate-800/50 px-2 py-0.5 rounded-full border border-slate-700">
+                    {demandList.length} Active
+                </span>
             </div>
 
             <div className="flex-1 overflow-y-auto pr-1 space-y-2 custom-scrollbar">
                 {demandList.length === 0 ? (
                     <div className="text-center p-8 text-slate-500 text-sm italic">
-                        No upcoming project demand found.
+                        No active demands found.
                     </div>
                 ) : (
                     demandList.map(project => (
@@ -83,10 +81,12 @@ export default function ClientDemandWidget({ projects = [], onOpenProject }) {
                             onClick={() => onOpenProject(project)}
                         >
                             <div className="flex items-center gap-3">
-                                <div className={`status-dot ${project.status.toLowerCase()}`}></div>
+                                {/* Dynamic Status Color */}
+                                <div className={`status-dot ${project.status?.toLowerCase() || 'neutral'}`}></div>
+
                                 <div className="flex-1 min-w-0">
                                     <div className="project-name truncate">{project.name}</div>
-                                    <div className="client-name truncate">{project.client || "Direct Client"}</div>
+                                    <div className="client-name truncate">{project.client || project.assetOwner || "Direct Client"}</div>
                                 </div>
                             </div>
 
@@ -98,7 +98,6 @@ export default function ClientDemandWidget({ projects = [], onOpenProject }) {
                                     <Calendar size={10} className="inline mr-1" />
                                     {(() => {
                                         const d = getStartDate(project);
-                                        // Check if it's the "far future" placeholder
                                         return d.getFullYear() > 3000 ? 'TBD' : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
                                     })()}
                                 </div>
@@ -113,11 +112,6 @@ export default function ClientDemandWidget({ projects = [], onOpenProject }) {
             </div>
 
             <style jsx>{`
-                .client-demand-widget {
-                    /* fits parent */
-                }
-                .widget-header { margin-bottom: 0.75rem; }
-
                 .project-item {
                     display: flex;
                     align-items: center;
@@ -137,9 +131,10 @@ export default function ClientDemandWidget({ projects = [], onOpenProject }) {
                     transform: translateX(2px);
                 }
 
-                .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+                .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #64748b; }
                 .status-dot.active { background: #10b981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.4); }
                 .status-dot.planning { background: #f59e0b; box-shadow: 0 0 8px rgba(245, 158, 11, 0.4); }
+                .status-dot.construction { background: #3b82f6; box-shadow: 0 0 8px rgba(59, 130, 246, 0.4); }
 
                 .project-name { font-weight: 600; font-size: 0.9rem; color: #e2e8f0; }
                 .client-name { font-size: 0.75rem; color: #64748b; }
@@ -154,11 +149,7 @@ export default function ClientDemandWidget({ projects = [], onOpenProject }) {
                     position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
                     opacity: 0; transition: opacity 0.2s; color: white;
                 }
-                .project-item:hover .hover-arrow { opacity: 1; }
-                .project-item:hover .meta-info { opacity: 0; } /* Hide meta to show arrow cleanly or keep both? hiding for clean look */
-                .project-item:hover .meta-info { opacity: 1; padding-right: 15px; } /* Actually let's just shift layout if we can, or just keep it simple */
                 
-                /* Override hover behavior */
                 .project-item:hover .meta-info { opacity: 0; } 
                 .project-item:hover .hover-arrow { opacity: 1; }
 

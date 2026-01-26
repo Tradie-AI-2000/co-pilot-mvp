@@ -9,7 +9,7 @@ import {
 import { useData } from "../context/data-context.js";
 
 export default function ProjectIntelligencePanel({ project, onClose, onEdit }) {
-    const { clients, moneyMoves } = useData();
+    const { clients, candidates, moneyMoves } = useData();
     const [activeTab, setActiveTab] = useState("overview");
 
     if (!project) return null;
@@ -182,52 +182,70 @@ export default function ProjectIntelligencePanel({ project, onClose, onEdit }) {
 
                                     {/* Logic: Aggregate all requirements from all packages */}
                                     {(() => {
-                                        let hasGranularData = false;
-                                        const allRows = [];
+                                        const projectCandidates = candidates.filter(c => c.projectId === project.id);
+                                        const requirements = [];
 
+                                        // Collect requirements from packages
                                         Object.values(project.packages || {}).forEach(pkg => {
-                                            if (pkg.laborRequirements && pkg.laborRequirements.length > 0) {
-                                                hasGranularData = true;
-                                                pkg.laborRequirements.forEach(req => {
-                                                    const deployed = req.assigned ? req.assigned.length : 0;
-                                                    const gap = req.count - deployed;
-                                                    allRows.push({
-                                                        trade: req.trade,
-                                                        req: req.count,
-                                                        dep: deployed,
-                                                        gap: gap
-                                                    });
-                                                });
+                                            if (pkg.laborRequirements) {
+                                                pkg.laborRequirements.forEach(req => requirements.push(req));
                                             }
                                         });
 
-                                        if (hasGranularData) {
-                                            return allRows.map((row, i) => (
-                                                <div key={i} className="gap-row">
-                                                    <span className="trade-name col-left">{row.trade}</span>
-                                                    <span className="req col-center">{row.req}</span>
-                                                    <span className="dep col-center">{row.dep}</span>
-                                                    <span className={`gap col-center ${row.gap > 0 ? "negative" : "positive"}`}>
-                                                        {row.gap > 0 ? `-${row.gap}` : "✓"}
-                                                    </span>
-                                                </div>
-                                            ));
-                                        } else {
-                                            // Fallback to Signals (Legacy)
-                                            return (project.hiringSignals || []).map((signal, i) => (
-                                                <div key={i} className="gap-row">
-                                                    <span className="trade-name col-left">{signal.role}</span>
-                                                    <span className="req col-center">{signal.count}</span>
-                                                    <span className="dep col-center">0</span>
-                                                    <span className="gap negative col-center">-{signal.count}</span>
-                                                </div>
-                                            ));
+                                        // Fallback to hiring signals if no package requirements
+                                        if (requirements.length === 0 && project.hiringSignals) {
+                                            project.hiringSignals.forEach(signal => {
+                                                requirements.push({ trade: signal.role, count: signal.count });
+                                            });
                                         }
-                                    })()}
 
-                                    {(!project.hiringSignals?.length && !Object.values(project.packages || {}).some(p => p.laborRequirements?.length)) && (
-                                        <div className="empty-state">No workforce planning data available.</div>
-                                    )}
+                                        if (requirements.length === 0 && projectCandidates.length === 0) {
+                                            return <div className="empty-state">No workforce planning data available.</div>;
+                                        }
+
+                                        return (
+                                            <>
+                                                {requirements.map((req, i) => {
+                                                    const deployed = projectCandidates.filter(c => c.role === req.trade || c.trade === req.trade).length;
+                                                    const gap = req.count - deployed;
+                                                    return (
+                                                        <div key={i} className="gap-row">
+                                                            <span className="trade-name col-left">{req.trade}</span>
+                                                            <span className="req col-center">{req.count}</span>
+                                                            <span className="dep col-center">{deployed}</span>
+                                                            <span className={`gap col-center ${gap > 0 ? "negative" : "positive"}`}>
+                                                                {gap > 0 ? `-${gap}` : "✓"}
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })}
+
+                                                {projectCandidates.length > 0 && (
+                                                    <div className="mt-6">
+                                                        <h3 className="text-sm font-bold text-muted uppercase mb-3 px-3">Assigned Workforce ({projectCandidates.length})</h3>
+                                                        <div className="flex flex-col gap-2">
+                                                            {projectCandidates.map(c => (
+                                                                <div key={c.id} className="candidate-assignment-row">
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className="w-8 h-8 rounded-full bg-secondary/20 text-secondary flex items-center justify-center text-xs font-bold">
+                                                                            {c.firstName?.[0]}{c.lastName?.[0]}
+                                                                        </div>
+                                                                        <div>
+                                                                            <div className="text-sm font-bold text-white">{c.firstName} {c.lastName}</div>
+                                                                            <div className="text-[10px] text-muted uppercase">{c.role}</div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className={`text-[10px] px-2 py-0.5 rounded-full ${c.status === 'on_job' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-800 text-slate-400'}`}>
+                                                                        {c.status === 'on_job' ? 'DEPLOYED' : c.status.toUpperCase()}
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </>
+                                        );
+                                    })()}
                                 </div>
                             </div>
                         </div>
@@ -525,6 +543,22 @@ export default function ProjectIntelligencePanel({ project, onClose, onEdit }) {
                 .spec-row { display: flex; justify-content: space-between; font-size: 0.8rem; }
                 .spec-row .label { color: var(--text-muted); }
                 .spec-row .val { color: #cbd5e1; }
+
+                .candidate-assignment-row {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 0.75rem;
+                    background: rgba(255,255,255,0.03);
+                    border: 1px solid var(--border);
+                    border-radius: 6px;
+                    transition: all 0.2s ease;
+                }
+
+                .candidate-assignment-row:hover {
+                    background: rgba(255,255,255,0.06);
+                    border-color: var(--secondary);
+                }
             `}</style>
         </div>
     );

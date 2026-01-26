@@ -1,100 +1,72 @@
 {
   "workflow_version": "1.2.0",
   "timestamps": {
-    "started": "2025-12-23T10:00:00Z",
-    "last_updated": "2025-12-23T10:00:00Z"
+    "started": "2026-01-22T10:00:00Z",
+    "last_updated": "2026-01-22T10:15:00Z",
+    "completed": "2026-01-22T10:15:00Z"
   },
-  "mode": "initial_scan",
-  "scan_level": "deep",
+  "mode": "full_rescan",
+  "scan_level": "exhaustive",
   "project_root": "/Users/joeward/Antigravity Projects/Co-Pilot",
   "output_folder": "docs",
   "completed_steps": [
     {
       "step": "step_1",
       "status": "completed",
-      "timestamp": "2025-12-23T10:05:00Z",
+      "timestamp": "2026-01-22T10:01:00Z",
       "summary": "Classified as monolith with 1 part (web)"
     },
     {
       "step": "step_2",
       "status": "completed",
-      "timestamp": "2025-12-23T10:10:00Z",
-      "summary": "Found 5 existing docs (README, project-summary, co-pilot-summary, walkthrough, openapi)"
+      "timestamp": "2026-01-22T10:02:00Z",
+      "summary": "Found 20+ existing docs in root and docs/ folder"
     },
     {
       "step": "step_3",
       "status": "completed",
-      "timestamp": "2025-12-23T10:15:00Z",
-      "summary": "Tech stack: Next.js 16, React 19, Leaflet"
+      "timestamp": "2026-01-22T10:03:00Z",
+      "summary": "Tech stack: Next.js 16, React 19, Drizzle ORM, Leaflet"
     },
     {
       "step": "step_4",
       "status": "completed",
-      "timestamp": "2025-12-23T10:25:00Z",
-      "summary": "Conditional analysis complete: 5 routes, 21 components, 6 services, React Context state"
+      "timestamp": "2026-01-22T10:10:00Z",
+      "summary": "Batch scan complete for app/, components/, services/, lib/."
     },
     {
       "step": "step_12",
       "status": "completed",
-      "timestamp": "2025-12-23T10:45:00Z",
-      "summary": "Workflow complete: 8 documentation files generated"
+      "timestamp": "2026-01-22T10:15:00Z",
+      "summary": "Workflow complete: 8 primary documentation files generated and index updated."
     }
   ],
   "current_step": "completed",
   "findings": {
     "project_classification": "Monolith, 1 part (web), Next.js framework",
-    "existing_docs": [
-      "README.md",
-      "project-summary.md",
-      "co-pilot-summary.md",
-      "walkthrough.md",
-      "openapi.json"
-    ],
+    "existing_docs_count": 23,
     "technology_stack": {
       "framework": "Next.js 16.0.8",
-      "language": "JavaScript",
       "ui": "React 19.2.1",
-      "mapping": "Leaflet/react-leaflet",
-      "icons": "lucide-react",
-      "architecture_pattern": "Next.js App Router"
-    },
-    "deep_scan_findings": {
-      "routes": [
-        "/",
-        "/candidates",
-        "/projects",
-        "/crm",
-        "/market"
-      ],
-      "component_count": 21,
-      "state_management": "React Context API (DataContext.js)",
-      "data_models": [
-        "Candidates",
-        "Clients",
-        "Projects",
-        "Jobs",
-        "Placements",
-        "Market Insights"
-      ],
-      "logic_layers": [
-        "constructionLogic.js",
-        "dataProvider.js",
-        "projectService.js"
-      ]
+      "orm": "Drizzle ORM",
+      "database": "Postgres",
+      "mapping": "Leaflet",
+      "styling": "Tailwind CSS",
+      "ai": "Google Generative AI"
     }
   },
   "outputs_generated": [
     "project-scan-report.json",
-    "index.md",
     "project-overview.md",
     "architecture.md",
     "source-tree-analysis.md",
     "development-guide.md",
     "api-contracts.md",
     "data-models.md",
-    "component-inventory.md"
+    "component-inventory.md",
+    "index.md"
   ],
-  "resume_instructions": "Starting from step 2",
+  "resume_instructions": "Workflow complete",
   "project_parts": [
     {
       "part_id": "web",

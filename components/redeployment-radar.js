@@ -15,7 +15,7 @@ export default function RedeploymentRadar({ candidates }) {
         };
 
         candidates.forEach(c => {
-            if (c.status !== 'On Job' || !c.finishDate) return;
+            if (c.status?.toLowerCase() !== 'on_job' || !c.finishDate) return;
 
             // Handle date parsing safely
             const finish = new Date(c.finishDate);
