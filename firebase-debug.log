@@ -330,3 +330,18 @@ For CI servers and headless environments, generate a new token with firebase log
 [debug] [2026-01-25T18:10:38.436Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
 [debug] [2026-01-25T18:10:38.436Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
 [debug] [2026-01-25T18:10:38.768Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 400
+[debug] [2026-01-26T07:45:33.148Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-26T07:45:33.150Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-26T07:45:33.150Z] Checked if tokens are valid: false, expires at: 1761543700887
+[debug] [2026-01-26T07:45:33.150Z] Checked if tokens are valid: false, expires at: 1761543700887
+[debug] [2026-01-26T07:45:33.150Z] > refreshing access token with scopes: []
+[debug] [2026-01-26T07:45:33.151Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-01-26T07:45:33.151Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-01-26T07:45:33.177Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-26T07:45:33.177Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-26T07:45:33.177Z] Checked if tokens are valid: false, expires at: 1761543700887
+[debug] [2026-01-26T07:45:33.177Z] Checked if tokens are valid: false, expires at: 1761543700887
+[debug] [2026-01-26T07:45:33.177Z] > refreshing access token with scopes: []
+[debug] [2026-01-26T07:45:33.177Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-01-26T07:45:33.177Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-01-26T07:45:33.526Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 400

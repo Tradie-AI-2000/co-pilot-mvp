@@ -11,7 +11,7 @@ export default function CommissionDashboard() {
     // --- Configuration ---
     const BURDEN_MULTIPLIER = 1.30; // 30% overhead as per prompt
     const WORK_WEEK_HOURS = 40;
-    
+
     // Splits Configuration
     const SPLITS = useMemo(() => ({
         recruiter: 0.20,
@@ -22,8 +22,9 @@ export default function CommissionDashboard() {
 
     // --- Logic: Calculate Attributed Margin ---
     const commissionData = useMemo(() => {
-        const activePlacements = candidates.filter(c => c.status === "On Job" && c.projectId);
-        
+        // FIXED: Include all "on_job" candidates (using correct DB enum value)
+        const activePlacements = candidates.filter(c => c.status === "on_job");
+
         const myBreakdown = {
             recruiter: 0,
             candidateManager: 0,
@@ -32,10 +33,17 @@ export default function CommissionDashboard() {
         };
 
         const placementsWithSplits = activePlacements.map(candidate => {
-            const project = projects.find(p => p.id === candidate.projectId);
-            const client = clients.find(c => 
-                c.id === project?.client || 
-                c.name === project?.client || 
+            // IMPROVED: Try to find project by ID first, then by name
+            const project = projects.find(p =>
+                p.id === candidate.projectId ||
+                p.name === candidate.currentProject
+            );
+
+            // IMPROVED: Try multiple ways to find the client
+            const client = clients.find(c =>
+                c.id === project?.client ||
+                c.name === project?.client ||
+                c.name === candidate.currentEmployer ||
                 (project?.assignedCompanyIds && project.assignedCompanyIds.includes(c.id))
             );
 
@@ -132,10 +140,10 @@ export default function CommissionDashboard() {
             <div className="viz-section">
                 <div className="breakdown-list">
                     {categories.map(cat => {
-                        const pct = commissionData.myWeeklyAttribution > 0 
-                            ? (cat.value / commissionData.myWeeklyAttribution) * 100 
+                        const pct = commissionData.myWeeklyAttribution > 0
+                            ? (cat.value / commissionData.myWeeklyAttribution) * 100
                             : 0;
-                        
+
                         return (
                             <div key={cat.id} className="cat-row">
                                 <div className="cat-info">
@@ -143,8 +151,8 @@ export default function CommissionDashboard() {
                                     <span className="cat-val">${Math.round(cat.value)}</span>
                                 </div>
                                 <div className="cat-bar-track">
-                                    <div 
-                                        className="cat-bar-fill" 
+                                    <div
+                                        className="cat-bar-fill"
                                         style={{ width: `${pct}%`, background: cat.color }}
                                     ></div>
                                 </div>

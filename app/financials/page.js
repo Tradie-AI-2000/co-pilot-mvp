@@ -15,8 +15,8 @@ export default function FinancialsPage() {
     const [isFloatModalOpen, setIsFloatModalOpen] = useState(false);
 
     const BURDEN_MULTIPLIER = 1.20;
-    const activeCandidates = candidates.filter(c => c.status === "On Job");
-    const benchCandidates = candidates.filter(c => c.status === "Available" && c.guaranteedHours > 0);
+    const activeCandidates = candidates.filter(c => c.status === "on_job");
+    const benchCandidates = candidates.filter(c => c.status === "available" && c.guaranteedHours > 0);
     const grossMarginPercent = weeklyRevenue > 0 ? ((weeklyGrossProfit / weeklyRevenue) * 100).toFixed(1) : "0.0";
 
     const handleFloatClick = (candidate) => {

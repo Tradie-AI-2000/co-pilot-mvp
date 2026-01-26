@@ -138,10 +138,10 @@ export async function GET() {
         for (const client of allClients) {
             const clientAny = client as any;
 
-            // Logic: Last Contact was > 90 days ago
+            // Logic: Last Contact was > 45 days ago
             const daysQuiet = daysSince(clientAny.lastContact);
 
-            if (daysQuiet > 90) {
+            if (daysQuiet > 45) {
                 await createNudgeIfNew({
                     title: `Cold Client: ${client.name}`,
                     description: `No contact for ${daysQuiet} days. Re-engage now.`,

@@ -1,31 +1,33 @@
 import { NextResponse } from 'next/server';
-import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import fs from 'fs';
 import path from 'path';
 
-// [NEW] Import the new Tools Library
+// Import our upgraded toolkit
 import {
     analyzeSystemHealth,
     calculateBenchLiability,
     identifyRainmakerTargets,
     auditCommissions,
     analyzeMarginHealth,
-    generateFinancialForecast
+    generateFinancialForecast,
+    matchmakeGhostTown,
+    identifyRedeploymentRisks
 } from '../../../lib/tools.js';
 
-// --- 1. Load Static Knowledge Bases (Cached) ---
+// --- 1. Load Static Knowledge Bases (Personas) ---
+// This path assumes your folder structure is correct based on previous uploads
 const AGENT_DIR = path.join(process.cwd(), '_bmad-output/bmb-creations');
 
-// Helper to safely load files
 const loadFile = (relPath) => {
     try {
         const fullPath = path.join(process.cwd(), relPath);
         if (fs.existsSync(fullPath)) return fs.readFileSync(fullPath, 'utf8');
-        return "";
+        return ""; // Fail gracefully if file missing
     } catch (e) { return ""; }
 };
 
-// Load Personas
+// Load the "Personality" Files
 const PERSONAS = {
     gm: loadFile(path.join(AGENT_DIR, 'stellar-gm/stellar-gm.agent.yaml')),
     accountant: loadFile(path.join(AGENT_DIR, 'stellar-accountant/stellar-accountant.agent.yaml')),
@@ -36,104 +38,131 @@ const PERSONAS = {
 
 export async function POST(request) {
     try {
-        // 1. Parse Input
+        // 1. Parse Input & Context
+        // 'context' is the data bucket sent from the frontend
         const { message, agentId = 'gm', context = {} } = await request.json();
         const userQuery = message.toLowerCase();
 
-        // 2. LOGIC HUB: Determine Intent & Run Tools
+        // 2. EXTRACT OPERATIONAL RISKS (The Nudge Engine Integration)
+        // We look for the Red/Purple cards we created earlier
+        const nudges = context.moneyMoves || [];
+
+        // Categorize Nudges for the AI
+        const ghostTowns = nudges.filter(n => n.title?.includes('GHOST TOWN') || n.priority === 'CRITICAL');
+        const rainmakers = nudges.filter(n => n.type === 'PRE_EMPTIVE_STRIKE');
+        const tasks = nudges.filter(n => n.type === 'TASK');
+
+        // Build the Live "Risk Report"
+        // This is injected into the prompt so the AI knows the situation immediately
+        const riskReport = `
+        ### 🚨 OPERATIONAL ALERT FEED (LIVE):
+        ${ghostTowns.length > 0 ? `🔥 CRITICAL: ${ghostTowns.length} Ghost Towns Detected! (Immediate Action Required)` : "✅ No Critical Site Risks."}
+        ${rainmakers.length > 0 ? `💰 OPPORTUNITY: ${rainmakers.length} Rainmaker Targets (Cold Clients) Identified.` : "⏸️ No Cold Clients."}
+        ${tasks.length > 0 ? `📋 TASKS: ${tasks.length} pending administrative tasks.` : "✅ Admin Clear."}
+        
+        TOP PRIORITY ALERTS:
+        ${ghostTowns.map(n => `- [URGENT] ${n.title}: ${n.description}`).join('\n')}
+        ${rainmakers.map(n => `- [GROWTH] ${n.title}: ${n.description}`).join('\n')}
+        `;
+
+        // 3. LOGIC HUB: Determine Intent & Run Tools
         let toolData = null;
         let protocolName = null;
 
-        // --- GM PROTOCOLS ---
+        // --- GM PROTOCOLS (General Manager) ---
         if (agentId === 'gm') {
-            if (message === 'SYSTEM_STARTUP_BRIEFING' || userQuery.includes('boot') || userQuery.includes('briefing')) {
+            // A. Boot / Status Check
+            if (message === 'SYSTEM_STARTUP_BRIEFING' || userQuery.includes('boot') || userQuery.includes('status') || userQuery.includes('briefing')) {
                 protocolName = 'BOOT_SEQUENCE';
-                toolData = analyzeSystemHealth(context);
+                const health = analyzeSystemHealth(context);
+                // We calculate Bench Liability manually here to ensure it's fresh in the briefing
+                const benchData = calculateBenchLiability(context);
+                toolData = {
+                    ...health,
+                    benchReport: benchData,
+                    operationalRisks: riskReport
+                };
             }
-            else if (userQuery.includes('bench') || userQuery.includes('liability') || userQuery.includes('bleed')) {
+            // B. Bench / Liability Check
+            else if (userQuery.includes('bench') || userQuery.includes('liability')) {
                 protocolName = 'BENCH_LIABILITY';
                 toolData = calculateBenchLiability(context);
             }
-            else if (userQuery.includes('deficit') || userQuery.includes('recovery')) {
-                protocolName = 'DEFICIT_RECOVERY';
-                toolData = identifyRainmakerTargets(context);
+            // C. Growth / Sales Check
+            else if (userQuery.includes('deficit') || userQuery.includes('rainmaker') || userQuery.includes('sales')) {
+                protocolName = 'GROWTH_PROTOCOL';
+                toolData = {
+                    rainmakerTargets: rainmakers, // Feed the Nudges directly
+                    ...identifyRainmakerTargets(context)
+                };
+            }
+            // D. Rescue / Matchmaking (New!)
+            else if (userQuery.includes('ghost') || userQuery.includes('match') || userQuery.includes('find')) {
+                protocolName = 'RESCUE_PROTOCOL';
+                // If the user says "Find a hammerhand", we could parse that. 
+                // For now, we default to 'General' or match the first Ghost Town if it exists.
+                const targetRole = ghostTowns.length > 0 ? 'General' : 'General';
+                toolData = matchmakeGhostTown(context, targetRole);
             }
         }
 
-        // --- ACCOUNTANT / CFO PROTOCOLS (UPDATED) ---
+        // --- ACCOUNTANT / CFO PROTOCOLS ---
         if (agentId === 'accountant') {
-
-            // 1. COMMISSION AUDIT (The Predator)
-            if (userQuery.includes('audit') || userQuery.includes('commission') || userQuery.includes('ncr')) {
+            if (userQuery.includes('audit') || userQuery.includes('commission')) {
                 protocolName = 'COMMISSION_AUDIT';
                 toolData = auditCommissions(context);
             }
-
-            // 2. MARGIN HEALTH (The Auditor)
             else if (userQuery.includes('margin') || userQuery.includes('profit')) {
                 protocolName = 'MARGIN_HEALTH';
                 toolData = analyzeMarginHealth(context);
             }
-
-            // 3. CFO BRIEFING (The Executive)
-            // Runs the full "Triangle of Wealth" suite to check for Swap Targets, Bleed, and Quality simultaneously.
-            else if (userQuery.includes('briefing') || userQuery.includes('status') || userQuery.includes('report') || userQuery.includes('forecast')) {
+            else if (userQuery.includes('briefing') || userQuery.includes('report')) {
                 protocolName = 'CFO_BRIEFING';
-
-                const margin = analyzeMarginHealth(context);
-                const forecast = generateFinancialForecast(context);
-                const liability = calculateBenchLiability(context);
-                const commissions = auditCommissions(context); // [CRITICAL ADDITION: Predatory Logic]
-
                 toolData = {
-                    marginHealth: margin,
-                    forecast: forecast,
-                    liability: liability,
-                    commissionStructure: commissions
+                    marginHealth: analyzeMarginHealth(context),
+                    forecast: generateFinancialForecast(context),
+                    liability: calculateBenchLiability(context),
+                    commissionStructure: auditCommissions(context)
                 };
             }
         }
 
-
-        // --- 3. Construct the "Targeted" Context ---
+        // 4. Construct the Final Prompt
         const primaryPersona = PERSONAS[agentId] || PERSONAS.gm;
 
-        // Orchestration Context (GM Only)
+        // Add instructions for the GM to orchestrate others
         let orchestratorAddon = "";
         if (agentId === 'gm') {
             orchestratorAddon = `
-            ### BOARD OF DIRECTORS SWARM REGISTRY (SUB-AGENTS)
-            You have direct oversight of the following specialists. Task them in your responses:
-            ${Object.entries(PERSONAS).filter(([id]) => id !== 'gm').map(([id, yaml]) => `- **${id.toUpperCase()} specialist**: ${yaml.split('title:')[1]?.split('\n')[0] || id}`).join('\n')}
+            ### 🤖 BOARD OF DIRECTORS SWARM (SUB-AGENTS)
+            You command these specialists. If you see a specific risk (e.g. Low Margin), task them by name:
+            ${Object.entries(PERSONAS).filter(([id]) => id !== 'gm').map(([id, yaml]) => `- **${id.toUpperCase()}**: ${yaml.split('title:')[1]?.split('\n')[0] || id}`).join('\n')}
             `;
         }
 
-        // Dynamic Context Injection
+        // Prepare the Dynamic Data Block
         let dynamicContext = "";
         if (toolData) {
             dynamicContext = `
             ### ⚡ ACTIVE PROTOCOL: ${protocolName}
-            The system has run a specific TOOL and generated this HARD DATA. 
-            You must interpret this data. Do not hallucinate numbers. Use the data below:
-            
+            HARD DATA GENERATED. INTERPRET THIS IMMEDIATELY:
             ${JSON.stringify(toolData, null, 2)}
             `;
         } else {
-            // Fallback: General Context
+            // Fallback Context (General Chat)
             dynamicContext = `
             ### 📊 LIVE DASHBOARD CONTEXT
+            ${riskReport} 
+            
             - Weekly Revenue: $${context.financials?.weeklyRevenue || 0}
             - Revenue at Risk: $${context.financials?.revenueAtRisk || 0}
-            - Bench Liability: $${context.financials?.benchLiability || 0}
-            - Projects Managed: ${context.projects?.length || 0}
-            - Status Badge: ${context.financials?.status || 'Active'}
             `;
         }
 
         const systemPrompt = `
         You are strictly the persona defined below for Stellar Recruitment.
         
-        ### AUTHORITATIVE PERSONA BLUEPRINT
+        ### 🧠 AUTHORITATIVE PERSONA
         ${primaryPersona}
 
         ${orchestratorAddon}
@@ -142,59 +171,30 @@ export async function POST(request) {
 
         ### MANDATORY VISUAL HIERARCHY
         1. **Header**: # [AGENT: IDENTIFIER] | STATUS: [URGENT/CAUTION/CLEAR]
-        2. **Executive Summary**: A 2-column markdown table summary.
-        3. **Tactical Breakdown**: Use ### subheaders.
-        4. **The "Play"**: A clear action item for Joe.
-        5. **Commands**: A list of shorthand command trigger codes.
+        2. **Situation Report**: If there are GHOST TOWNS or CRITICAL RISKS in the data above, put them right here in RED bold text.
+        3. **Tactical Plan**: Use bullet points.
+        4. **Direct Orders**: Assign tasks to Joe or Sub-Agents.
 
-        ### OPERATIONAL RULES
-        - Use BOLDING for all names and dollar amounts.
-        - Use Markdown TABLES for all data lists.
-        - Tone: Executive shorthand. Direct. Solutions-focused.
-        - If GM: Orchestrate the sub-agents by name.
-        
         ### USER DIRECTIVE
         User Directive: "${message}"
         `;
 
-        // 4. Call Gemini
+        // 5. Call Gemini
         const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
         const genAI = new GoogleGenerativeAI(apiKey);
-
-        const schema = {
-            description: "Agent Response",
-            type: SchemaType.OBJECT,
-            properties: {
-                chat_response: { type: SchemaType.STRING, description: "Markdown response" },
-                signal_updates: {
-                    type: SchemaType.ARRAY,
-                    items: {
-                        type: SchemaType.OBJECT,
-                        properties: {
-                            agent_id: { type: SchemaType.STRING },
-                            status: { type: SchemaType.STRING, enum: ["success", "caution", "urgent", "predict", "neutral"] },
-                            meta: { type: SchemaType.STRING }
-                        }
-                    }
-                }
-            },
-            required: ["chat_response", "signal_updates"]
-        };
-
-        const model = genAI.getGenerativeModel({
-            model: "gemini-2.0-flash-exp",
-            generationConfig: { responseMimeType: "application/json", responseSchema: schema }
-        });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
 
         const result = await model.generateContent(systemPrompt);
-        const parsed = JSON.parse(result.response.text());
 
-        return NextResponse.json(parsed);
+        return NextResponse.json({
+            chat_response: result.response.text(),
+            signal_updates: [] // Future: Wire this to UI signals
+        });
 
     } catch (error) {
         console.error("🚨 [AGENT_ERROR]:", error);
         return NextResponse.json({
-            chat_response: `**[SYSTEM FAILURE]**\n\nUnable to execute protocol. Error: ${error.message}`,
+            chat_response: `**[SYSTEM FAILURE]**\n\nError: ${error.message}`,
             signal_updates: []
         });
     }
