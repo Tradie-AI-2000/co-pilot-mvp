@@ -10,7 +10,13 @@ import { useCrew } from "../context/crew-context.js";
 import WhatsAppBlaster from "../components/whatsapp-blaster.js";
 import BenchLiabilityWidget from "../components/bench-liability-widget.js";
 import RedeploymentRadar from "../components/redeployment-radar.js";
-import ClientSidePanel from "../components/client-side-panel.js";
+
+// 👇 OLD COMPONENT (REMOVED)
+// import ClientSidePanel from "../components/client-side-panel.js";
+
+// 👇 NEW COMPONENT (ADDED)
+import ClientDetailsModal from "../components/client-details-modal.js";
+
 import ActivePlacementsModal from "../components/active-placements-modal.js";
 import ActionDrawer from "../components/action-drawer.js";
 import ActiveBenchModal from "../components/active-bench-modal.js";
@@ -26,7 +32,8 @@ export default function PredictiveCommandCenter() {
 }
 
 function DashboardContent() {
-  const { candidates, projects, clients, selectedProject, setSelectedProject, updateProject, addProject, updateCandidate, moneyMoves, weeklyRevenue, revenueAtRisk, benchLiability, isSyncing } = useData();
+  // 👇 ADDED 'updateClient' to destructuring
+  const { candidates, projects, clients, selectedProject, setSelectedProject, updateProject, addProject, updateCandidate, updateClient, moneyMoves, weeklyRevenue, revenueAtRisk, benchLiability, isSyncing } = useData();
   const [watchlist, setWatchlist] = useState([]);
 
   // Edit Modal State
@@ -63,6 +70,17 @@ function DashboardContent() {
   const handleSaveCandidate = (updatedCandidate) => {
     updateCandidate(updatedCandidate);
     setSelectedCandidate(null);
+  };
+
+  // 👇 NEW: Handle Saving Client Changes
+  const handleSaveClient = (updatedClient) => {
+    if (updateClient) {
+      updateClient(updatedClient);
+    } else {
+      console.warn("updateClient function missing from context");
+    }
+    // Don't close immediately so you can see the update
+    // setSelectedClient(null); 
   };
 
   const handleFocusCardClick = (item) => {
@@ -182,7 +200,7 @@ function DashboardContent() {
               </div>
               <div className="urgent-list custom-scrollbar">
                 {moneyMoves.map((action) => {
-                  const cardType = action.type; // already mapped in context to lead, risk, urgent, task
+                  const cardType = action.type;
 
                   return (
                     <FocusFeedCard
@@ -211,10 +229,12 @@ function DashboardContent() {
           />
         )}
 
+        {/* 👇 THE FIX: Swapped ClientSidePanel for ClientDetailsModal */}
         {selectedClient && (
-          <ClientSidePanel
+          <ClientDetailsModal
             client={selectedClient}
             onClose={() => setSelectedClient(null)}
+            onUpdate={handleSaveClient}
           />
         )}
 
@@ -244,7 +264,7 @@ function DashboardContent() {
             candidate={selectedCandidate}
             projects={projects}
             clients={clients}
-            squads={[]} // Pass empty squads or fetch if needed
+            squads={[]}
             onClose={() => setSelectedCandidate(null)}
             onSave={handleSaveCandidate}
           />
@@ -287,7 +307,6 @@ function DashboardContent() {
           background: var(--background);
         }
 
-        /* Zone 1: Scoreboard */
         .scoreboard {
           display: grid;
           grid-template-columns: repeat(5, 1fr);
@@ -295,24 +314,21 @@ function DashboardContent() {
           flex-shrink: 0;
         }
 
-        /* Zone 1.5: Risk Control (increased height) */
         .risk-control {
             display: grid;
             grid-template-columns: 1fr;
             gap: 1rem;
             flex-shrink: 0;
-            max-height: 300px; /* Increased by 20% */
+            max-height: 300px;
             height: 300px;     
         }
         
-        /* THIS IS THE FIX: Target the widgets directly */
         .risk-control > :global(*) {
-            overflow-y: auto;       /* Internal scroll only */
-            height: 100%;           /* Fill container */
-            max-height: 100%;       /* Prevent overflow */
+            overflow-y: auto;       
+            height: 100%;           
+            max-height: 100%;       
         }
         
-        /* Add custom scrollbar for the risk widgets */
         .risk-control > :global(*)::-webkit-scrollbar {
             width: 4px;
         }
@@ -321,16 +337,14 @@ function DashboardContent() {
             border-radius: 4px;
         }
 
-        /* Main Grid Layout (increased height) */
         .main-grid {
           display: grid;
           grid-template-columns: 65fr 35fr;
           gap: 1rem;
           flex: 1; 
-          min-height: 650px; /* Set a base height to allow growth */
+          min-height: 650px; 
         }
 
-        /* Zone 2: Mission Control */
         .mission-control {
           background: rgba(15, 23, 42, 0.3);
           border: 1px solid var(--border);
@@ -338,10 +352,9 @@ function DashboardContent() {
           display: flex;
           flex-direction: column;
           overflow: hidden; 
-          /* FIX: Removed rigid height constraint */
-          min-height: 400px; /* Give it real space to render the list */
-          height: auto;      /* Allow it to grow based on content if needed */
-          flex: 1;           /* Allow it to fill the grid cell */ 
+          min-height: 400px;
+          height: auto;
+          flex: 1; 
         }
 
         .section-header {
@@ -403,7 +416,6 @@ function DashboardContent() {
             border-radius: 4px;
         }
 
-        /* Zone 3: Context Sidebar */
         .context-sidebar {
           display: flex;
           flex-direction: column;
@@ -419,7 +431,7 @@ function DashboardContent() {
         }
 
         .nudge-widget {
-          flex: 1; /* Match Mission Control height */
+          flex: 1; 
           background: rgba(15, 23, 42, 0.3);
           border: 1px solid var(--border);
           border-radius: var(--radius-lg);

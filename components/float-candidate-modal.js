@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Send, Calculator, User, Building2, Paperclip, AlertTriangle, Shield, Mail } from "lucide-react";
+import { X, Send, Calculator, User, Building2, Paperclip, AlertTriangle, Shield, Mail, MessageCircle, Smartphone } from "lucide-react";
 import { useData } from "../context/data-context.js";
-import { checkVisaCompliance, generatePhaseMessage } from "../services/construction-logic.js";
+import { checkVisaCompliance, generatePhaseMessage, formatWhatsAppLink } from "../services/construction-logic.js";
 
 export default function FloatCandidateModal({ candidate, isOpen, onClose, prefilledData }) {
     const { clients, projects, floatCandidate } = useData();
@@ -26,7 +26,8 @@ export default function FloatCandidateModal({ candidate, isOpen, onClose, prefil
     // Message Construction
     const defaultSubject = candidate ? `${candidate.role} Available: ${candidate.firstName} ${candidate.lastName}` : "Candidate Enquiry";
     const [emailSubject, setEmailSubject] = useState(defaultSubject);
-    const [message, setMessage] = useState("");
+    const [emailBody, setEmailBody] = useState("");
+    const [smsBody, setSmsBody] = useState("");
 
     // Derived Data
     const selectedClient = clients.find(c => c.id === (typeof selectedClientId === 'string' ? selectedClientId : selectedClientId.toString()));
@@ -50,63 +51,69 @@ export default function FloatCandidateModal({ candidate, isOpen, onClose, prefil
     const margin = chargeRate - (payRate * 1.3);
     const marginPercent = chargeRate > 0 ? (margin / chargeRate) * 100 : 0;
 
-    // --- EFFECT: Auto-Generate Message ---
+    // --- EFFECT: Auto-Generate Messages ---
     useEffect(() => {
         if (!isOpen || !candidate) return;
 
         const contactName = selectedContact?.name ? selectedContact.name.split(' ')[0] : "there";
+        const clientName = selectedClient?.name || "Client";
         const role = candidate.role || "Specialist";
-        const projName = selectedProject?.name || "your project";
+        const projName = selectedProject?.name || "the project";
 
-        // Dynamic Template
-        const msg = `Hi ${contactName},
+        // SMS Template
+        const smsMsg = `Hey ${contactName}, hows ${projName} going? got a candidate available for an immediate start. If you need an extra pair of hands, I can do a cost rate to get him off the books?`;
+        
+        // Email Template
+        const emailMsg = `Hey ${clientName}
 
-I'd like to put forward ${candidate.firstName} for the open role at ${projName}.
+${projName} going well?
 
-They have strong experience as a ${role} and are available immediately.
-${candidate.isMobile ? "They are fully mobile with valid work rights." : ""}
+Righto, got a strong candidate coming off a job next week at ........and thought I'd float him across if you guys needed an extra pair of hands. Good english and great worker.
 
-Please find the CV attached.
+See attached Report - If you want him let me know, if not no worries mate.
 
-Best,
+Cheers
+
 Joe`;
 
-        setMessage(msg);
+        setSmsBody(smsMsg);
+        setEmailBody(emailMsg);
         setEmailSubject(`${role} Available: ${candidate.firstName} ${candidate.lastName} - ${candidate.status === 'available' ? 'Available Now' : 'Finishing Soon'}`);
 
-    }, [candidate, selectedContact, selectedProject, isOpen]);
+    }, [candidate, selectedContact, selectedProject, selectedClient, isOpen]);
 
     if (!isOpen) return null;
 
-    const handleSend = () => {
-        if (!candidate) return;
-
-        // Construct the Email Payload
-        const emailPayload = {
-            to: selectedContact?.email || "general@client.com",
-            subject: emailSubject,
-            body: message,
-            attachments: attachCV && candidate.cvUrl ? [candidate.cvUrl] : [],
-            candidateId: candidate.id,
-            clientId: selectedClientId,
-            projectId: selectedProjectId,
-            rates: { charge: chargeRate, pay: payRate }
-        };
-
-        // In a real app, this would be: await fetch('/api/send-email', ...)
-        console.log("📧 SENDING EMAIL:", emailPayload);
-
-        // Trigger the internal float record
+    const recordFloat = (method, body) => {
+        // Trigger the internal float record for logging
         floatCandidate(candidate.id, selectedProjectId || null, {
             clientId: selectedClientId,
             contactName: selectedContact?.name || "Unknown",
             chargeRate,
             payRate,
-            message
+            message: body,
+            method: method
         });
+    };
 
-        alert(`Float sent to ${selectedContact?.name || 'Client'} (${emailPayload.to})!`);
-        onClose();
+    const handleWhatsApp = () => {
+        if (!selectedContact?.phone) return alert("No phone number for contact");
+        const waLink = formatWhatsAppLink(selectedContact.phone);
+        window.open(`${waLink}?text=${encodeURIComponent(smsBody)}`, '_blank');
+        recordFloat('WhatsApp', smsBody);
+    };
+
+    const handleSMS = () => {
+        if (!selectedContact?.phone) return alert("No phone number for contact");
+        window.location.href = `sms:${selectedContact.phone}?body=${encodeURIComponent(smsBody)}`;
+        recordFloat('SMS', smsBody);
+    };
+
+    const handleOutlook = () => {
+        const to = selectedContact?.email || "";
+        const mailto = `mailto:${to}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+        window.location.href = mailto;
+        recordFloat('Email', emailBody);
     };
 
     return (
@@ -166,7 +173,7 @@ Joe`;
                                         <label>Recipient (Key Contact)</label>
                                         <select
                                             className="input-field"
-                                            value={JSON.stringify(selectedContact)} // Store object as string for Select
+                                            value={selectedContact ? JSON.stringify(selectedContact) : ""} // Store object as string for Select
                                             onChange={(e) => {
                                                 const val = e.target.value;
                                                 setSelectedContact(val ? JSON.parse(val) : null);
@@ -179,9 +186,9 @@ Joe`;
                                                 </option>
                                             ))}
                                         </select>
-                                        {selectedContact?.email && (
+                                        {selectedContact && (
                                             <div className="email-hint">
-                                                <Mail size={12} /> Will email: <span className="text-sky-400">{selectedContact.email}</span>
+                                                <Mail size={12} /> Contact Info: <span className="text-sky-400">{selectedContact.email || 'No Email'}</span> | <span className="text-emerald-400">{selectedContact.phone || 'No Phone'}</span>
                                             </div>
                                         )}
                                     </div>
@@ -247,9 +254,14 @@ Joe`;
                                 )}
                             </div>
 
-                            {/* Subject Line */}
+                            <div className="toggle-group bg-slate-800/50 p-1 rounded-lg flex mb-2">
+                                <button className="flex-1 py-1.5 text-xs font-bold uppercase rounded bg-slate-700 text-sky-400">Email Draft</button>
+                                <button className="flex-1 py-1.5 text-xs font-bold uppercase rounded text-slate-500">SMS Draft</button>
+                            </div>
+
+                            {/* Body Selection based on what user wants to edit (Keeping it simple by showing both or letting user choose) */}
                             <div className="form-group">
-                                <label>Subject</label>
+                                <label>Email Subject</label>
                                 <input
                                     type="text"
                                     className="input-field"
@@ -258,14 +270,23 @@ Joe`;
                                 />
                             </div>
 
-                            {/* Body */}
                             <div className="form-group">
-                                <label>Message</label>
+                                <label>Email Body</label>
                                 <textarea
                                     className="input-field message-box"
-                                    value={message}
-                                    onChange={(e) => setMessage(e.target.value)}
-                                    rows={6}
+                                    value={emailBody}
+                                    onChange={(e) => setEmailBody(e.target.value)}
+                                    rows={4}
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>SMS / WhatsApp Message</label>
+                                <textarea
+                                    className="input-field message-box text-emerald-400 border-emerald-500/30"
+                                    value={smsBody}
+                                    onChange={(e) => setSmsBody(e.target.value)}
+                                    rows={3}
                                 />
                             </div>
 
@@ -297,13 +318,32 @@ Joe`;
                             Next
                         </button>
                     ) : (
-                        <button
-                            className="btn-success"
-                            onClick={handleSend}
-                            disabled={!complianceCheck.valid}
-                        >
-                            <Send size={16} /> Send Email
-                        </button>
+                        <div className="flex gap-2">
+                            <button
+                                className="btn-whatsapp"
+                                onClick={handleWhatsApp}
+                                disabled={!selectedContact?.phone}
+                                title="Send via WhatsApp"
+                            >
+                                <MessageCircle size={16} /> WhatsApp
+                            </button>
+                            <button
+                                className="btn-sms"
+                                onClick={handleSMS}
+                                disabled={!selectedContact?.phone}
+                                title="Send via Text"
+                            >
+                                <Smartphone size={16} /> SMS
+                            </button>
+                            <button
+                                className="btn-success"
+                                onClick={handleOutlook}
+                                disabled={!complianceCheck.valid || !selectedContact?.email}
+                                title="Open in Outlook"
+                            >
+                                <Mail size={16} /> Outlook
+                            </button>
+                        </div>
                     )}
                 </div>
             </div>
@@ -316,7 +356,7 @@ Joe`;
                     z-index: 1100; backdrop-filter: blur(4px);
                 }
                 .float-modal {
-                    background: #0f172a; width: 500px;
+                    background: #0f172a; width: 550px;
                     border-radius: 12px; border: 1px solid #1e293b;
                     display: flex; flex-direction: column;
                     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
@@ -388,8 +428,12 @@ Joe`;
                 .spacer { flex: 1; }
                 .btn-secondary { background: transparent; color: #94a3b8; border: none; cursor: pointer; }
                 .btn-primary { background: #38bdf8; color: #0f172a; border: none; padding: 0.6rem 1.5rem; border-radius: 6px; font-weight: 600; cursor: pointer; }
-                .btn-success { background: #10b981; color: white; border: none; padding: 0.6rem 1.5rem; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; }
-                .btn-primary:disabled, .btn-success:disabled { opacity: 0.5; cursor: not-allowed; }
+                
+                .btn-whatsapp { background: #25d366; color: white; border: none; padding: 0.6rem 1rem; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; }
+                .btn-sms { background: #6366f1; color: white; border: none; padding: 0.6rem 1rem; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; }
+                .btn-success { background: #0078d4; color: white; border: none; padding: 0.6rem 1rem; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; }
+                
+                .btn-primary:disabled, .btn-whatsapp:disabled, .btn-sms:disabled, .btn-success:disabled { opacity: 0.5; cursor: not-allowed; }
             `}</style>
         </div>
     );

@@ -15,7 +15,9 @@ export default function AddClientModal({ onClose, onSave }) {
         contactName: "",
         contactRole: "",
         contactEmail: "",
-        contactPhone: ""
+        contactPhone: "",
+        // 👇 NEW: Default to today's date (YYYY-MM-DD) for the input field
+        lastContact: new Date().toISOString().split('T')[0]
     });
 
     const handleSubmit = (e) => {
@@ -32,12 +34,13 @@ export default function AddClientModal({ onClose, onSave }) {
             region: formData.region,
             address: formData.address,
             website: formData.website,
-            phone: formData.contactPhone, // Defaults to primary contact phone
-            email: formData.contactEmail, // Defaults to primary contact email
+            phone: formData.contactPhone,
+            email: formData.contactEmail,
             status: formData.status,
             tier: tierValue,
             activeJobs: 0,
-            lastContact: new Date().toISOString(), // Proper Postgres Timestamp
+            // 👇 UPDATED: Uses your manual input (or defaults to today)
+            last_contact: formData.lastContact,
             keyContacts: formData.contactName ? [{
                 name: formData.contactName,
                 role: formData.contactRole,
@@ -83,7 +86,7 @@ export default function AddClientModal({ onClose, onSave }) {
                                     onChange={e => setFormData({ ...formData, industry: e.target.value })}
                                 >
                                     <option value="">Select Industry...</option>
-                                    <option value="Builder">Builder (General)</option>
+                                    <option value="Builder">Builder</option>
                                     <option value="Formwork">Formwork & Concrete</option>
                                     <option value="Civil">Civil Infrastructure</option>
                                     <option value="Electrical">Electrical</option>
@@ -168,9 +171,9 @@ export default function AddClientModal({ onClose, onSave }) {
                         </div>
                     </div>
 
-                    {/* Section 3: Classification */}
+                    {/* Section 3: Classification & Dates */}
                     <div className="section-block mt-4">
-                        <h3 className="text-sm font-bold text-secondary uppercase mb-3">Classification</h3>
+                        <h3 className="text-sm font-bold text-secondary uppercase mb-3">Classification & Activity</h3>
                         <div className="form-row">
                             <div className="form-group">
                                 <label>Status</label>
@@ -195,6 +198,17 @@ export default function AddClientModal({ onClose, onSave }) {
                                     <option>Tier 3: Niche</option>
                                 </select>
                             </div>
+                        </div>
+
+                        {/* 👇 NEW FIELD: Last Contact Date */}
+                        <div className="form-group mt-3">
+                            <label>Last Contact Date</label>
+                            <input
+                                type="date"
+                                value={formData.lastContact}
+                                onChange={e => setFormData({ ...formData, lastContact: e.target.value })}
+                                className="w-full bg-[#0f172a] border border-gray-700 rounded p-2 text-white"
+                            />
                         </div>
                     </div>
 
@@ -228,7 +242,7 @@ export default function AddClientModal({ onClose, onSave }) {
                     border: 1px solid var(--border);
                     border-radius: var(--radius-lg);
                     width: 100%;
-                    max-width: 600px; /* Wider for better layout */
+                    max-width: 600px;
                     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
                     max-height: 90vh;
                     overflow-y: auto;

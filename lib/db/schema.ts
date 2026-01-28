@@ -11,7 +11,8 @@ export const nudgeTypeEnum = pgEnum('nudge_type', [
     'CHURN_INTERCEPTOR',  // Retention Risk
     'ZOMBIE_HUNTER',      // Dormant Candidate
     'CLIENT_STALKER',     // CRM Decay
-    'RAINMAKER'           // Weather Event
+    'RAINMAKER',          // Weather Event
+    'TASK'                // General Task
 ]);
 export const nudgePriorityEnum = pgEnum('nudge_priority', ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']);
 
@@ -37,7 +38,7 @@ export const internalRoster = pgTable('internal_roster', {
 export const clients = pgTable('clients', {
     id: uuid('id').primaryKey().defaultRandom(),
     name: text('name').notNull(),
-    industry: text('industry').default('Construction'),
+    industry: text('industry'),
     status: text('status'),
     tier: tierEnum('tier').default('3'),
     region: text('region'),
@@ -58,6 +59,7 @@ export const clients = pgTable('clients', {
     accountManager: text('account_manager'),
     clientOwner: text('client_owner'),
     notes: jsonb('notes'),
+    tasks: jsonb('tasks'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 

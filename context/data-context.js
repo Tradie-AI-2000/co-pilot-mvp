@@ -65,7 +65,6 @@ export function DataProvider({ children }) {
     };
 
     const enrichProjectData = (project) => {
-        console.log("Raw Project from DB:", project.name, "Demands:", project.client_demands || project.clientDemands);
         return {
             ...project,
             // Header Info
@@ -105,7 +104,6 @@ export function DataProvider({ children }) {
                 fetch('/api/clients').then(res => res.json()),
                 fetch('/api/nudges').then(res => res.json())
             ]);
-            console.log("🔔 Raw Nudges from DB:", nudgeRes);
 
             // Set State ONLY if data exists
             if (Array.isArray(candRes)) setCandidates(candRes.map(enrichCandidateData));
@@ -124,9 +122,6 @@ export function DataProvider({ children }) {
                     // 3. Keep existing mappings
                     id: n.id,
                     type: n.type, // Pass raw type to let UI decide colors
-                    // (Optional: Keep your old mapping if you prefer, but raw is safer for the new drawer)
-                    // type: n.type === 'PRE_EMPTIVE_STRIKE' ? 'lead' : ... 
-
                     title: n.title,
                     description: n.description,
                     priority: n.priority, // Pass raw priority (CRITICAL/HIGH)
@@ -243,13 +238,32 @@ export function DataProvider({ children }) {
 
     const addRole = (roleName) => setAvailableRoles(prev => prev.includes(roleName) ? prev : [...prev, roleName].sort());
 
+    // --- NEW: ACTIVITY LOGGING ---
+    // This allows GoldenHourMode and ClientModal to record logs globally
+    const logActivity = (actionType, details) => {
+        const newLog = {
+            id: `log-${Date.now()}`,
+            actionType,
+            ...details,
+            timestamp: new Date().toISOString()
+        };
+        // 1. Update local state for immediate UI feedback (streaks, etc)
+        setActivityLogs(prev => [newLog, ...prev]);
+
+        // 2. (Optional) In the future, persist to a DB table:
+        // persistItem('/api/logs', 'POST', newLog, setActivityLogs);
+
+        console.log(`[CRM Activity] ${actionType}:`, details);
+    };
+
     const value = {
         candidates, clients, projects, selectedProject, setSelectedProject, moneyMoves, placements, availableRoles,
         weeklyRevenue, weeklyPayroll, weeklyGrossProfit, benchLiability, revenueAtRisk,
         isSyncing, activityLogs,
         addCandidate, updateCandidate, addProject, updateProject, addClient, updateClient, addRole, floatCandidate,
         assignCandidateToProject,
-        syncFromSupabase
+        syncFromSupabase,
+        logActivity // <--- EXPORTED HERE to fix ReferenceError
     };
 
     return <DataContext.Provider value={value}>{children}</DataContext.Provider>;

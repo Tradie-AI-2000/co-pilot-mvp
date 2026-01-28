@@ -50,6 +50,20 @@ export async function PATCH(request) {
         // Remove fields that should not be updated or cause serialization issues
         delete sanitizedData.createdAt;
 
+        // Whitelist allowed fields to prevent "column does not exist" errors (e.g. projectIds)
+        const allowedFields = [
+            'name', 'industry', 'status', 'tier', 'region', 'address', 'website', 'phone', 'email', 
+            'activeJobs', 'lastContact', 'pipelineStage', 'contractStatus', 'financials', 
+            'keyContacts', 'siteLogistics', 'hiringInsights', 'actionAlerts', 'network', 
+            'accountManager', 'clientOwner', 'notes', 'tasks'
+        ];
+
+        Object.keys(sanitizedData).forEach(key => {
+            if (!allowedFields.includes(key)) {
+                delete sanitizedData[key];
+            }
+        });
+
         if (sanitizedData.lastContact) sanitizedData.lastContact = new Date(sanitizedData.lastContact);
 
         // Prevent "No values to set" error
