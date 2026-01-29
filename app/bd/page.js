@@ -1,19 +1,20 @@
 "use client";
 
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useData } from "../../context/data-context.js";
-import {
-    Target, Flame, Phone, Zap, TrendingUp, Activity
-} from "lucide-react";
+import { Target, Zap } from "lucide-react";
 import ClientSidePanel from "../../components/client-side-panel.js";
-// [CRITICAL] This imports your NEW refactored modal
 import FloatCandidateModal from "../../components/float-candidate-modal.js";
 import MatchListModal from "../../components/match-list-modal.js";
 import GoldenHourMode from "../../components/golden-hour-mode.js";
 import RelationshipDecayWidget from "../../components/relationship-decay-widget.js";
 import RelationshipActionModal from "../../components/relationship-action-modal.js";
+
+// [NEW] Import the advanced widget we just created
+import ActivityPulseWidget from "../../components/activity-pulse-widget.js";
+
 import { RELATED_ROLES, WORKFORCE_MATRIX, PHASE_MAP } from "../../services/construction-logic.js";
-import { parse, differenceInDays, isValid, format, subDays, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, parseISO, isSameWeek } from 'date-fns';
+import { parse, differenceInDays, isValid } from 'date-fns';
 
 // --- SUB-COMPONENTS ---
 
@@ -69,7 +70,7 @@ const MatchmakerWidget = ({ candidates, projects, onPitch }) => {
                                 project: p.name,
                                 projectId: p.id,
                                 client: p.assetOwner || p.client || "Direct Client",
-                                clientId: p.assignedCompanyIds?.[0], // Used for pre-filling modal
+                                clientId: p.assignedCompanyIds?.[0],
                                 phase: "Client Demand",
                                 currentPhase: "client_demand",
                                 role: role,
@@ -120,7 +121,7 @@ const MatchmakerWidget = ({ candidates, projects, onPitch }) => {
                                     project: p.name,
                                     projectId: p.id,
                                     client: p.assetOwner || "Client",
-                                    clientId: p.assignedCompanyIds?.[0], // Used for pre-filling modal
+                                    clientId: p.assignedCompanyIds?.[0],
                                     phase: phaseLabel,
                                     currentPhase: phaseId,
                                     role: role,
@@ -177,113 +178,19 @@ const MatchmakerWidget = ({ candidates, projects, onPitch }) => {
     );
 };
 
-// 2. ACTIVITY VISUALIZER (Safe Version)
-const ActivityPulseWidget = () => {
-    const { activityLogs } = useData();
-    const [view, setView] = useState("daily");
-
-    const data = useMemo(() => {
-        const today = new Date();
-
-        // [FIX APPLIED] Defensive Helper that preserves your Timezone logic
-        const getLocalISODate = (dateInput) => {
-            if (!dateInput) return null; // 1. Skip null/undefined
-
-            const date = new Date(dateInput);
-            if (isNaN(date.getTime())) return null; // 2. Skip Invalid Dates
-
-            // 3. YOUR ORIGINAL LOGIC: Adjust for timezone offset
-            const offset = date.getTimezoneOffset();
-            const local = new Date(date.getTime() - (offset * 60 * 1000));
-            return local.toISOString().split('T')[0];
-        };
-
-        const matchLogDate = (logDateISO, targetDate) => {
-            const formattedLogDate = getLocalISODate(logDateISO);
-            if (!formattedLogDate) return false; // Skip if date was invalid
-            return formattedLogDate === getLocalISODate(targetDate);
-        };
-
-        if (view === 'daily') {
-            const days = [];
-            let i = 0;
-            // Generate last 5 days (excluding weekends)
-            while (days.length < 5) {
-                const d = subDays(today, i);
-                const dayOfWeek = d.getDay();
-                if (dayOfWeek !== 0 && dayOfWeek !== 6) days.push(d);
-                i++;
-            }
-            return days.map(day => {
-                const dayLogs = activityLogs.filter(log => matchLogDate(log.date || log.timestamp, day)); // Check both keys
-                return {
-                    label: isSameDay(day, today) ? 'Today' : format(day, 'EEE'),
-                    fullLabel: format(day, 'd MMM'),
-                    calls: dayLogs.filter(l => l.type === 'contact' || l.type === 'meeting' || l.type === 'fail').length,
-                    sms: dayLogs.filter(l => l.type === 'sms').length,
-                    email: dayLogs.filter(l => l.type === 'email').length
-                };
-            }).reverse(); // Show oldest to newest
-        }
-
-        // Placeholder for Weekly/Monthly (Logic preserved if you expand it later)
-        return [];
-    }, [view, activityLogs]);
-
-    const maxVal = Math.max(...(data || []).map(d => d.calls + d.sms + d.email), 1);
-
-    return (
-        <div className="hunter-card activity-card glass-panel flex flex-col h-full col-span-12 md:col-span-12 lg:col-span-6">
-            <div className="card-header border-b border-secondary/30 pb-3 mb-3 flex justify-between items-center flex-shrink-0">
-                <div className="flex items-center gap-2">
-                    <Activity size={24} className="text-secondary" />
-                    <h3 className="text-secondary font-bold uppercase tracking-wider text-xl">Activity Pulse ({activityLogs.length})</h3>
-                </div>
-                <div className="flex bg-slate-800 rounded p-1 border border-slate-700">
-                    {['daily', 'weekly', 'monthly'].map(v => (
-                        <button
-                            key={v}
-                            className={`text-xs px-3 py-1 rounded font-bold uppercase transition-all ${view === v ? 'bg-secondary text-slate-900' : 'text-slate-400 hover:text-white'}`}
-                            onClick={() => setView(v)}
-                        >
-                            {v}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            <div className="flex flex-col flex-1 min-h-0 gap-4">
-                <div className="chart-area h-24 flex items-end justify-between gap-2 px-2 flex-shrink-0">
-                    {(data || []).map((d, i) => (
-                        <div key={i} className="flex flex-col items-center gap-1 w-full group relative h-full justify-end">
-                            <div className="w-full max-w-[32px] flex flex-col-reverse h-full max-h-full bg-slate-800/30 rounded-t overflow-hidden">
-                                <div style={{ height: `${(d.calls / maxVal) * 100}%` }} className="bg-emerald-500 w-full transition-all duration-500"></div>
-                                <div style={{ height: `${(d.sms / maxVal) * 100}%` }} className="bg-purple-500 w-full transition-all duration-500"></div>
-                                <div style={{ height: `${(d.email / maxVal) * 100}%` }} className="bg-sky-500 w-full transition-all duration-500"></div>
-                            </div>
-                            <span className="text-xs text-slate-500 font-bold uppercase">{d.label}</span>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
-};
-
 // --- MAIN PAGE ---
 
 export default function BusinessDevPage() {
     const { candidates, clients, projects, updateClient, logActivity } = useData();
     const [selectedClient, setSelectedClient] = useState(null);
     const [matchListTarget, setMatchListTarget] = useState(null);
-    const [floatTarget, setFloatTarget] = useState(null); // Controls the NEW Float Modal
+    const [floatTarget, setFloatTarget] = useState(null);
     const [isPowerMode, setIsPowerMode] = useState(false);
     const [directPowerHourTarget, setDirectPowerHourTarget] = useState(null);
     const [decayActionTarget, setDecayActionTarget] = useState(null);
 
     // --- HUD LOGIC ---
     const hudMetrics = useMemo(() => {
-        // ... (HUD logic same as before)
         return { bleedValue: 12000, bleedCount: 4, pipelineValue: 24000, velocity: "32/50" };
     }, [candidates]);
 
@@ -321,9 +228,9 @@ export default function BusinessDevPage() {
                 </div>
             </header>
 
-            {/* HUD Metrics (Simplified for brevity) */}
+            {/* HUD Metrics (Simplified) */}
             <div className="grid grid-cols-12 gap-4 mb-4 flex-shrink-0">
-                {/* ... (HUD Panels) ... */}
+                {/* Preserved HUD panels layout for brevity */}
             </div>
 
             {/* --- MAIN GRID --- */}
@@ -336,6 +243,7 @@ export default function BusinessDevPage() {
                     />
                 </div>
                 <div className="col-span-12 md:col-span-5 flex flex-col gap-4 h-full min-h-0">
+                    {/* Now rendering the IMPORTED widget */}
                     <ActivityPulseWidget />
                 </div>
             </div>
@@ -356,18 +264,13 @@ export default function BusinessDevPage() {
                 />
             )}
 
-            {/* 1. MATCH LIST MODAL */}
-            {/* [CRITICAL FIX] We now pass onFloat to trigger the parent modal */}
             {matchListTarget && (
                 <MatchListModal
                     isOpen={!!matchListTarget}
                     matchData={matchListTarget}
                     onClose={() => setMatchListTarget(null)}
                     onFloat={(candidateData) => {
-                        // Close the list, open the float modal with specific candidate
                         setMatchListTarget(null);
-
-                        // Merge match context (project/client) with selected candidate
                         setFloatTarget({
                             candidate: candidateData.candidate,
                             clientId: matchListTarget.clientId,
@@ -378,8 +281,6 @@ export default function BusinessDevPage() {
                 />
             )}
 
-            {/* 2. FLOAT CANDIDATE MODAL (The New One) */}
-            {/* It receives the 'floatTarget' object which includes candidate + context */}
             {floatTarget && (
                 <FloatCandidateModal
                     isOpen={!!floatTarget}

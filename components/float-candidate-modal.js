@@ -9,14 +9,12 @@ export default function FloatCandidateModal({ candidate, isOpen, onClose, prefil
     const { clients, projects, floatCandidate } = useData();
 
     // Initial Step Logic
-    const initialStep = 1; // <--- Force start at Target selection
+    const initialStep = 1;
     const [step, setStep] = useState(initialStep);
 
     // Form State
     const [selectedClientId, setSelectedClientId] = useState(prefilledData?.clientId || "");
     const [selectedProjectId, setSelectedProjectId] = useState(prefilledData?.projectId || "");
-
-    // We now store the full contact object, not just the name
     const [selectedContact, setSelectedContact] = useState(null);
 
     const [chargeRate, setChargeRate] = useState(candidate?.chargeRate || 0);
@@ -29,13 +27,11 @@ export default function FloatCandidateModal({ candidate, isOpen, onClose, prefil
     const [emailBody, setEmailBody] = useState("");
     const [smsBody, setSmsBody] = useState("");
 
-    // Derived Data
+    // Derived Data - VITAL FOR LOGGING
     const selectedClient = clients.find(c => c.id === (typeof selectedClientId === 'string' ? selectedClientId : selectedClientId.toString()));
-    // Combine client contacts and project-specific stakeholders if available
     const clientContacts = selectedClient?.keyContacts || [];
 
     const clientProjects = projects.filter(p =>
-        // Handle both string/number ID mismatches
         String(p.clientId) === String(selectedClientId) ||
         (p.assignedCompanyIds && p.assignedCompanyIds.includes(String(selectedClientId)))
     );
@@ -60,10 +56,8 @@ export default function FloatCandidateModal({ candidate, isOpen, onClose, prefil
         const role = candidate.role || "Specialist";
         const projName = selectedProject?.name || "the project";
 
-        // SMS Template
         const smsMsg = `Hey ${contactName}, hows ${projName} going? got a candidate available for an immediate start. If you need an extra pair of hands, I can do a cost rate to get him off the books?`;
-        
-        // Email Template
+
         const emailMsg = `Hey ${clientName}
 
 ${projName} going well?
@@ -84,11 +78,19 @@ Joe`;
 
     if (!isOpen) return null;
 
+    // --- CRITICAL UPDATE: PASSING NAMES TO CONTEXT ---
     const recordFloat = (method, body) => {
-        // Trigger the internal float record for logging
         floatCandidate(candidate.id, selectedProjectId || null, {
+            // IDs
             clientId: selectedClientId,
-            contactName: selectedContact?.name || "Unknown",
+            projectId: selectedProjectId,
+
+            // Explicit Names (So the Export knows "Macrennie" not just "ID: 123")
+            clientName: selectedClient?.name || "Unknown Client",
+            projectName: selectedProject?.name || "General Float",
+            contactName: selectedContact?.name || "Unknown Contact",
+
+            // Details
             chargeRate,
             payRate,
             message: body,
@@ -146,8 +148,8 @@ Joe`;
                                     value={selectedClientId}
                                     onChange={(e) => {
                                         setSelectedClientId(e.target.value);
-                                        setSelectedProjectId(""); // Reset project
-                                        setSelectedContact(null); // Reset contact
+                                        setSelectedProjectId("");
+                                        setSelectedContact(null);
                                     }}
                                 >
                                     <option value="">Select Client...</option>
@@ -173,7 +175,7 @@ Joe`;
                                         <label>Recipient (Key Contact)</label>
                                         <select
                                             className="input-field"
-                                            value={selectedContact ? JSON.stringify(selectedContact) : ""} // Store object as string for Select
+                                            value={selectedContact ? JSON.stringify(selectedContact) : ""}
                                             onChange={(e) => {
                                                 const val = e.target.value;
                                                 setSelectedContact(val ? JSON.parse(val) : null);
@@ -239,7 +241,6 @@ Joe`;
 
                     {step === 3 && (
                         <div className="step-content space-y-4">
-                            {/* Attachments */}
                             <div className="attachment-toggle" onClick={() => setAttachCV(!attachCV)}>
                                 <div className="flex items-center gap-2">
                                     <Paperclip size={16} className={attachCV ? "text-sky-400" : "text-slate-500"} />
@@ -259,7 +260,6 @@ Joe`;
                                 <button className="flex-1 py-1.5 text-xs font-bold uppercase rounded text-slate-500">SMS Draft</button>
                             </div>
 
-                            {/* Body Selection based on what user wants to edit (Keeping it simple by showing both or letting user choose) */}
                             <div className="form-group">
                                 <label>Email Subject</label>
                                 <input
@@ -290,7 +290,6 @@ Joe`;
                                 />
                             </div>
 
-                            {/* Compliance Check UI */}
                             {!complianceCheck.valid ? (
                                 <div className="compliance-bar error">
                                     <AlertTriangle size={14} /> Visa Issue: {complianceCheck.reason}
