@@ -1,61 +1,42 @@
-import { createClient } from '@supabase/supabase-js';
+import { db } from '../../../lib/db';
+import { activityLogs } from '../../../lib/db/schema';
 import { NextResponse } from 'next/server';
-
-// Initialize Supabase Client (Server-Side)
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+import { desc } from 'drizzle-orm';
 
 // GET: Fetch the last 100 logs (Most recent first)
-// This runs when the app loads to populate the "Activity Pulse"
 export async function GET() {
     try {
-        const { data, error } = await supabase
-            .from('activity_logs')
-            .select('*')
-            .order('created_at', { ascending: false })
+        const results = await db.select()
+            .from(activityLogs)
+            .orderBy(desc(activityLogs.createdAt))
             .limit(100);
-
-        if (error) {
-            console.error('Supabase Fetch Error:', error);
-            throw error;
-        }
-
-        return NextResponse.json(data);
+            
+        return NextResponse.json(results);
     } catch (error) {
+        console.error('API Error (GET /api/logs):', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
 
 // POST: Add a new log entry
-// This runs when you float a candidate, send an SMS, etc.
 export async function POST(request) {
     try {
         const body = await request.json();
 
-        // Prepare the data for Supabase
+        // Prepare the data for Drizzle
         const { type, title, description, meta_data, timestamp } = body;
 
-        const { data, error } = await supabase
-            .from('activity_logs')
-            .insert([{
-                type,
-                title,
-                description,
-                meta_data, // Stores complex data like clientId, projectId
-                created_at: timestamp || new Date().toISOString()
-            }])
-            .select()
-            .single();
+        const [result] = await db.insert(activityLogs).values({
+            type,
+            title,
+            description,
+            meta_data: meta_data || {},
+            createdAt: timestamp ? new Date(timestamp) : new Date()
+        }).returning();
 
-        if (error) {
-            console.error('Supabase Insert Error:', error);
-            throw error;
-        }
-
-        return NextResponse.json(data);
+        return NextResponse.json(result);
     } catch (error) {
+        console.error('API Error (POST /api/logs):', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

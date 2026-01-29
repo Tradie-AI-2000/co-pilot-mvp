@@ -132,6 +132,36 @@ export function DataProvider({ children }) {
         setIsHydrated(true);
     }, []);
 
+    // --- FINANCIAL METRICS (Real Data Only) ---
+    const WORK_WEEK_HOURS = 40;
+    const BURDEN_MULTIPLIER = 1.30;
+
+    const parseNum = (val) => {
+        if (typeof val === 'number') return val;
+        if (!val) return 0;
+        return parseFloat(String(val).replace(/[^0-9.-]+/g, "")) || 0;
+    };
+
+    const financialMetrics = useMemo(() => {
+        const activeCandidates = candidates.filter(c => c.status?.toLowerCase() === "on_job");
+        const benchCandidates = candidates.filter(c => c.status?.toLowerCase() === "available" && (c.guaranteedHours || 0) > 0);
+
+        const rev = activeCandidates.reduce((sum, c) => sum + (parseNum(c.chargeRate) * WORK_WEEK_HOURS), 0);
+        const pay = activeCandidates.reduce((sum, c) => sum + (parseNum(c.payRate) * BURDEN_MULTIPLIER * WORK_WEEK_HOURS), 0);
+        const gp = rev - pay;
+        const liability = benchCandidates.reduce((sum, c) => sum + (parseNum(c.payRate) * BURDEN_MULTIPLIER * (c.guaranteedHours || 0)), 0);
+
+        return {
+            weeklyRevenue: rev,
+            weeklyPayroll: pay,
+            weeklyGrossProfit: gp,
+            benchLiability: liability,
+            revenueAtRisk: 0 // Placeholder until dates are manually fixed in DB
+        };
+    }, [candidates]);
+
+    const { weeklyRevenue, weeklyPayroll, weeklyGrossProfit, benchLiability, revenueAtRisk } = financialMetrics;
+
     // --- PERSISTENCE HELPER ---
     const persistItem = async (endpoint, method, item, setState, isUpdate = false) => {
         const tempId = item.id || `temp-${Date.now()}`;
@@ -237,6 +267,7 @@ export function DataProvider({ children }) {
 
     const value = {
         candidates, clients, projects, selectedProject, setSelectedProject, moneyMoves, placements, availableRoles,
+        weeklyRevenue, weeklyPayroll, weeklyGrossProfit, benchLiability, revenueAtRisk,
         isSyncing, activityLogs,
         addCandidate, updateCandidate, addProject, updateProject, addClient, updateClient, addRole, floatCandidate,
         assignCandidateToProject,

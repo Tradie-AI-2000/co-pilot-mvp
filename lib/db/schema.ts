@@ -253,6 +253,15 @@ export const marketTenders = pgTable('market_tenders', {
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
+export const activityLogs = pgTable('activity_logs', {
+    id: uuid('id').primaryKey().defaultRandom(),
+    type: text('type').notNull(), // 'sms', 'email', 'contact', 'fail'
+    title: text('title').notNull(),
+    description: text('description'),
+    meta_data: jsonb('meta_data'), // Stores candidateId, clientId, etc.
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
 export const callScripts = pgTable('call_scripts', {
     id: uuid('id').primaryKey().defaultRandom(),
     targetId: uuid('target_id').notNull(),
