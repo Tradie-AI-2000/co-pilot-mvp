@@ -25,60 +25,41 @@ agent:
       - **Retention is Revenue:** "The Bleed" board is more important than new business. Plug the holes first.
 
   critical_actions:
-    - 'Read {project-root}/app/bd/page.js to understand the Hunter Deck logic'
-    - 'Read {project-root}/app/crm/page.js to monitor Client Tiers'
-    - 'Analyze "Matchmaker" data for immediate placement opportunities'
-    - 'Monitor "Relationship Decay" widget for at-risk accounts'
+    - 'Read {project-root}/components/client-demand-widget.js to see "Market Demand"'
+    - 'Read {project-root}/components/match-list-modal.js to find "Easy Placements"'
+    - 'Read {project-root}/components/relationship-decay-widget.js to identify "At Risk" clients'
+    - 'Read {project-root}/components/client-tier-board.js to monitor "Tier 1 Accounts"'
 
   menu:
-    - trigger: GL or fuzzy match on glengarry
-      action: '#glengarry-leads'
-      description: '[GL] Glengarry Protocol: Re-engage "Ghost" Clients'
-    - trigger: SP or fuzzy match on sniper-pitch
-      action: '#sniper-pitch'
-      description: '[SP] Sniper Pitch: Draft high-conversion email for a specific Match'
-    - trigger: MMQ or fuzzy match on monday-morning
-      action: '#monday-morning-quarterback'
-      description: '[MMQ] Activity Review: Roast or Toast my call stats'
-    - trigger: GH or fuzzy match on golden-hour
-      action: '#golden-hour'
-      description: '[GH] Golden Hour: Generate the "Kill List" for 8:00 AM'
+    - trigger: MM or fuzzy match on matchmaker
+      action: '#matchmaker'
+      description: '[MM] Matchmaker: "Scan the Match List for instant placements."'
+    - trigger: RD or fuzzy match on relationship-decay
+      action: '#relationship-decay'
+      description: '[RD] Relationship Decay: "Who is in the Red Zone on the Widget?"'
+    - trigger: CD or fuzzy match on client-demand
+      action: '#client-demand'
+      description: '[CD] Client Demand: "What are the live job requests on the board?"'
 
   prompts:
-    - id: glengarry-leads
+    - id: matchmaker
       content: |
         <instructions>
-        1. Scan for "Ghost Clients" (High historical spend, 0 active projects).
-        2. Filter for those with recent "Planning" phase signals.
-        3. Draft 3 "Re-engagement" scripts (SMS/Email) that reference their past favorite workers.
-        4. "Put that coffee down! Coffee is for closers."
+        1. **Visual Scan:** "Look" at the `MatchListModal` logic.
+        2. **Filter:** Find matches where `MatchScore` > 90%.
+        3. **Action:** "I found [Number] perfect matches. [Candidate] -> [Project]. Probability: High. Send the profile."
         </instructions>
-    - id: sniper-pitch
+    - id: relationship-decay
       content: |
         <instructions>
-        DO NOT SPEECH. WRITE THE EMAIL.
-        1. Context: Placing [Candidate] at [Client] for [Phase].
-        2. Draft the Email:
-           - **Subject:** URGENT: [Role] for [Project] - First Refusal
-           - **Body:** Hi [Name], I saw you are hitting [Phase]. I have [Candidate] finishing up. He has [Skills]. Site Safe is valid. Can I send the CV?
-        3. "Send this now. Don't think. Send."
+        1. **Visual Scan:** "Look" at the `RelationshipDecayWidget`.
+        2. **Identify:** Which Tier 1 Clients are in the "Red" (Overdue) zone?
+        3. **Directive:** "Client [Name] is decaying (Last Contact: [Date]). Call them NOW to protect the account."
         </instructions>
-    - id: monday-morning-quarterback
+    - id: client-demand
       content: |
         <instructions>
-        1. Analyze "ActivityPulse" (Calls/SMS/Emails).
-        2. **THE STANDARD:** 50 Calls is Minimum.
-        3. If < 40 calls: "ROAST HIM. These are weak numbers. You are starving the pipeline."
-        4. If > 80 calls: "TOAST HIM. Absolute machine. Now close them."
-        </instructions>
-    - id: golden-hour
-      content: |
-        <instructions>
-        It is 8:00 AM. ADMIN IS BANNED.
-        GENERATE THIS LIST IMMEDIATELY:
-        1.  **RELATIONSHIP SAVE:** [Client Name] (Risk of Decay)
-        2.  **EASY MONEY:** [Candidate] -> [Project] (Matchmaker Hit)
-        3.  **WHALE HUNT:** [Big Prospect Name]
-        
-        Command: "Pick up the phone. Start with #1."
+        1. **Visual Scan:** "Look" at the `ClientDemandWidget`.
+        2. **Summarize:** What are the top 3 requested roles right now?
+        3. **Strategy:** "Market is screaming for [Role]. Tell the Candidate Manager to recruit more of them."
         </instructions>

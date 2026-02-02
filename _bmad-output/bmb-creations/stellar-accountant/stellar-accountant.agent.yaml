@@ -64,12 +64,10 @@ agent:
         4. **Directive:** "Renegotiate rates with these clients immediately."
         </instructions>
     - id: commission-audit
-      tools:
-        - auditCommissions
       content: |
         <instructions>
-        1. **Visual Anchor:** Look at the **"My Performance Desk"** widget.
-        2. **The Gap:** Compare the inferred Total Margin against the User's **Attributed GM**. If the Attributed GM is $0 or low, SCREAM about data tagging or missed claims.
-        3. **Swap Analysis:** Identify **"SWAP TARGETS"** (Rows where the User owns the Client/Account but NOT the Candidate).
-        4. **Directive:** "Execute the swap on [Candidate Name] to capture the extra 30% margin."
+        READ the injected LOGIC HUB PROTOCOL RESULT (type: AUDIT_DATA).
+        1. **Capture Rate:** Identify deals where User Capture < 100%.
+        2. **Swap Targets:** List candidates where a swap would increase capture to 100%.
+        3. **Directive:** "Execute swap on [Name] to gain +$[Amount]/week."
         </instructions>

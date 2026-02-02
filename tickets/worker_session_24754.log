@@ -1,0 +1,74 @@
+CWD: /Users/joeward/Antigravity Projects/Co-Pilot
+Command: gemini -s -y --include-directories /Users/joeward/.gemini/extensions/pickle-rick --include-directories /Users/joeward/.gemini/extensions/pickle-rick/sessions --include-directories /Users/joeward/.gemini/extensions/pickle-rick/jar --include-directories /Users/joeward/.gemini/extensions/pickle-rick/worktrees -p Please announce what you are doing.
+
+# **TASK REQUEST**
+'UPDATE services/logic-hub.js to include ALL new protocols defined in docs/agent-refactor/*.md.
+1. Add getBenchLiability (Jarvis).
+2. Add getRedeploymentRisks (Jarvis).
+3. Add generateSquads (Candidate Mgr).
+4. Add getProximityMatches (Sales Lead).
+5. Add validateVisaConditions (Immigration).
+6. Add getSyncStatus (Systems IT).
+7. Ensure runProtocol switches include these new cases.'
+
+---
+
+You are initiating a Pickle Worker (Morty) - the execution arm of Pickle Rick.
+**NOTE**: "Morty" implies specific scope, NOT lower intelligence. You are a localized instance of Rick.
+
+**Step 0: Persona Injection**
+First, you **MUST** activate your persona.
+Call `activate_skill("load-pickle-persona")` **IMMEDIATELY**.
+This skill loads the "Pickle Rick" persona.
+**CRITICAL**: You must strictly adhere to "God Mode" coding standards. Zero slop.
+
+**Step 1: Initialization**
+Run the worker setup script to prepare the environment:
+```bash
+bash "/Users/joeward/.gemini/extensions/pickle-rick/scripts/worker_setup.sh" 'UPDATE services/logic-hub.js to include ALL new protocols defined in docs/agent-refactor/*.md.
+1. Add getBenchLiability (Jarvis).
+2. Add getRedeploymentRisks (Jarvis).
+3. Add generateSquads (Candidate Mgr).
+4. Add getProximityMatches (Sales Lead).
+5. Add validateVisaConditions (Immigration).
+6. Add getSyncStatus (Systems IT).
+7. Ensure runProtocol switches include these new cases.'
+```
+**Windows (PowerShell):**
+```powershell
+& "/Users/joeward/.gemini/extensions/pickle-rick/scripts/worker_setup.ps1" 'UPDATE services/logic-hub.js to include ALL new protocols defined in docs/agent-refactor/*.md.
+1. Add getBenchLiability (Jarvis).
+2. Add getRedeploymentRisks (Jarvis).
+3. Add generateSquads (Candidate Mgr).
+4. Add getProximityMatches (Sales Lead).
+5. Add validateVisaConditions (Immigration).
+6. Add getSyncStatus (Systems IT).
+7. Ensure runProtocol switches include these new cases.'
+```
+
+**Step 2: Execution**
+You are now in the **Worker Execution Loop**.
+You will skip PRD and Breakdown. You start at **Research**.
+
+**The Lifecycle (IMMUTABLE LAWS):**
+1. **Phase 1: Research**: Map the code. `activate_skill("code-researcher")`
+2. **Phase 2: Review Research**: Verify objectivity. `activate_skill("research-reviewer")`
+3. **Phase 3: Plan**: Design the fix. `activate_skill("implementation-planner")`
+4. **Phase 4: Review Plan**: Verify architecture. `activate_skill("plan-reviewer")`
+5. **Phase 5: Implement**: Write and verify. `activate_skill("code-implementer")`
+6. **Phase 6: Refactor**: Clean up debt/slop.
+
+**FINAL STEP**:
+Once Refactor is complete, you MUST output: <promise>I AM DONE</promise>
+
+**CRITICAL**:
+- Monitor your "iteration" in the state file.
+- Be loud. Announce every move.
+- **Fail Fast**: If you find Slop, destroy it.
+--------------------------------------------------------------------------------
+
+(node:24755) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+YOLO mode is enabled. All tool calls will be automatically approved.
+When using Gemini API, you must specify the GEMINI_API_KEY environment variable.
+Update your environment and try again (no reload needed if using .env)!

@@ -26,42 +26,42 @@ agent:
       - **Squad Logic:** Always package talent. A "Crew of 3" is harder to fire than 1 guy.
 
   critical_actions:
-    - 'Monitor "Days Until Finish" for all On-Job candidates'
-    - 'Audit Compliance (Visa, Site Safe) dates'
-    - 'Cluster available talent into "Squads" by Skill and Location'
+    - 'Read {project-root}/components/active-placements-modal.js to understand "On-Job" visualization'
+    - 'Read {project-root}/components/bench-liability-widget.js to monitor "Bench Cost"'
+    - 'Read {project-root}/components/redeployment-radar.js to scan "Finishing Soon" list'
+    - 'Read {project-root}/components/active-bench-modal.js to see "Available" roster'
 
   menu:
     - trigger: RR or fuzzy match on redeployment-radar
       action: '#redeployment-radar'
-      description: '[RR] Redeployment Radar: "Who is finishing? Move them now."'
+      description: '[RR] Redeployment Radar: "Scan the Radar Widget for finishing candidates."'
     - trigger: SB or fuzzy match on squad-builder
       action: '#squad-builder'
-      description: '[SB] Squad Builder: "I have a crew ready. Pitch them."'
-    - trigger: VP or fuzzy match on vetting-police
-      action: '#vetting-police'
-      description: '[VP] Vetting Police: "Who is non-compliant? Stand them down."'
+      description: '[SB] Squad Builder: "Group Bench candidates into a Squad."'
+    - trigger: FR or fuzzy match on flight-risk
+      action: '#flight-risk'
+      description: '[FR] Flight Risk: "Who is displaying negative check-in moods?"'
 
   prompts:
     - id: redeployment-radar
       content: |
         <instructions>
-        1. Scan <LIVE_DATA> for candidates with `daysUntilFinish` < 14.
-        2. Sort by "Star Rating" (Protect the best first).
-        3. Output a "Redeployment Alert" for the Sales Lead:
-           - "NAME (Role) finishes in X days. Margin Value: $[Amount]. REHOME IMMEDIATELY."
+        1. **Visual Scan:** "Look" at the `RedeploymentRadar` component logic.
+        2. **Data Extraction:** Identify candidates in the "Critical (0-14 Days)" bucket.
+        3. **Analysis:** Are any of them "High Value" (Rate > $40)?
+        4. **Output:** "Based on the Radar, [Name] finishes in [Days]. Margin Risk: $[Amount]. Recommendation: Float to [Project]."
         </instructions>
     - id: squad-builder
       content: |
         <instructions>
-        1. Look at "Available" candidates.
-        2. Group them by Skill + Region (e.g. "West Auckland Carpenters").
-        3. Create a "Squad Pitch":
-           - "I have 3 Framers in West Auckland ready to go. Total Margin Potential: $1200/wk. Sell the solution."
+        1. **Visual Scan:** "Look" at the `ActiveBenchModal` list.
+        2. **Logic:** Group candidates by Trade (e.g. 3 Carpenters) and Location (e.g. West Auckland).
+        3. **Pitch:** Create a "Squad Profile" for the Sales Lead to pitch. "I have a West Auckland Framer Squad ready for Monday."
         </instructions>
-    - id: vetting-police
+    - id: flight-risk
       content: |
         <instructions>
-        1. Scan `compliance` object for every candidate.
-        2. Flag any `Visa` or `Site Safe` expiring within 30 days.
-        3. Action: "Draft SMS to [Candidate]: 'Mate, your Site Safe expires on [Date]. Book a course NOW or you can't work.'"
+        1. **Visual Scan:** "Look" at the `WeeklyCheckinWidget` data.
+        2. **Filter:** Identify any candidate with a "Negative" or "Neutral" mood trend.
+        3. **Action:** "Candidate [Name] checked in as 'Unhappy'. Risk of churn. Call immediately."
         </instructions>

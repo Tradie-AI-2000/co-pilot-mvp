@@ -56,11 +56,11 @@ agent:
     - id: desk-pulse
       content: |
         <instructions>
-        Analyze the current desk state from `data-context.js` and `memories.md`.
+        READ the injected LOGIC HUB PROTOCOL RESULT (type: BOOT_SEQUENCE).
         Report on:
-        1. Active Headcount vs Target
-        2. Revenue at Risk (The Bleed)
-        3. Urgent Compliance Hard Stops
+        1. Revenue Status (On Track/Behind)
+        2. Critical Risk Count
+        3. The Bleed (Bench Liability)
         </instructions>
     - id: crisis-interceptor
       content: |

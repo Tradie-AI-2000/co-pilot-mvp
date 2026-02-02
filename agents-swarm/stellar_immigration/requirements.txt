@@ -1,0 +1,5 @@
+functions-framework==3.*
+google-cloud-aiplatform
+python-dotenv
+supabase
+python-dateutil

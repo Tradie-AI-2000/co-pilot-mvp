@@ -5,7 +5,7 @@ require('dotenv').config({ path: '.env.local' });
 const { drizzle } = require('drizzle-orm/postgres-js');
 const postgres = require('postgres');
 const { internalRoster, candidates, projects, clients, stakeholders } = require('../lib/db/schema');
-const { fetchSheetData } = require('../services/google-sheets');
+// const { fetchSheetData } = require('../services/google-sheets'); // Removed
 const { eq } = require('drizzle-orm');
 
 const connectionString = process.env.DIRECT_URL || process.env.DATABASE_URL;
@@ -38,16 +38,11 @@ async function run() {
       return;
     }
 
-    // 2. Real Ingestion from Google Sheets
-    console.log('📊 Fetching Real Data from Google Sheets...');
-    const sheetClients = await fetchSheetData('Clients');
-    const sheetProjects = await fetchSheetData('Projects');
-    const sheetCandidates = await fetchSheetData('Candidates');
-
-    console.log(`✅ Fetched: ${sheetClients.length} Clients, ${sheetProjects.length} Projects, ${sheetCandidates.length} Candidates`);
-
-    // Mapping logic for sheet data would go here (omitted for brevity in this brief)
-    // For now, we focus on the requested Padding and Package Mapping.
+    // 2. Real Ingestion from Google Sheets (REMOVED)
+    console.log('📊 Skipping Real Data Fetch (Google Sheets removed)...');
+    const sheetClients = [];
+    const sheetProjects = [];
+    const sheetCandidates = [];
 
     // 3. Package Mapping & Stakeholder Linking
     console.log('🔗 Applying Package Mapping to Projects...');

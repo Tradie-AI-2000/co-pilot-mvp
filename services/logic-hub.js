@@ -1,8 +1,7 @@
 import { WORKFORCE_MATRIX, getProjectSize, PHASE_MAP } from './construction-logic.js';
 import { calculateReactivationScore, getGoldenHourTargets } from './growth-logic.js';
 
-// --- FINANCIAL LOGIC (The "Accountant" Brain) ---  
-// Single Source of Truth for Commission Splits  
+// --- FINANCIAL LOGIC (The "Accountant" Brain) ---
 export const SPLIT_RULES = {
     recruiter: 0.20,
     candidateManager: 0.30,
@@ -11,144 +10,242 @@ export const SPLIT_RULES = {
 };
 
 export function calculateNCR(dealData) {
-    // 1. Calculate Weekly Margin  
-    // Formula: (Charge - (Pay * 1.30)) * Hours  
     const charge = parseFloat(dealData.chargeRate) || 0;
     const pay = parseFloat(dealData.payRate) || 0;
     const hours = parseFloat(dealData.guaranteedHours) || 40;
+    const burden = 1.30;
+    const margin = (charge - (pay * burden)) * hours;
 
-    // Burden is hardcoded to 1.30 (standard construction burden)  
-    const margin = (charge - (pay * 1.30)) * hours;
-
-    // 2. Determine Ownership  
-    // In a real app, these would be IDs. For now, we match strings or booleans passed from context.  
-    const isRecruiter = dealData.userIsRecruiter;
-    const isClientOwner = dealData.userIsClientOwner;
-    const isAccountMgr = dealData.userIsAccountMgr;
-
-    // 3. Calculate "The Split"  
+    // Capture Logic
     let commissionPct = 0;
-    if (isRecruiter) commissionPct += SPLIT_RULES.recruiter; // +20%  
-    // We assume Cand Mgr is someone else (Sarah) usually, so we don't add that 30%  
-    if (isClientOwner) commissionPct += SPLIT_RULES.clientOwner; // +20%  
-    if (isAccountMgr) commissionPct += SPLIT_RULES.accountManager; // +30%
+    if (dealData.userIsRecruiter) commissionPct += SPLIT_RULES.recruiter;
+    if (dealData.userIsClientOwner) commissionPct += SPLIT_RULES.clientOwner;
+    if (dealData.userIsAccountMgr) commissionPct += SPLIT_RULES.accountManager;
+    // Candidate Mgr usually separate
 
     const ncr = margin * commissionPct;
-
-    // 4. Verdict  
+    
     let verdict = "STANDARD";
-    if (commissionPct < 0.5) verdict = "BUSY_FOOL"; // User getting < 50%  
-    if (commissionPct >= 0.7) verdict = "GOLD_MINE"; // User getting > 70%
+    if (commissionPct < 0.5) verdict = "BUSY_FOOL"; 
+    if (commissionPct >= 0.7) verdict = "GOLD_MINE";
+    if (margin < 400) verdict = "BUSY_FOOL"; // Low total GP
 
     return {
         weeklyMargin: Math.round(margin),
         userCommissionPct: commissionPct * 100,
         weeklyNCR: Math.round(ncr),
-        verdict: verdict,
-        splitBreakdown: {
-            recruiter: SPLIT_RULES.recruiter,
-            candMgr: SPLIT_RULES.candidateManager,
-            client: SPLIT_RULES.clientOwner,
-            account: SPLIT_RULES.accountManager
-        }
+        verdict,
+        splitBreakdown: SPLIT_RULES
     };
 }
 
-// --- LOGIC ROUTER (The API calls this) ---
+// --- JARVIS LOGIC (Logistics) ---
+
+export function getBenchLiability(candidates) {
+    // Logic: Status=Available AND GuaranteedHours > 0
+    const liability = candidates
+        .filter(c => c.status === 'Available' && (c.guaranteedHours || 0) > 0)
+        .map(c => ({
+            name: `${c.firstName} ${c.lastName}`,
+            cost: (c.payRate || 25) * (c.guaranteedHours || 0),
+            hours: c.guaranteedHours
+        }));
+    
+    const totalCost = liability.reduce((sum, c) => sum + c.cost, 0);
+    return {
+        status: totalCost > 0 ? "CRITICAL" : "SAFE",
+        totalWeeklyLiability: totalCost,
+        candidates: liability
+    };
+}
+
+export function getRedeploymentRisks(placements) {
+    // Logic: Finish Date <= 21 Days
+    const now = new Date();
+    const riskWindow = new Date();
+    riskWindow.setDate(now.getDate() + 30);
+
+    return placements
+        .filter(p => {
+            const finish = new Date(p.endDate || p.finishDate);
+            return finish >= now && finish <= riskWindow;
+        })
+        .map(p => ({
+            candidateName: p.candidateName,
+            finishDate: p.endDate,
+            project: p.projectName,
+            daysRemaining: Math.ceil((new Date(p.endDate) - now) / (1000 * 60 * 60 * 24))
+        }));
+}
+
+// --- CANDIDATE MGR LOGIC (Talent Ops) ---
+
+export function generateSquads(benchCandidates) {
+    // Logic: Group by Region + Trade. 1 Senior : 2 Juniors
+    const squads = [];
+    // Mocking logic for MVP - grouping simply by region
+    const regions = [...new Set(benchCandidates.map(c => c.region || "Auckland"))];
+    
+    regions.forEach(region => {
+        const regionalBench = benchCandidates.filter(c => c.region === region);
+        if (regionalBench.length >= 3) {
+            squads.push({
+                name: `${region} Hit Squad`,
+                members: regionalBench.slice(0, 3).map(c => c.firstName),
+                skillMix: "Mixed"
+            });
+        }
+    });
+    return squads;
+}
+
+export function getFlightRisks(candidates) {
+    // Logic: Mood Check + Commute
+    return candidates.filter(c => {
+        // Mock checkin logic - assuming 'mood' field exists on candidate for now
+        const isUnhappy = c.mood === 'Negative' || c.mood === 'Neutral';
+        return isUnhappy;
+    }).map(c => ({
+        name: `${c.firstName} ${c.lastName}`,
+        riskFactor: "Mood Decay",
+        action: "Call immediately"
+    }));
+}
+
+// --- SALES LEAD LOGIC (The Hunter) ---
+
+export function getProximityMatches(candidates, projectLocation) {
+    // Logic: Distance < 45 mins. Mocking geo for now.
+    // In real app, call api/geo
+    return candidates
+        .filter(c => c.status === 'Available')
+        .map(c => ({
+            name: `${c.firstName} ${c.lastName}`,
+            driveTime: Math.floor(Math.random() * 60), // Mock
+            marginBuffer: (c.chargeOutRate || 50) - ((c.payRate || 30) * 1.3)
+        }))
+        .filter(c => c.driveTime < 45)
+        .sort((a, b) => a.driveTime - b.driveTime);
+}
+
+// --- IMMIGRATION LOGIC (The Guard) ---
+
+export function validateVisaConditions(candidate, project) {
+    if (!candidate.visaConditions) return { status: "UNKNOWN", message: "No Visa Data" };
+    
+    const violations = [];
+    
+    // 1. Role Check
+    if (candidate.visaConditions.role && candidate.visaConditions.role !== project.role) {
+        violations.push(`Role Mismatch: Visa says '${candidate.visaConditions.role}', Project says '${project.role}'`);
+    }
+    
+    // 2. Region Check
+    if (candidate.visaConditions.regions && !candidate.visaConditions.regions.includes(project.region)) {
+        violations.push(`Region Mismatch: Visa allows [${candidate.visaConditions.regions}], Project is in '${project.region}'`);
+    }
+    
+    // 3. Employer Lock
+    if (candidate.visaConditions.employer && candidate.visaConditions.employer !== "CarryOn Working Limited") {
+        violations.push(`Employer Mismatch: Visa locked to '${candidate.visaConditions.employer}'`);
+    }
+    
+    return {
+        status: violations.length > 0 ? "BLOCKED" : "APPROVED",
+        violations
+    };
+}
+
+// --- SYSTEMS IT LOGIC (The Sentinel) ---
+
+export function getSyncStatus(lastSyncTime) {
+    const now = new Date();
+    const diffMins = (now - new Date(lastSyncTime)) / 60000;
+    
+    if (diffMins > 60) return { status: "KILL_SWITCH", message: "Data is > 1 hour old. Agents Disabled." };
+    if (diffMins > 15) return { status: "WARNING", message: "Sync Latency > 15 mins." };
+    return { status: "NOMINAL", message: "Systems Green." };
+}
+
+// --- MAIN ROUTER ---
 
 export async function runProtocol(protocolName, contextData = {}) {
     console.log(`[LogicHub] Running Protocol: ${protocolName}`);
 
     switch (protocolName) {
         case 'COMMISSION_AUDIT':
-            // Filter for Active deals  
-            const activeDeals = contextData.candidates ? contextData.candidates.filter(c => c.status?.toLowerCase() === 'on_job') : [];
-            const auditResults = activeDeals.map(deal => {
-                // Defensive coding for missing nested objects  
-                const financials = deal.financials || { chargeRate: deal.chargeRate, payRate: deal.payRate, guaranteedHours: deal.guaranteedHours };
-                const splits = deal.splits || { recruiter: deal.recruiter || 'Joe Ward', clientOwner: deal.clientOwner || 'Joe Ward', accountManager: deal.accountManager || 'Joe Ward' };
-
-                return {
-                    candidateName: `${deal.firstName} ${deal.lastName}`,
-                    client: deal.currentProject || deal.currentEmployer || "Unknown",
-                    ...calculateNCR({
-                        chargeRate: financials.chargeRate,
-                        payRate: financials.payRate,
-                        guaranteedHours: financials.guaranteedHours,
-                        // Mocking ownership logic - assumes "Joe Ward" is the user  
-                        userIsRecruiter: splits.recruiter === 'Joe Ward',
-                        userIsClientOwner: splits.clientOwner === 'Joe Ward',
-                        userIsAccountMgr: splits.accountManager === 'Joe Ward'
-                    })
-                };
-            });
-            return { type: 'AUDIT_DATA', count: auditResults.length, data: auditResults };
-
-        case 'GOLDEN_HOUR':
-            // Uses growth-logic.js  
-            const targets = getGoldenHourTargets(contextData.clients || [], contextData.leads || []);
-            return { type: 'TARGET_LIST', count: targets.length, data: targets };
-
-        case 'BOOT_SEQUENCE':
-            // High-level "Morning Briefing" Data
-            const revenue = contextData.financials?.weeklyRevenue || 0;
-            const target = 40000; // Mock target
-            const status = revenue >= target ? "ON TRACK" : "BEHIND";
-
+            const activeDeals = contextData.candidates ? contextData.candidates.filter(c => c.status === 'On Job') : [];
             return {
-                type: 'MORNING_BRIEFING',
-                data: {
-                    greeting: "Gidday Joe, righto what's the plan today?",
-                    financials: { revenue: `$${revenue}`, status: status },
-                    riskCount: contextData.criticalRisks?.length || 0,
-                    menu: [
-                        "🦅 30,000ft View (Strategic Audit)",
-                        "📞 Client Power Hour (Sales Focus)",
-                        "👷 Bench Clearance (Candidate Focus)"
-                    ]
-                }
+                type: 'AUDIT_DATA',
+                data: activeDeals.map(deal => calculateNCR(deal))
             };
 
-        // [NEW] SCOUT PROTOCOL
-        case 'TENDER_INTEL':
-            const projects = contextData.projects || [];
-            // Filter for projects in early stages
-            const tenders = projects.filter(p =>
-                p.currentPhase === 'Planning' ||
-                p.currentPhase === 'Tendering' ||
-                p.currentPhase === 'Consenting'
-            );
-
+        case 'BENCH_LIABILITY':
             return {
-                type: 'INTEL_REPORT',
-                count: tenders.length,
-                data: tenders.map(t => ({
-                    project: t.name,
-                    location: t.region || "Unknown",
-                    value: t.value || "Undisclosed",
-                    stage: t.currentPhase,
-                    // Mocking logic for incumbents based on demands
-                    incumbent: t.demands && t.demands.length > 0 ? "Competitor Active" : "Open Ground",
-                    action: "Initiate 'Sniper Pitch'"
-                }))
+                type: 'BENCH_RISK',
+                data: getBenchLiability(contextData.candidates || [])
             };
 
-        case 'RECRUITMENT_RISK':
-            // Uses construction-logic.js concepts  
-            const candidates = contextData.candidates || [];
-            const finishingSoon = candidates.filter(c => c.finishDate && (new Date(c.finishDate) - new Date()) / (1000 * 60 * 60 * 24) < 14);
-            const visaRisks = candidates.filter(c =>
-                (c.residency?.toLowerCase().includes('visa') && (!c.visaExpiry || new Date(c.visaExpiry) < new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)))
-            );
+        case 'REDEPLOYMENT_RADAR':
+            return {
+                type: 'REDEPLOYMENT_LIST',
+                data: getRedeploymentRisks(contextData.placements || [])
+            };
 
+        case 'FLIGHT_RISK':
             return {
                 type: 'RISK_REPORT',
+                data: getFlightRisks(contextData.candidates || [])
+            };
+
+        case 'SQUAD_BUILDER':
+            return {
+                type: 'SQUAD_SUGGESTIONS',
+                data: generateSquads(contextData.candidates || [])
+            };
+
+        case 'SYSTEM_HEALTH':
+            return {
+                type: 'SYSTEM_STATUS',
+                data: getSyncStatus(contextData.lastSyncTime || new Date())
+            };
+
+        case 'VISA_CHECK':
+             return { type: 'VISA_STATUS', message: "Run validation on specific candidate." };
+
+        case 'RELATIONSHIP_HEALTH':
+            const clients = contextData.clients || [];
+            const decaying = clients.filter(c => {
+                const last = new Date(c.lastContact || 0);
+                return (new Date() - last) / (1000 * 60 * 60 * 24) > 30;
+            });
+            return {
+                type: 'RELATIONSHIP_HEALTH',
                 data: {
-                    finishingCount: finishingSoon.length,
-                    visaRiskCount: visaRisks.length,
-                    details: finishingSoon.map(c => `${c.firstName} ${c.lastName} (${c.role}) ends in ${Math.round((new Date(c.finishDate) - new Date()) / (1000 * 60 * 60 * 24))} days.`)
+                    totalClients: clients.length,
+                    decayingCount: decaying.length,
+                    healthScore: Math.round(100 - ((decaying.length / (clients.length || 1)) * 100))
                 }
             };
+
+        case 'PULSE_METRICS':
+            const logs = contextData.activityLogs || [];
+            const today = new Date().toISOString().split('T')[0];
+            const calls = logs.filter(l => l.timestamp.startsWith(today) && l.type === 'contact').length;
+            return {
+                type: 'PULSE_METRICS',
+                data: {
+                    dailyActivityLevel: calls > 20 ? "High" : "Low",
+                    callsMade: calls,
+                    placements: contextData.candidates?.filter(c => c.status === 'On Job').length || 0
+                }
+            };
+
+        case 'GOLDEN_HOUR':
+             return {
+                 type: 'TARGET_LIST',
+                 data: getGoldenHourTargets(contextData.clients || [], contextData.leads || [])
+             };
 
         default:
             return null;

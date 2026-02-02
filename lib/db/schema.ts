@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, date, pgEnum, integer, doublePrecision, jsonb, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, timestamp, date, pgEnum, integer, doublePrecision, jsonb, boolean, decimal } from 'drizzle-orm/pg-core';
 
 // Enums
 export const placementStatusEnum = pgEnum('placement_status', ['draft', 'active', 'completed', 'cancelled', 'Unconfirmed']);
@@ -7,16 +7,12 @@ export const projectStageEnum = pgEnum('project_stage', ['Won', 'Tender', 'Pipel
 export const projectStatusEnum = pgEnum('project_status', ['Active', 'Planning', 'Tender', 'At Risk', 'Lead', 'Construction']);
 export const tierEnum = pgEnum('tier', ['1', '2', '3']);
 export const nudgeTypeEnum = pgEnum('nudge_type', [
-    'PRE_EMPTIVE_STRIKE', // New Project
-    'CHURN_INTERCEPTOR',  // Retention Risk
-    'ZOMBIE_HUNTER',      // Dormant Candidate
-    'CLIENT_STALKER',     // CRM Decay
-    'RAINMAKER',          // Weather Event
-    'TASK'                // General Task
+    'PRE_EMPTIVE_STRIKE', 'CHURN_INTERCEPTOR', 'ZOMBIE_HUNTER', 'CLIENT_STALKER', 'RAINMAKER', 'TASK'
 ]);
 export const nudgePriorityEnum = pgEnum('nudge_priority', ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']);
 
-// Existing Tables
+// --- CORE TABLES ---
+
 export const users = pgTable('users', {
     id: uuid('id').primaryKey().defaultRandom(),
     name: text('name').notNull(),
@@ -24,14 +20,22 @@ export const users = pgTable('users', {
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
-// --- NEW: Internal Roster (The Stellar Team - Reference Directory) ---
 export const internalRoster = pgTable('internal_roster', {
     id: uuid('id').primaryKey().defaultRandom(),
     name: text('name').notNull(),
     role: text('role').notNull(),
-    division: text('division'), // 'Build', 'HVAC', 'Electrical', 'Engineering', 'Recruitment'
+    division: text('division'),
     email: text('email'),
     phone: text('phone'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// --- NEW: Financial Benchmarks (The Accountant's Rules) ---
+export const financialBenchmarks = pgTable('financial_benchmarks', {
+    id: uuid('id').primaryKey().defaultRandom(),
+    burdenMultiplier: decimal('burden_multiplier').default('1.30'),
+    minWeeklyGp: integer('min_weekly_gp').default(400),
+    targetMarginPct: decimal('target_margin_pct').default('0.18'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
@@ -102,13 +106,12 @@ export const projects = pgTable('projects', {
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
-// --- NEW: Stakeholders (Relational Project/Client Contacts) ---
 export const stakeholders = pgTable('stakeholders', {
     id: uuid('id').primaryKey().defaultRandom(),
     projectId: uuid('project_id').references(() => projects.id, { onDelete: 'cascade' }),
     clientId: uuid('client_id').references(() => clients.id, { onDelete: 'cascade' }),
     name: text('name').notNull(),
-    role: text('role'), // 'Foreman', 'PM', 'Commercial Manager'
+    role: text('role'),
     phone: text('phone'),
     email: text('email'),
     isInternal: boolean('is_internal').default(false),
@@ -121,7 +124,7 @@ export const candidates = pgTable('candidates', {
     id: uuid('id').primaryKey().defaultRandom(),
     firstName: text('first_name').notNull(),
     lastName: text('last_name').notNull(),
-    email: text('email').unique(), // Removed .notNull()
+    email: text('email').unique(),
     phone: text('phone'),
     mobile: text('mobile'),
     suburb: text('suburb'),
@@ -133,6 +136,8 @@ export const candidates = pgTable('candidates', {
     status: candidateStatusEnum('status').default('available'),
     role: text('role'),
     trade: text('trade'),
+    // --- NEW: Seniority Level (Junior, Senior, Leading Hand) ---
+    seniorityLevel: text('seniority_level'),
     payRate: integer('pay_rate'),
     chargeOutRate: text('charge_out_rate'),
     guaranteedHours: integer('guaranteed_hours'),
@@ -144,13 +149,23 @@ export const candidates = pgTable('candidates', {
     projectId: uuid('project_id').references(() => projects.id),
     compliance: jsonb('compliance'),
     recruiter: text('recruiter'),
-    cvUrl: text('cv_url'), // <--- Stores the public Supabase Storage link
+    cvUrl: text('cv_url'),
     candidateManager: text('candidate_manager'),
     currentEmployer: text('current_employer'),
     currentProject: text('current_project'),
     siteAddress: text('site_address'),
     workSafeExpiry: timestamp('work_safe_expiry', { withTimezone: true }),
     notes: text('notes'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// --- NEW: Compliance Exceptions (The Sin Bin) ---
+export const complianceExceptions = pgTable('compliance_exceptions', {
+    id: uuid('id').primaryKey().defaultRandom(),
+    candidateId: uuid('candidate_id').references(() => candidates.id),
+    projectId: uuid('project_id').references(() => projects.id),
+    authorizedBy: uuid('authorized_by').references(() => users.id),
+    reason: text('reason').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
@@ -181,6 +196,8 @@ export const placements = pgTable('placements', {
     groupId: uuid('group_id').references(() => placementGroups.id, { onDelete: 'cascade' }).notNull(),
     candidateId: uuid('candidate_id').references(() => candidates.id, { onDelete: 'cascade' }).notNull(),
     status: placementStatusEnum('status').default('draft').notNull(),
+    // --- NEW: Paying Entity (Employer Lock) ---
+    payingEntity: text('paying_entity'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
@@ -198,20 +215,6 @@ export const nudges = pgTable('nudges', {
     isSeen: boolean('is_seen').default(false),
     isActioned: boolean('is_actioned').default(false),
     snoozedUntil: timestamp('snoozed_until', { withTimezone: true }),
-    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-});
-
-// --- NEW: Marketing Assets (Decoupled Creative Studio) ---
-export const marketingAssets = pgTable('marketing_assets', {
-    id: uuid('id').primaryKey().defaultRandom(),
-    type: text('type'), // 'LinkedIn', 'Newsletter', 'Blog'
-    direction: text('direction'), // 'Contrarian', 'Playbook', 'Trend-Spotter'
-    topic: text('topic'),
-    content: text('content').notNull(),
-    mediaUrls: jsonb('media_urls').$type<string[]>().default([]),
-    relatedTenderId: uuid('related_tender_id'), // Soft reference to marketTenders if needed
-    relatedProjectId: uuid('related_project_id').references(() => projects.id),
-    status: text('status').default('Draft'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
@@ -240,6 +243,7 @@ export const leads = pgTable('leads', {
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
+// --- NEW: Market Intelligence (Sales Lead) ---
 export const marketTenders = pgTable('market_tenders', {
     id: uuid('id').primaryKey().defaultRandom(),
     title: text('title').notNull(),
@@ -253,12 +257,21 @@ export const marketTenders = pgTable('market_tenders', {
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
+export const marketTenderStakeholders = pgTable('market_tender_stakeholders', {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tenderId: uuid('tender_id').references(() => marketTenders.id, { onDelete: 'cascade' }),
+    name: text('name'),
+    role: text('role'),
+    contactInfo: text('contact_info'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
 export const activityLogs = pgTable('activity_logs', {
     id: uuid('id').primaryKey().defaultRandom(),
-    type: text('type').notNull(), // 'sms', 'email', 'contact', 'fail'
+    type: text('type').notNull(),
     title: text('title').notNull(),
     description: text('description'),
-    meta_data: jsonb('meta_data'), // Stores candidateId, clientId, etc.
+    meta_data: jsonb('meta_data'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 

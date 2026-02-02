@@ -1,4 +1,4 @@
-import { enhancedClients } from './enhanced-mock-data';
+import { enhancedClients } from './enhanced-mock-data.js';
 
 // --- Wolf of Wall Street: Growth Engine Logic ---
 

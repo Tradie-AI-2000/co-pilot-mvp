@@ -295,7 +295,96 @@ export const getProjectSize = (valueStr) => {
 };
 
 // --- Phase & Compliance Helpers ---
-import phaseSchema from './construction-phase-schema.json';
+// INLINED JSON CONTENT TO AVOID IMPORT ATTRIBUTE ERRORS
+const phaseSchema = {
+    "construction_lifecycle": {
+        "01_civil": {
+            "label": "Civil & Foundations",
+            "primary_trades": [
+                "Civil Labourer",
+                "Formworker",
+                "Concreter"
+            ],
+            "compliance_focus": [
+                "Site Safe",
+                "ConstructSafe"
+            ],
+            "next_phase": "02_structure"
+        },
+        "02_structure": {
+            "label": "Structure & Framing",
+            "primary_trades": [
+                "LBP Carpenter",
+                "Steel Fixer",
+                "Scaffolder",
+                "Rigger"
+            ],
+            "compliance_focus": [
+                "LBP Registration",
+                "Working at Heights"
+            ],
+            "next_phase": "03_enclosure"
+        },
+        "03_enclosure": {
+            "label": "Enclosure & Roofing",
+            "primary_trades": [
+                "Roofer",
+                "External Plasterer",
+                "Window Installer"
+            ],
+            "compliance_focus": [
+                "EWP Ticket"
+            ],
+            "next_phase": "04_services"
+        },
+        "04_services": {
+            "label": "Services Rough-In",
+            "primary_trades": [
+                "Electrician",
+                "Plumber",
+                "HVAC Technician"
+            ],
+            "compliance_focus": [
+                "NZ Registration Card"
+            ],
+            "next_phase": "05_interiors"
+        },
+        "05_interiors": {
+            "label": "Interiors & Fit-out",
+            "primary_trades": [
+                "GIB Fixer",
+                "2nd-Fix Carpenter",
+                "Painter",
+                "Floor Layer"
+            ],
+            "compliance_focus": [
+                "Site Safe"
+            ],
+            "next_phase": "06_handover"
+        },
+        "06_handover": {
+            "label": "Handover & Snagging",
+            "primary_trades": [
+                "Final Cleaner",
+                "Detail Joiner"
+            ],
+            "compliance_focus": [
+                "Induction Completed"
+            ],
+            "next_phase": "Completed"
+        }
+    },
+    "regional_constraints": {
+        "visa_restricted_group": "Filipino Workers",
+        "approved_regions": [
+            "Auckland",
+            "Bay of Plenty",
+            "Waikato",
+            "Northland"
+        ],
+        "alert_threshold": "Immediate Block on Allocation"
+    }
+};
 
 export const CONSTRUCTION_LIFECYCLE = phaseSchema.construction_lifecycle;
 export const REGIONAL_CONSTRAINTS = phaseSchema.regional_constraints;
