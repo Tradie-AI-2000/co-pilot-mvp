@@ -193,6 +193,16 @@ function ProjectsContent() {
 
     const widgetData = getWidgetDetails();
 
+    // Helper to handle selection from widgets
+    const handleWidgetSelection = (project) => {
+        handleMapProjectSelect(project); // Focus on map
+        setClickedWidget(null); // Close modal
+        
+        // OPTIONAL: If we want to open the edit modal too
+        // setEditingProject(project);
+        // setIsModalOpen(true);
+    };
+
 
     return (
         <div className="projects-container">
@@ -357,14 +367,11 @@ function ProjectsContent() {
                                     key={project.id}
                                     className={`project-card glass-panel ${hasRisk ? 'border-rose-500/50 shadow-[0_0_15px_rgba(244,63,94,0.1)]' : ''}`}
                                     onClick={() => {
-                                        if (hasRisk) {
-                                            // "Explode" interaction - select map project to show detailed timeline/risks
-                                            handleMapProjectSelect(project);
-                                            // Optionally could open a specific modal, but map context is good
-                                        } else {
-                                            setEditingProject(project);
-                                            setIsModalOpen(true);
-                                        }
+                                        // Always select on map for context
+                                        handleMapProjectSelect(project);
+                                        // Always open modal to allow editing/fixing
+                                        setEditingProject(project);
+                                        setIsModalOpen(true);
                                     }}
                                 >
                                     <div className="card-header">
@@ -492,7 +499,7 @@ function ProjectsContent() {
                             </div>
                             <div className="modal-list">
                                 {widgetData.items.length === 0 ? <p className="empty-text">No items found.</p> : widgetData.items.map((item, idx) => (
-                                    <div key={idx} className="modal-item" onClick={() => { handleMapProjectSelect(item); setClickedWidget(null); }}>
+                                    <div key={idx} className="modal-item" onClick={() => handleWidgetSelection(item)}>
                                         <div className="item-header">
                                             <h3>{item.name}</h3>
                                             <span className="arrow-icon"><ArrowRight size={16} /></span>

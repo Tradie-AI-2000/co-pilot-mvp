@@ -80,7 +80,9 @@ export function DataProvider({ children }) {
             assignedCompanyIds: project.assignedCompanyIds || project.assigned_company_ids || [],
             packages: project.packages || project.packages || {},
             labourPrediction: project.labourPrediction || project.labour_prediction || {},
-            ssaStatus: project.ssaStatus || project.ssa_status || "Pending"
+            ssaStatus: project.ssaStatus || project.ssa_status || "Pending",
+            ssaExpiry: project.ssaExpiry || project.ssa_expiry || null,
+            systemReviewDate: project.systemReviewDate || project.system_review_date || null
         };
     };
 

@@ -103,6 +103,10 @@ export const projects = pgTable('projects', {
     clientDemands: jsonb('client_demands'),
     assignedCompanyIds: jsonb('assigned_company_ids').$type<string[]>(),
     ssaStatus: text('ssa_status').default('Pending'),
+    ssaType: text('ssa_type'),
+    ssaExpiry: timestamp('ssa_expiry', { withTimezone: true }),
+    siteHazards: text('site_hazards'),
+    systemReviewDate: timestamp('system_review_date', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 

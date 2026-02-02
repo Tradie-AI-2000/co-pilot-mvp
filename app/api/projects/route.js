@@ -13,40 +13,17 @@ export async function GET() {
     }
 }
 
-// Helper to map Frontend CamelCase -> DB SnakeCase
-const mapPayloadToSchema = (data) => {
-    const payload = { ...data };
-
-    // Explicitly map complex fields if they exist
-    if (payload.clientDemands) {
-        payload.client_demands = payload.clientDemands;
-        delete payload.clientDemands;
-    }
-    if (payload.phaseSettings) {
-        payload.phase_settings = payload.phaseSettings;
-        delete payload.phaseSettings;
-    }
-    if (payload.labourPrediction) {
-        payload.labour_prediction = payload.labourPrediction;
-        delete payload.labourPrediction;
-    }
-    // Add other mappings here as needed
-
-    return payload;
-};
-
 export async function POST(request) {
     try {
         const body = await request.json();
         const { id, ...data } = body;
 
-        // 1. Map Keys Correctly
-        const dbPayload = mapPayloadToSchema(data);
-
         const sanitizedBody = {
-            ...dbPayload,
-            startDate: dbPayload.startDate ? new Date(dbPayload.startDate) : null,
-            completionDate: dbPayload.completionDate ? new Date(dbPayload.completionDate) : null,
+            ...data,
+            startDate: data.startDate ? new Date(data.startDate) : null,
+            completionDate: data.completionDate ? new Date(data.completionDate) : null,
+            ssaExpiry: data.ssaExpiry ? new Date(data.ssaExpiry) : null,
+            systemReviewDate: data.systemReviewDate ? new Date(data.systemReviewDate) : null,
             createdAt: new Date()
         };
 
@@ -64,15 +41,14 @@ export async function PATCH(request) {
         const { id, ...data } = body;
         if (!id) return NextResponse.json({ error: 'ID is required' }, { status: 400 });
 
-        // 1. Map Keys Correctly
-        const dbPayload = mapPayloadToSchema(data);
-
-        // Sanitize Payload for Drizzle
-        const sanitizedData = { ...dbPayload };
+        // Sanitize Payload for Drizzle (Use Schema Property Names/CamelCase)
+        const sanitizedData = { ...data };
         delete sanitizedData.createdAt;
 
         if (sanitizedData.startDate) sanitizedData.startDate = new Date(sanitizedData.startDate);
         if (sanitizedData.completionDate) sanitizedData.completionDate = new Date(sanitizedData.completionDate);
+        if (sanitizedData.ssaExpiry) sanitizedData.ssaExpiry = new Date(sanitizedData.ssaExpiry);
+        if (sanitizedData.systemReviewDate) sanitizedData.systemReviewDate = new Date(sanitizedData.systemReviewDate);
 
         if (Object.keys(sanitizedData).length === 0) {
             return NextResponse.json({ message: "No changes detected" });
@@ -82,6 +58,7 @@ export async function PATCH(request) {
             .set(sanitizedData)
             .where(eq(projects.id, id))
             .returning();
+        
         return NextResponse.json(result);
     } catch (error) {
         console.error('API Error (PATCH /api/projects):', error);

@@ -1100,7 +1100,7 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                                         </label>
                                         {/* Status Badge Logic */}
                                         {(() => {
-                                            const lastDate = formData.ssaDate ? new Date(formData.ssaDate) : null;
+                                            const lastDate = formData.ssaExpiry ? new Date(formData.ssaExpiry) : null;
                                             const today = new Date();
                                             const isExpired = lastDate && (today - lastDate) / (1000 * 60 * 60 * 24) > 365;
                                             const status = !formData.ssaType ? "missing" : isExpired ? "expired" : "valid";
@@ -1140,8 +1140,8 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                                                 <label>Last Assessment Date</label>
                                                 <input
                                                     type="date"
-                                                    value={formData.ssaDate || ""}
-                                                    onChange={(e) => updateFormData("ssaDate", e.target.value)}
+                                                    value={formData.ssaExpiry || ""}
+                                                    onChange={(e) => updateFormData("ssaExpiry", e.target.value)}
                                                     className="bg-slate-800 border border-slate-600 rounded p-2 text-sm text-white date-input"
                                                 />
                                             </div>
@@ -1160,7 +1160,7 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                                         </div>
 
                                         {/* ALERT LOGIC: Triggered if Missing or Expired */}
-                                        {(!formData.ssaType || (formData.ssaDate && (new Date() - new Date(formData.ssaDate)) / (1000 * 60 * 60 * 24) > 365)) && (
+                                        {(!formData.ssaType || (formData.ssaExpiry && (new Date() - new Date(formData.ssaExpiry)) / (1000 * 60 * 60 * 24) > 365)) && (
                                             <div className="flex items-start gap-3 p-3 bg-red-500/10 border border-red-500/30 rounded-md mt-2">
                                                 <AlertCircle size={20} className="text-red-500 flex-shrink-0 mt-0.5" />
                                                 <div>
