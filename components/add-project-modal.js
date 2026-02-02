@@ -1137,13 +1137,14 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                                                 </select>
                                             </div>
                                             <div className="form-group">
-                                                <label>Last Assessment Date</label>
+                                                <label>SSA Expiry Date</label>
                                                 <input
                                                     type="date"
-                                                    value={formData.ssaExpiry || ""}
+                                                    value={formData.ssaExpiry ? String(formData.ssaExpiry).split('T')[0] : ""}
                                                     onChange={(e) => updateFormData("ssaExpiry", e.target.value)}
                                                     className="bg-slate-800 border border-slate-600 rounded p-2 text-sm text-white date-input"
                                                 />
+                                                <span className="text-[11px] text-slate-400 font-bold block mt-1"><span className="text-red-500">NOTE:</span> If SSA/Systems Review expires within 28 days, this will alert you.</span>
                                             </div>
                                         </div>
 

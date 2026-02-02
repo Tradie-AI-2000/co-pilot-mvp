@@ -566,6 +566,7 @@ function ProjectsContent() {
                     gap: 1.5rem;
                     padding-bottom: 2rem;
                     border-bottom: 1px solid var(--border);
+                    flex-shrink: 0;
                 }
 
                 .intel-layout {
@@ -573,7 +574,7 @@ function ProjectsContent() {
                     grid-template-columns: 350px 1fr;
                     gap: 1.5rem;
                     align-items: start;
-                    height: 600px;
+                    height: 800px;
                 }
 
                 .intel-sidebar {
