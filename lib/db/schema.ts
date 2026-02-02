@@ -250,7 +250,14 @@ export const marketTenders = pgTable('market_tenders', {
     description: text('description'),
     client: text('client'),
     location: text('location'),
-    value: text('value'),
+    region: text('region'), // Auckland, Northland, Waikato, Bay of Plenty
+    sector: text('sector'), // Commercial, Industrial, Residential, etc.
+    mainContractor: text('main_contractor'), // Hawkins, Naylor Love, etc.
+    status: text('status').default('New'), // New, Qualified, Contacted, Tender, Won, Lost
+    value: text('value'), // Display string (e.g. "$50m")
+    projectValueRaw: decimal('project_value_raw'), // Numeric for analytics
+    subcontractors: jsonb('subcontractors'),
+    estimatedStartDate: timestamp('estimated_start_date', { withTimezone: true }),
     closingDate: timestamp('closing_date', { withTimezone: true }),
     sourceUrl: text('source_url'),
     isPursuing: boolean('is_pursuing').default(false),
@@ -262,6 +269,8 @@ export const marketTenderStakeholders = pgTable('market_tender_stakeholders', {
     tenderId: uuid('tender_id').references(() => marketTenders.id, { onDelete: 'cascade' }),
     name: text('name'),
     role: text('role'),
+    email: text('email'),
+    phone: text('phone'),
     contactInfo: text('contact_info'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });

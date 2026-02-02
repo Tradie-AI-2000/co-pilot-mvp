@@ -41,7 +41,8 @@ export default function RealMap({
     activeMarkerId,
     renderPopup,
     getMarkerIcon,
-    polygonData = null
+    polygonData = null,
+    candidates = []
 }) {
     // Default center (Auckland)
     const defaultCenter = [-36.8485, 174.7633];
@@ -98,6 +99,7 @@ export default function RealMap({
                         polygonData={polygonData}
                         onMarkerClick={onMarkerClick}
                         renderPopup={renderPopup}
+                        candidates={candidates}
                     />
                 ))}
             </MapContainer>
@@ -120,6 +122,7 @@ export default function RealMap({
 
                 .custom-popup {
                     font-family: var(--font-sans);
+                    min-width: 200px;
                 }
 
                 .status-badge {
@@ -129,6 +132,7 @@ export default function RealMap({
                     font-size: 10px;
                     font-weight: 600;
                     margin-top: 4px;
+                    text-transform: uppercase;
                 }
                 
                 .status-badge.active { background: #dbeafe; color: #1e40af; }
@@ -136,12 +140,63 @@ export default function RealMap({
                 .status-badge.tender { background: #f3e8ff; color: #6b21a8; }
                 .status-badge.on_job { background: #fee2e2; color: #dc2626; }
                 .status-badge.available { background: #d1fae5; color: #047857; }
+                .status-badge.construction { background: #e0f2fe; color: #0369a1; }
+
+                /* Candidate List in Popup */
+                .popup-candidates {
+                    margin-top: 10px;
+                    border-top: 1px solid #e2e8f0;
+                    padding-top: 8px;
+                }
+                .popup-candidates h4 {
+                    font-size: 11px;
+                    font-weight: 700;
+                    color: #64748b;
+                    margin: 0 0 6px 0;
+                    text-transform: uppercase;
+                }
+                .p-candidate-row {
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    padding: 4px 6px;
+                    background: #f8fafc;
+                    border-radius: 4px;
+                    margin-bottom: 4px;
+                    border: 1px solid #f1f5f9;
+                }
+                .p-avatar {
+                    width: 20px;
+                    height: 20px;
+                    background: #3b82f6;
+                    color: white;
+                    border-radius: 50%;
+                    font-size: 9px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-weight: bold;
+                }
+                .p-info {
+                    flex: 1;
+                    line-height: 1.1;
+                }
+                .p-name {
+                    font-size: 11px;
+                    font-weight: 600;
+                    color: #334155;
+                    display: block;
+                }
+                .p-role {
+                    font-size: 9px;
+                    color: #94a3b8;
+                }
             `}</style>
         </div>
     );
 }
 
-function DraggableMarker({ marker, getCoords, polygonData, onMarkerClick, renderPopup }) {
+function DraggableMarker({ marker, getCoords, polygonData, onMarkerClick, renderPopup, candidates = [] }) {
     const position = getCoords(marker);
     let isInside = false;
     let color = marker.color || 'blue';
@@ -218,6 +273,11 @@ function DraggableMarker({ marker, getCoords, polygonData, onMarkerClick, render
         iconAnchor: [10, 10]
     });
 
+    const assignedCandidates = React.useMemo(() => {
+        if (marker.type !== 'project') return [];
+        return candidates.filter(c => c.projectId === marker.id && c.status === 'on_job');
+    }, [candidates, marker.id, marker.type]);
+
     return (
         <Marker
             ref={markerRef}
@@ -242,10 +302,34 @@ function DraggableMarker({ marker, getCoords, polygonData, onMarkerClick, render
                             )}
                         </div>
                         <span className="text-xs text-gray-500">{marker.client || (marker.type === 'candidate' ? marker.status : '')}</span>
-                        <br />
-                        <span className={`status-badge ${(marker.status || 'Planning').toLowerCase()}`}>
-                            {marker.status || 'Planning'}
-                        </span>
+                        <div className="flex gap-2 items-center">
+                            <span className={`status-badge ${(marker.status || 'Planning').toLowerCase()}`}>
+                                {marker.status || 'Planning'}
+                            </span>
+                            {marker.type === 'project' && assignedCandidates.length > 0 && (
+                                <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">
+                                    {assignedCandidates.length} Active
+                                </span>
+                            )}
+                        </div>
+
+                        {/* Project Candidates List */}
+                        {marker.type === 'project' && assignedCandidates.length > 0 && (
+                            <div className="popup-candidates">
+                                <h4>Deployed Crew</h4>
+                                {assignedCandidates.map(c => (
+                                    <div key={c.id} className="p-candidate-row">
+                                        <div className="p-avatar">
+                                            {c.firstName?.[0]}{c.lastName?.[0]}
+                                        </div>
+                                        <div className="p-info">
+                                            <span className="p-name">{c.firstName} {c.lastName}</span>
+                                            <span className="p-role">{c.role}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
             </Popup>

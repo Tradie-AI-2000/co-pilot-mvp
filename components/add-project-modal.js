@@ -5,6 +5,7 @@ import { EyeOff, Trash2, Plus, Calendar, Layers, Truck, Users, MapPin, Building2
 import { PHASE_TEMPLATES, WORKFORCE_MATRIX, RELATED_ROLES, PHASE_MAP, COMMON_TICKETS } from '../services/construction-logic.js';
 import { useData } from "../context/data-context.js";
 import CandidateModal from "./candidate-modal.js";
+import { geocodeAddress } from "../services/geocoding.js";
 
 // --- Micro-Component: Client Demand Builder (Direct Requests) ---
 const ClientDemandBuilder = ({ demands = [], onChange, availableRoles = [] }) => {
@@ -564,6 +565,20 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
     const projectMoneyMoves = (moneyMoves || []).filter(m => m.projectId === effectiveProjectId);
     const nextTrigger = projectMoneyMoves[0];
 
+    const handleFind = async () => {
+        if (!formData.address) return;
+        try {
+            const coords = await geocodeAddress(formData.address);
+            if (coords) {
+                updateFormData("coordinates", { lat: coords.lat, lng: coords.lng });
+            } else {
+                alert("Location not found. Please try a more specific address.");
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
     if (!isOpen) return null;
 
     const handleSubmit = (e) => {
@@ -720,10 +735,15 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
                                     <label>Project Address</label>
                                     <div className="address-input-group">
                                         <input type="text" value={formData.address || ""} onChange={(e) => updateFormData("address", e.target.value)} placeholder="e.g. 123 Queen Street" />
-                                        <button type="button" className="btn-find" onClick={() => alert('Mock Geocode')}>
+                                        <button type="button" className="btn-find" onClick={handleFind}>
                                             <MapPin size={16} /> Find
                                         </button>
                                     </div>
+                                    {formData.coordinates && formData.coordinates.lat && (
+                                        <div className="mt-1 text-[10px] text-emerald-400 flex items-center gap-1 font-mono">
+                                            <MapPin size={10} /> Lat: {formData.coordinates.lat.toFixed(4)}, Lng: {formData.coordinates.lng.toFixed(4)}
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="form-row">
                                     <div className="form-group">

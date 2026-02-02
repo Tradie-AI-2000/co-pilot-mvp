@@ -1,18 +1,20 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useMemo } from "react";
 import { useData } from "../../context/data-context.js";
-import { Search, Filter, Plus, Building, MapPin, Calendar, DollarSign, Briefcase, LayoutGrid, List as ListIcon, X, ArrowRight } from "lucide-react";
+import { Search, Filter, Plus, Building, MapPin, Calendar, DollarSign, Briefcase, LayoutGrid, List as ListIcon, X, ArrowRight, AlertTriangle, Users, Map as MapIcon, ShieldAlert } from "lucide-react";
 import { useSearchParams } from "next/navigation";
+import { geocodeAddress } from "../../services/geocoding.js";
+import { analyzeProjectRisk } from "../../services/risk-logic.js";
+import { calculateRecruitmentDemand, groupProjectsBy } from "../../services/recruitment-logic.js";
 
 import AddProjectModal from "../../components/add-project-modal.js";
-import DashboardWidgets from "../../components/dashboard-widgets.js";
 import GeospatialMap from "../../components/geospatial-map.js";
 import ProjectList from "../../components/project-list.js";
 import ProjectTimeline from "../../components/project-timeline.js";
 
 function ProjectsContent() {
-    const { projects, addProject, updateProject, clients } = useData();
+    const { projects, addProject, updateProject, clients, candidates } = useData();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProject, setEditingProject] = useState(null);
     const [selectedProject, setSelectedProject] = useState(null); // For Read-Only View
@@ -24,6 +26,45 @@ function ProjectsContent() {
     const [isochroneData, setIsochroneData] = useState(null);
     const [isCommuteLoading, setIsCommuteLoading] = useState(false);
     const [clickedWidget, setClickedWidget] = useState(null);
+
+    // --- INTELLIGENCE HOOKS ---
+    const regionalStats = useMemo(() => groupProjectsBy(projects, 'region'), [projects]);
+    const recruitmentDemand = useMemo(() => calculateRecruitmentDemand(projects), [projects]);
+
+    // --- AUTO-GEOCODE EFFECT ---
+    useEffect(() => {
+        const autoGeocode = async () => {
+            const toGeocode = projects.filter(p =>
+                p.address &&
+                p.address.length > 5 &&
+                (!p.coordinates || !p.coordinates.lat || p.coordinates.lat === 0) &&
+                (!p.lat || p.lat === 0)
+            );
+
+            if (toGeocode.length === 0) return;
+
+            console.log(`[Geo] Found ${toGeocode.length} projects needing coordinates.`);
+
+            for (const p of toGeocode) {
+                const coords = await geocodeAddress(p.address);
+                if (coords) {
+                    console.log(`[Geo] Resolved ${p.name}:`, coords);
+                    updateProject({
+                        ...p,
+                        coordinates: { lat: coords.lat, lng: coords.lng },
+                        lat: coords.lat,
+                        lng: coords.lng
+                    });
+                    // Rate limit to be nice to OSM
+                    await new Promise(r => setTimeout(r, 1100));
+                }
+            }
+        };
+
+        // Run with a small delay to allow initial load
+        const timer = setTimeout(autoGeocode, 2000);
+        return () => clearTimeout(timer);
+    }, [projects]);
 
     useEffect(() => {
         const projectId = searchParams.get("projectId");
@@ -68,6 +109,23 @@ function ProjectsContent() {
         }
         setIsModalOpen(false);
     };
+
+    // --- Market Intel Logic ---
+
+    // --- INTELLIGENCE METRICS CALCULATION ---
+    const riskMetrics = useMemo(() => {
+        let totalRisks = 0;
+        let critical = 0;
+        projects.forEach(p => {
+            const analysis = analyzeProjectRisk(p);
+            if (analysis.hasRisk) {
+                totalRisks++;
+                if (analysis.expiringItems.some(i => i.severity === 'Critical')) critical++;
+            }
+        });
+        return { totalRisks, critical };
+    }, [projects]);
+
 
     // --- Market Intel Logic ---
 
@@ -117,19 +175,17 @@ function ProjectsContent() {
                 }));
                 return { title: "Projects with Urgent Hiring Needs", items: urgentProjs };
 
-            case 'phases':
-                const transitioning = projects.filter(p => (p.phases || []).some(ph => ph.status === 'Upcoming')).map(p => ({
+            case 'risk':
+                const riskyProjs = projects.filter(p => analyzeProjectRisk(p).hasRisk).map(p => ({
                     ...p,
-                    details: p.phases.filter(ph => ph.status === 'Upcoming')
+                    details: analyzeProjectRisk(p).expiringItems.map(i => ({ name: i.item, urgency: i.severity, start: i.expiry }))
                 }));
-                return { title: "Upcoming Phase Transitions", items: transitioning };
+                return { title: "Projects with H&S Compliance Risks", items: riskyProjs };
 
-            case 'revenue':
-                const revRisk = projects.filter(p => (p.hiringSignals || []).some(s => s.revenueAtRisk > 0 || (s.count > 0))).map(p => ({
-                    ...p,
-                    details: p.hiringSignals.filter(s => s.revenueAtRisk > 0 || s.count > 0)
-                }));
-                return { title: "Revenue at Risk Breakdown", items: revRisk };
+            case 'regions':
+                // Group by region logic to show modal list if needed
+                const regionList = projects.map(p => ({ ...p, details: [{ name: p.region || 'No Region' }] }));
+                return { title: "Territory Deployment Breakdown", items: regionList };
 
             default: return { title: "", items: [] };
         }
@@ -157,7 +213,79 @@ function ProjectsContent() {
 
             {/* --- Market Intelligence Section --- */}
             <div className="market-intel-section">
-                <DashboardWidgets projects={projects} onWidgetClick={handleWidgetClick} />
+
+                {/* [NEW] INTELLIGENCE COMMAND CENTER (Replaces DashboardWidgets) */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+
+                    {/* CARD 1: URGENT HIRING (Moved from below) */}
+                    <div className="glass-panel p-5 relative overflow-hidden group hover:border-rose-500/30 transition-colors cursor-pointer" onClick={() => handleWidgetClick('urgent')}>
+                        <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <Users size={80} />
+                        </div>
+                        <div className="flex items-center gap-2 mb-2 text-xs font-bold uppercase tracking-widest text-rose-300">
+                            <AlertTriangle size={14} /> Urgent Hiring Demand
+                        </div>
+                        <div className="flex items-end gap-3 z-10 relative">
+                            <span className="text-4xl font-black text-rose-500">{recruitmentDemand.totalUrgent}</span>
+                            <span className="text-sm text-slate-400 font-medium mb-1.5">Open Roles (Next 4 Weeks)</span>
+                        </div>
+                        <div className="mt-3 flex flex-wrap gap-2 text-[10px] text-slate-500 z-10 relative">
+                            {recruitmentDemand.breakdown.slice(0, 3).map((role, i) => (
+                                <span key={i} className="bg-rose-500/10 px-2 py-1 rounded text-rose-400/80 border border-rose-500/20 shadow-sm">
+                                    {role.role}: {role.count}
+                                </span>
+                            ))}
+                            {recruitmentDemand.breakdown.length > 3 && <span className="py-1">+{recruitmentDemand.breakdown.length - 3} more</span>}
+                        </div>
+                    </div>
+
+                    {/* CARD 2: TERRITORY DEPLOYMENT (Refactored to Card) */}
+                    <div className="glass-panel p-5 relative overflow-hidden group hover:border-secondary/30 transition-colors cursor-pointer" onClick={() => handleWidgetClick('regions')}>
+                        <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <MapIcon size={80} />
+                        </div>
+                        <div className="flex items-center gap-2 mb-2 text-xs font-bold uppercase tracking-widest text-secondary">
+                            <MapIcon size={14} /> Territory Deployment
+                        </div>
+                        <div className="flex flex-col gap-1 z-10 relative mt-2 max-h-[80px] overflow-y-auto custom-scrollbar">
+                            {regionalStats.length === 0 ? <span className="text-slate-500 italic text-sm">No Active Regions</span> :
+                                regionalStats.slice(0, 4).map((stat, idx) => (
+                                    <div key={idx} className="flex justify-between items-center w-full pr-4">
+                                        <span className="text-sm text-slate-300 font-medium uppercase">{stat.name}</span>
+                                        <span className="text-lg font-black text-white">{stat.count} <span className="text-[10px] text-slate-500 font-normal">PROJ</span></span>
+                                    </div>
+                                ))}
+                        </div>
+                        {regionalStats.length > 4 && (
+                            <div className="mt-2 text-[10px] text-slate-500 z-10 relative">
+                                +{regionalStats.length - 4} other regions active
+                            </div>
+                        )}
+                    </div>
+
+                    {/* CARD 3: H&S RISK (New) */}
+                    <div className="glass-panel p-5 relative overflow-hidden group hover:border-orange-500/30 transition-colors cursor-pointer" onClick={() => handleWidgetClick('risk')}>
+                        <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <ShieldAlert size={80} />
+                        </div>
+                        <div className="flex items-center gap-2 mb-2 text-xs font-bold uppercase tracking-widest text-orange-400">
+                            <ShieldAlert size={14} /> H&S Compliance Risk
+                        </div>
+                        <div className="flex items-end gap-3 z-10 relative">
+                            <span className={`text-4xl font-black ${riskMetrics.totalRisks > 0 ? 'text-orange-500 animate-pulse' : 'text-slate-500'}`}>{riskMetrics.totalRisks}</span>
+                            <span className="text-sm text-slate-400 font-medium mb-1.5">Projects At Risk</span>
+                        </div>
+                        <div className="mt-3 z-10 relative">
+                            {riskMetrics.critical > 0 ? (
+                                <span className="inline-flex items-center gap-1.5 bg-orange-500/20 text-orange-400 px-2 py-1 rounded text-xs border border-orange-500/30">
+                                    <AlertTriangle size={10} fill="currentColor" /> {riskMetrics.critical} Critical Expiries
+                                </span>
+                            ) : (
+                                <span className="text-xs text-slate-500 bg-slate-800/50 px-2 py-1 rounded border border-slate-700">All Clear - No Critical Risks</span>
+                            )}
+                        </div>
+                    </div>
+                </div>
 
                 <div className="intel-layout">
                     <div className="intel-sidebar">
@@ -176,11 +304,13 @@ function ProjectsContent() {
                                     coordinates: p.coordinates || { lat: p.lat, lng: p.lng },
                                     type: 'project',
                                     color: 'blue',
-                                    status: p.status
+                                    status: p.status,
+                                    client: (clients.find(c => c.id === p.assignedCompanyIds?.[0])?.name) || p.client
                                 }))}
                                 polygonData={isochroneData}
                                 onMarkerClick={handleMarkerClick}
                                 activeMarkerId={mapSelectedProject?.id}
+                                candidates={candidates}
                             />
                         </div>
                         <div className="timeline-wrapper">
@@ -218,64 +348,95 @@ function ProjectsContent() {
 
                 {viewMode === "grid" ? (
                     <div className="projects-grid">
-                        {projects.map(project => (
-                            <div
-                                key={project.id}
-                                className="project-card glass-panel"
-                                onClick={() => {
-                                    setEditingProject(project);
-                                    setIsModalOpen(true);
-                                }}
-                            >
-                                <div className="card-header">
-                                    <h3 className="project-name">{project.name}</h3>
-                                    <div className="card-badges">
-                                        <span className={`stage-badge ${String(project.stage || 'pipeline').toLowerCase()}`}>
-                                            {project.stage || 'Pipeline'}
-                                        </span>
-                                    </div>
-                                </div>
+                        {projects.map(project => {
+                            const riskAnalysis = analyzeProjectRisk(project);
+                            const hasRisk = riskAnalysis.hasRisk;
 
-                                <div className="card-body">
-                                    <div className="meta-row">
-                                        <div className="meta-item">
-                                            <MapPin size={14} /> {project.location || project.address || 'No Location'}
-                                        </div>
-                                        <div className="meta-item">
-                                            <DollarSign size={14} /> {project.value || 'TBD'}
-                                        </div>
-                                    </div>
-
-                                    <div className="assigned-companies">
-                                        <div className="company-badges">
-                                            {Array.isArray(project.assignedCompanyIds) && [...new Set(project.assignedCompanyIds)].map(id => {
-                                                const company = clients.find(c => c.id === id);
-                                                return company ? (
-                                                    <span key={id} className={`company-badge tier-${company.tier}`}>
-                                                        {company.name}
+                            return (
+                                <div
+                                    key={project.id}
+                                    className={`project-card glass-panel ${hasRisk ? 'border-rose-500/50 shadow-[0_0_15px_rgba(244,63,94,0.1)]' : ''}`}
+                                    onClick={() => {
+                                        if (hasRisk) {
+                                            // "Explode" interaction - select map project to show detailed timeline/risks
+                                            handleMapProjectSelect(project);
+                                            // Optionally could open a specific modal, but map context is good
+                                        } else {
+                                            setEditingProject(project);
+                                            setIsModalOpen(true);
+                                        }
+                                    }}
+                                >
+                                    <div className="card-header">
+                                        <div className="flex flex-col gap-1">
+                                            <h3 className="project-name flex items-center gap-2">
+                                                {project.name}
+                                                {hasRisk && (
+                                                    <span className="animate-pulse text-rose-500" title="H&S Compliance Risk Detected">
+                                                        <ShieldAlert size={16} />
                                                     </span>
-                                                ) : null;
-                                            })}
-                                            {(!project.assignedCompanyIds || project.assignedCompanyIds.length === 0) && (
-                                                <span className="text-slate-500 text-xs italic">{project.client || "Unassigned"}</span>
+                                                )}
+                                            </h3>
+                                            {/* RISK BADGE */}
+                                            {hasRisk && (
+                                                <div className="flex gap-1 flex-wrap">
+                                                    {riskAnalysis.expiringItems.slice(0, 2).map((risk, i) => (
+                                                        <span key={i} className="text-[9px] font-black uppercase tracking-wide bg-rose-500 text-white px-1.5 py-0.5 rounded">
+                                                            EXP: {risk.item}
+                                                        </span>
+                                                    ))}
+                                                </div>
                                             )}
                                         </div>
+                                        <div className="card-badges">
+                                            <span className={`stage-badge ${String(project.stage || 'pipeline').toLowerCase()}`}>
+                                                {project.stage || 'Pipeline'}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div className="site-manager-row">
-                                        <Briefcase size={14} className="text-muted" />
-                                        <span className="text-sm text-slate-300">{project.siteManager || "No Site Manager"}</span>
-                                    </div>
-                                </div>
 
-                                <div className="card-footer">
-                                    <div className="date-info">
-                                        <Calendar size={14} /> Start: {project.startDate || 'TBD'}
+                                    <div className="card-body">
+                                        <div className="meta-row">
+                                            <div className="meta-item">
+                                                <MapPin size={14} /> {project.location || project.address || 'No Location'}
+                                            </div>
+                                            <div className="meta-item">
+                                                <DollarSign size={14} /> {project.value || 'TBD'}
+                                            </div>
+                                        </div>
+
+                                        <div className="assigned-companies">
+                                            <div className="company-badges">
+                                                {Array.isArray(project.assignedCompanyIds) && [...new Set(project.assignedCompanyIds)].map(id => {
+                                                    const company = clients.find(c => c.id === id);
+                                                    return company ? (
+                                                        <span key={id} className={`company-badge tier-${company.tier}`}>
+                                                            {company.name}
+                                                        </span>
+                                                    ) : null;
+                                                })}
+                                                {(!project.assignedCompanyIds || project.assignedCompanyIds.length === 0) && (
+                                                    <span className="text-slate-500 text-xs italic">{project.client || "Unassigned"}</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="site-manager-row">
+                                            <Briefcase size={14} className="text-muted" />
+                                            <span className="text-sm text-slate-300">{project.siteManager || "No Site Manager"}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="card-footer">
+                                        <div className="date-info">
+                                            <Calendar size={14} /> Start: {project.startDate || 'TBD'}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 ) : (
+                    // List View (Unchanged or minimal updates)
                     <div className="projects-list-view">
                         <div className="list-head">
                             <div className="col name">Project Name</div>
@@ -286,12 +447,17 @@ function ProjectsContent() {
                         </div>
                         {projects.map(project => {
                             const contractor = clients.find(c => c.id === project.assignedCompanyIds?.[0])?.name || project.client || "-";
+                            const riskAnalysis = analyzeProjectRisk(project);
+
                             return (
                                 <div key={project.id} className="list-row" onClick={() => {
                                     setEditingProject(project);
                                     setIsModalOpen(true);
                                 }}>
-                                    <div className="col name font-bold">{project.name}</div>
+                                    <div className="col name font-bold flex items-center gap-2">
+                                        {project.name}
+                                        {riskAnalysis.hasRisk && <ShieldAlert size={14} className="text-rose-500" />}
+                                    </div>
                                     <div className="col contractor">{contractor}</div>
                                     <div className="col value">{project.value || "-"}</div>
                                     <div className="col stage">
@@ -305,46 +471,50 @@ function ProjectsContent() {
                 )}
             </div>
 
-            {isModalOpen && (
-                <AddProjectModal
-                    isOpen={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
-                    onSave={handleSaveProject}
-                    initialData={editingProject}
-                />
-            )}
+            {
+                isModalOpen && (
+                    <AddProjectModal
+                        isOpen={isModalOpen}
+                        onClose={() => setIsModalOpen(false)}
+                        onSave={handleSaveProject}
+                        initialData={editingProject}
+                    />
+                )
+            }
 
-            {clickedWidget && (
-                <div className="modal-overlay" onClick={() => setClickedWidget(null)}>
-                    <div className="widget-modal" onClick={e => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h2>{widgetData.title}</h2>
-                            <button className="close-btn" onClick={() => setClickedWidget(null)}><X size={20} /></button>
-                        </div>
-                        <div className="modal-list">
-                            {widgetData.items.length === 0 ? <p className="empty-text">No items found.</p> : widgetData.items.map((item, idx) => (
-                                <div key={idx} className="modal-item" onClick={() => { handleMapProjectSelect(item); setClickedWidget(null); }}>
-                                    <div className="item-header">
-                                        <h3>{item.name}</h3>
-                                        <span className="arrow-icon"><ArrowRight size={16} /></span>
+            {
+                clickedWidget && (
+                    <div className="modal-overlay" onClick={() => setClickedWidget(null)}>
+                        <div className="widget-modal" onClick={e => e.stopPropagation()}>
+                            <div className="modal-header">
+                                <h2>{widgetData.title}</h2>
+                                <button className="close-btn" onClick={() => setClickedWidget(null)}><X size={20} /></button>
+                            </div>
+                            <div className="modal-list">
+                                {widgetData.items.length === 0 ? <p className="empty-text">No items found.</p> : widgetData.items.map((item, idx) => (
+                                    <div key={idx} className="modal-item" onClick={() => { handleMapProjectSelect(item); setClickedWidget(null); }}>
+                                        <div className="item-header">
+                                            <h3>{item.name}</h3>
+                                            <span className="arrow-icon"><ArrowRight size={16} /></span>
+                                        </div>
+                                        <div className="item-details">
+                                            {item.details.map((d, i) => (
+                                                <div key={i} className="detail-tag">
+                                                    {d.role || d.name}
+                                                    {d.count ? ` (${d.count})` : ''}
+                                                    {d.urgency ? ` • ${d.urgency}` : ''}
+                                                    {d.status ? ` • ${d.status}` : ''}
+                                                    {d.start ? ` • Starts ${d.start}` : ''}
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
-                                    <div className="item-details">
-                                        {item.details.map((d, i) => (
-                                            <div key={i} className="detail-tag">
-                                                {d.role || d.name}
-                                                {d.count ? ` (${d.count})` : ''}
-                                                {d.urgency ? ` • ${d.urgency}` : ''}
-                                                {d.status ? ` • ${d.status}` : ''}
-                                                {d.start ? ` • Starts ${d.start}` : ''}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             <style jsx>{`
                 .projects-container {
@@ -749,9 +919,11 @@ function ProjectsContent() {
                     padding: 2rem;
                 }
             `}</style>
-        </div>
+        </div >
     );
 }
+
+
 
 export default function ProjectsPage() {
     return (

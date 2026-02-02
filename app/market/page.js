@@ -1,69 +1,40 @@
-"use client";
+import { marketService } from '@/services/market-service';
+import { MarketView } from '@/components/market/market-view';
+import { NewsFeedWidget } from '@/components/market/news-feed';
+import styles from './market.module.css';
 
-import { Construction } from "lucide-react";
+export const metadata = {
+    title: 'Market Intelligence | Co-Pilot',
+    description: 'Golden Triangle Construction Market Intel'
+};
 
-export default function MarketPage() {
-  return (
-    <div className="market-placeholder">
-      <div className="content">
-        <Construction size={64} className="icon" />
-        <h1>Construction Market Intelligence</h1>
-        <p>We've moved the real-time project map and tracking to the main <strong>Projects Database</strong>.</p>
-        <p className="sub-text">This section will soon house detailed PDF market reports and sector analysis.</p>
-        <a href="/projects" className="btn-primary">Go to Projects Dashboard</a>
-      </div>
+export default async function MarketPage() {
+    // Parallel fetch for speed
+    const [tenders, news] = await Promise.all([
+        marketService.getTenders({}),
+        marketService.getNewsFeed()
+    ]);
 
-      <style jsx>{`
-            .market-placeholder {
-                min-height: 80vh;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                text-align: center;
-                padding: 2rem;
-            }
-            .content {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 1.5rem;
-                max-width: 500px;
-                background: var(--surface);
-                padding: 3rem;
-                border: 1px solid var(--border);
-                border-radius: var(--radius-lg);
-            }
-            .icon {
-                color: var(--secondary);
-                margin-bottom: 0.5rem;
-            }
-            h1 {
-                font-size: 1.75rem;
-                font-weight: 700;
-                color: var(--text-main);
-            }
-            p {
-                color: var(--text-muted);
-                line-height: 1.6;
-            }
-            .sub-text {
-                font-size: 0.875rem;
-                margin-top: -0.5rem;
-            }
-            .btn-primary {
-                background: var(--primary);
-                color: white;
-                padding: 0.75rem 1.5rem;
-                border-radius: var(--radius-md);
-                text-decoration: none;
-                font-weight: 600;
-                margin-top: 1rem;
-                transition: opacity 0.2s;
-            }
-            .btn-primary:hover {
-                opacity: 0.9;
-            }
-        `}</style>
-    </div>
-  );
+    return (
+        <div className={styles.marketPage}>
+            <header className={styles.pageHeader}>
+                <div className={styles.titleArea}>
+                    <h1>Market Intelligence</h1>
+                    <p className={styles.subtitle}>BCI Central Intel & Construction League Analytics</p>
+                </div>
+                <div className={styles.controls}>
+                    <span className={styles.badge}>Golden Triangle Focus</span>
+                </div>
+            </header>
+
+            <div className={styles.marketLayout}>
+                <main className={styles.mainBoard}>
+                    <MarketView tenders={tenders} />
+                </main>
+                <aside className={styles.sidebarWidget}>
+                    <NewsFeedWidget initialNews={news} />
+                </aside>
+            </div>
+        </div>
+    );
 }
