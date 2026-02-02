@@ -8,6 +8,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useData } from "../context/data-context";
+import LiveClock from "./live-clock";
 
 const navItems = [
   { name: "Dashboard", href: "/" },
@@ -34,6 +35,8 @@ export default function Sidebar() {
         </div>
         <p className="logo-sub neon-gradient">Labour Hire Co-Pilot</p>
       </div>
+
+      <LiveClock />
 
       <nav className="nav-menu">
         {navItems.map((item) => {

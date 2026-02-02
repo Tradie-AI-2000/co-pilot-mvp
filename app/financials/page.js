@@ -39,7 +39,16 @@ export default function FinancialsPage() {
                     <DollarSign className="text-emerald-400" /> Financial Command Centre
                 </h1>
                 <div className="header-meta">
-                    <span className="text-muted text-sm">Week ending: Jan 7, 2026</span>
+                    <span className="text-muted text-sm">
+                        Week ending: {(() => {
+                            const today = new Date();
+                            const day = today.getDay();
+                            const diff = (day <= 5 ? 5 - day : 12 - day);
+                            const friday = new Date(today);
+                            friday.setDate(today.getDate() + diff);
+                            return friday.toLocaleDateString('en-NZ', { day: 'numeric', month: 'short', year: 'numeric' });
+                        })()}
+                    </span>
                 </div>
             </header>
 

@@ -5,8 +5,8 @@ import { TrendingUp, TrendingDown, Target, AlertTriangle } from "lucide-react";
 export default function FinancialForecastWidget() {
     const { weeklyRevenue } = useData();
 
-    // 1. HARDCODED TARGETS (Ideally, fetch this from /api/forecasts to match the Agent's JSON)
-    const CURRENT_MONTH = "February 2026";
+    // 1. DYNAMIC TARGETS
+    const CURRENT_MONTH = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
     const TARGETS = {
         civil: { budget: 81000, actual: weeklyRevenue * 0.4 }, // Mocking split for demo
         structure: { budget: 45000, actual: weeklyRevenue * 0.6 },

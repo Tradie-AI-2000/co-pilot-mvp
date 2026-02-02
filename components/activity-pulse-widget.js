@@ -23,10 +23,17 @@ export default function ActivityPulseWidget() {
     useEffect(() => { setMounted(true); }, []);
 
     const getDays = () => {
+        const today = new Date();
+        const day = today.getDay(); // 0 (Sun) - 6 (Sat)
+        // If today is Sunday (0), treat it as part of the previous week (Monday = -6)
+        // If today is Monday (1), diff is 0. If Tuesday (2), diff is 1.
+        const diff = today.getDate() - day + (day === 0 ? -6 : 1); 
+        
+        const monday = new Date(today.setDate(diff));
         const days = [];
-        for (let i = 4; i >= 0; i--) {
-            const d = new Date();
-            d.setDate(d.getDate() - i);
+        for (let i = 0; i < 5; i++) {
+            const d = new Date(monday);
+            d.setDate(monday.getDate() + i);
             days.push(d);
         }
         return days;
@@ -74,7 +81,12 @@ export default function ActivityPulseWidget() {
     const chartData = useMemo(() => {
         return days.map(date => {
             const dateStr = date.toISOString().split('T')[0];
-            const dayLogs = activityLogs.filter(log => log.timestamp.startsWith(dateStr));
+            // Fix timezone issue by comparing localized date strings or strict day matching
+            const dayLogs = activityLogs.filter(log => {
+                const logDate = new Date(log.timestamp);
+                return isSameDay(logDate, date);
+            });
+            
             return {
                 date: date,
                 label: date.getDate() === new Date().getDate() ? 'TODAY' : date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase(),
@@ -86,6 +98,17 @@ export default function ActivityPulseWidget() {
             };
         });
     }, [activityLogs]);
+
+    // Default to the current day index (0-4), or 4 (Friday) if weekend
+    const getCurrentDayIndex = () => {
+        const today = new Date().getDay(); // 0-6
+        if (today === 0 || today === 6) return 4; // Weekend -> Show Friday
+        return today - 1; // Mon(1)->0, Tue(2)->1...
+    };
+
+    useEffect(() => {
+        setSelectedDayIndex(getCurrentDayIndex());
+    }, []);
 
     const selectedData = chartData[selectedDayIndex] || chartData[4];
 
