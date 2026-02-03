@@ -7,7 +7,7 @@ export const projectStageEnum = pgEnum('project_stage', ['Won', 'Tender', 'Pipel
 export const projectStatusEnum = pgEnum('project_status', ['Active', 'Planning', 'Tender', 'At Risk', 'Lead', 'Construction']);
 export const tierEnum = pgEnum('tier', ['1', '2', '3']);
 export const nudgeTypeEnum = pgEnum('nudge_type', [
-    'PRE_EMPTIVE_STRIKE', 'CHURN_INTERCEPTOR', 'ZOMBIE_HUNTER', 'CLIENT_STALKER', 'RAINMAKER', 'TASK'
+    'PRE_EMPTIVE_STRIKE', 'CHURN_INTERCEPTOR', 'ZOMBIE_HUNTER', 'CLIENT_STALKER', 'RAINMAKER', 'TASK', 'COMPLIANCE_RISK'
 ]);
 export const nudgePriorityEnum = pgEnum('nudge_priority', ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']);
 

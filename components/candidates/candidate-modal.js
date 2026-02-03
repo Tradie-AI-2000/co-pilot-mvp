@@ -294,7 +294,7 @@ export default function CandidateModal({ candidate, squads, projects, clients, o
                                             <input
                                                 type="date"
                                                 className="edit-input"
-                                                value={formData.visaExpiry || ""}
+                                                value={formatDateForInput(formData.visaExpiry)}
                                                 onChange={(e) => handleChange('visaExpiry', e.target.value)}
                                             />
                                         ) : (
