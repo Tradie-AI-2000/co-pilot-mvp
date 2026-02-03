@@ -55,6 +55,8 @@ export const marketService = {
 
         } catch (error) {
             console.error("Error fetching market tenders:", error);
+            if (error.code) console.error("DB Error Code:", error.code);
+            if (error.hint) console.error("DB Error Hint:", error.hint);
             return []; // Fail safe
         }
     },
