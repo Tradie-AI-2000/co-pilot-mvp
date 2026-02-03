@@ -169,11 +169,22 @@ function ProjectsContent() {
 
         switch (clickedWidget) {
             case 'urgent':
-                const urgentProjs = projects.filter(p => (p.hiringSignals || []).some(s => s.urgency === 'Critical' || s.urgency === 'High')).map(p => ({
-                    ...p,
-                    details: p.hiringSignals.filter(s => s.urgency === 'Critical' || s.urgency === 'High')
-                }));
-                return { title: "Projects with Urgent Hiring Needs", items: urgentProjs };
+                const urgentItems = [];
+                projects.forEach(p => {
+                    if (p.clientDemands && p.clientDemands.length > 0) {
+                        p.clientDemands.forEach(d => {
+                            urgentItems.push({
+                                ...p,
+                                modalTitle: `${d.quantity} ${d.role} at ${p.name} for ${p.client || 'Client'}`,
+                                details: [{
+                                    name: `Start: ${d.startDate || 'TBD'}`,
+                                    urgency: 'Critical'
+                                }]
+                            });
+                        });
+                    }
+                });
+                return { title: "Projects with Urgent Hiring Needs", items: urgentItems };
 
             case 'risk':
                 const riskyProjs = projects.filter(p => analyzeProjectRisk(p).hasRisk).map(p => ({
@@ -501,7 +512,7 @@ function ProjectsContent() {
                                 {widgetData.items.length === 0 ? <p className="empty-text">No items found.</p> : widgetData.items.map((item, idx) => (
                                     <div key={idx} className="modal-item" onClick={() => handleWidgetSelection(item)}>
                                         <div className="item-header">
-                                            <h3>{item.name}</h3>
+                                            <h3>{item.modalTitle || item.name}</h3>
                                             <span className="arrow-icon"><ArrowRight size={16} /></span>
                                         </div>
                                         <div className="item-details">
