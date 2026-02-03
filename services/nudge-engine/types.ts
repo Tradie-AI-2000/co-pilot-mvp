@@ -14,7 +14,7 @@ export interface NudgeResult {
     title: string;
     description: string;
     type: string;
-    priority: 'LOW' | 'Medium' | 'HIGH' | 'CRITICAL';
+    priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
     payload?: NudgePayload;
     candidateId?: string;
     projectId?: string;

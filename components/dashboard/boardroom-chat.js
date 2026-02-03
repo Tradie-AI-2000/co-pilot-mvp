@@ -88,8 +88,8 @@ export default function BoardroomChat({ agentId, onSignalUpdate }) {
                 const phaseName = currentPhaseObj ? currentPhaseObj.name : "Planning";
 
                 // 3. Contact Resolution (The "Brian Redpath" Fix)
-                // We check project.siteManager first (from add-project-modal.js), then fallback to client defaults
-                const primaryContact = p.siteManager || p.projectDirector || realClient.mainContact || "Site Manager";
+                // We check project.siteManager first, then projectManager, then client defaults
+                const primaryContact = p.siteManager || p.projectManager || realClient.mainContact || "Site Manager";
 
                 return {
                     id: p.id,
@@ -102,9 +102,9 @@ export default function BoardroomChat({ agentId, onSignalUpdate }) {
                     region: p.region || p.location || "Auckland",
                     demands: p.clientDemands || [], // <--- NEW: Direct Demands
                     contacts: {
-                        manager: primaryContact,
-                        director: p.projectDirector || "Unknown",
-                        safety: p.safetyOfficer || "Unknown"
+                        siteManager: p.siteManager || "Unknown",
+                        projectManager: p.projectManager || "Unknown",
+                        // safety: p.safetyOfficer - field removed
                     },
                     splits: {
                         clientOwner: realClient.clientOwner || "Unknown",

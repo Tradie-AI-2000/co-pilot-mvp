@@ -20,6 +20,17 @@ export default function CRMPage() {
   // Navigation State
   const [viewState, setViewState] = useState('regions'); // regions | types | clients
   const [filters, setFilters] = useState({ region: null, industry: null });
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredClients = clients.filter(client => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      client.name?.toLowerCase().includes(q) ||
+      client.region?.toLowerCase().includes(q) ||
+      client.industry?.toLowerCase().includes(q)
+    );
+  });
 
   const handleAddClient = () => {
     // Open the FULL modal in "New Mode" by setting a blank client with ID 'new'
@@ -91,7 +102,12 @@ export default function CRMPage() {
           </button>
           <div className="search-bar">
             <Search size={20} className="search-icon" />
-            <input type="text" placeholder="Search clients..." />
+            <input
+              type="text"
+              placeholder="Search clients..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
             <button className="filter-btn">
               <Filter size={20} />
             </button>
@@ -126,16 +142,16 @@ export default function CRMPage() {
 
       <div className="content-area">
         {viewState === 'regions' && (
-          <RegionGrid clients={clients} onSelectRegion={selectRegion} />
+          <RegionGrid clients={filteredClients} onSelectRegion={selectRegion} />
         )}
 
         {viewState === 'trades' && (
-          <TradeGrid clients={clients} region={filters.region} onSelectTrade={selectTrade} />
+          <TradeGrid clients={filteredClients} region={filters.region} onSelectTrade={selectTrade} />
         )}
 
         {viewState === 'clients' && (
           <ClientTierBoard
-            clients={clients}
+            clients={filteredClients}
             region={filters.region}
             industry={filters.industry}
             onClientClick={setSelectedClient}

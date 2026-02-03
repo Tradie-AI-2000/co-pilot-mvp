@@ -35,7 +35,10 @@ export default function CandidatesPage() {
   const [selectedTrade, setSelectedTrade] = useState(null);
   const [dashboardFilter, setDashboardFilter] = useState(null);
 
-  // SharePoint Mirror State
+  // Search State
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // SharePoint Mirror State (Restored)
   const [mirrorModal, setMirrorModal] = useState({ isOpen: false, type: null });
 
   // Auto-switch to table view on Bench Filter
@@ -47,6 +50,22 @@ export default function CandidatesPage() {
 
   const filteredCandidates = useMemo(() => {
     return candidates.filter(c => {
+      // 1. Search Filter (Global)
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const startString = c.startDate ? new Date(c.startDate).toLocaleDateString() : '';
+        const match =
+          (c.firstName?.toLowerCase().includes(q)) ||
+          (c.lastName?.toLowerCase().includes(q)) ||
+          (c.role?.toLowerCase().includes(q)) ||
+          (c.suburb?.toLowerCase().includes(q)) ||
+          (c.status?.toLowerCase().includes(q)) ||
+          (startString.includes(q));
+
+        if (!match) return false;
+      }
+
+      // 2. Dashboard Filters
       if (dashboardFilter) {
         if (dashboardFilter === 'Available') return c.status === 'available';
         if (dashboardFilter === 'Finishing Soon') {
@@ -56,15 +75,24 @@ export default function CandidatesPage() {
           const diff = (finish - today) / (1000 * 60 * 60 * 24);
           return diff >= 0 && diff <= 14;
         }
-        return true; // Total Pool shows all
+        return true;
       }
-      if (viewMode === 'table') return true; // Show all in table mode by default if no dashboard filter
-      if (!selectedRegion) return false; // Don't show any candidates if no region is selected at candidate level
-      if (!selectedTrade) return false; // Don't show any candidates if no trade is selected at candidate level
 
-      return c.state === selectedRegion && c.role === selectedTrade;
+      // 3. View Mode Specifics
+      if (viewMode === 'table') return true;
+
+      // 4. Drill-down Filters (Only if NOT searching)
+      // If user is searching, we ignore hierarchy to show global results
+      if (!searchQuery) {
+        if (!selectedRegion) return false;
+        if (!selectedTrade) return false;
+        return c.state === selectedRegion && c.role === selectedTrade;
+      }
+
+      return true; // If searching, return matches regardless of region/trade unless manually filtered?? 
+      // Actually, let's keep it simple: Search overrides drilling.
     });
-  }, [candidates, dashboardFilter, selectedRegion, selectedTrade, viewMode]);
+  }, [candidates, dashboardFilter, selectedRegion, selectedTrade, viewMode, searchQuery]);
 
   const handleCandidateClick = (candidate) => {
     setSelectedCandidate(candidate);
@@ -139,7 +167,12 @@ export default function CandidatesPage() {
             </button>
             <div className="search-bar">
               <Search size={20} className="search-icon" />
-              <input type="text" placeholder="Search by skill, name, or location..." />
+              <input
+                type="text"
+                placeholder="Search by skill, name, or location..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
               <button className="filter-btn">
                 <Filter size={20} />
               </button>

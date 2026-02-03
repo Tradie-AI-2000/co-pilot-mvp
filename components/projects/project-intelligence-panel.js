@@ -147,9 +147,10 @@ export default function ProjectIntelligencePanel({ project, onClose, onEdit }) {
                                     <h4>Key Contacts</h4>
                                     <div className="contact-list">
                                         {(project.keyContacts || [
-                                            { name: project.siteManager || "Site Manager", role: "Site Manager", phone: "021..." },
-                                            { name: project.projectDirector || "Project Director", role: "Project Director", phone: "021..." }
-                                        ]).map((contact, i) => (
+                                            { name: project.projectManager || "Project Manager (TBD)", role: "Project Manager", phone: project.projectManagerMobile, email: project.projectManagerEmail },
+                                            { name: project.siteManager || "Site Manager (TBD)", role: "Site Manager", phone: project.siteManagerMobile, email: project.siteManagerEmail },
+                                            ...(project.additionalContacts || []).map(c => ({ name: c.name, role: "Associate / Additional", phone: c.phone, email: c.email }))
+                                        ]).filter(c => c.name && !c.name.includes("(TBD)")).map((contact, i) => (
                                             <div key={i} className="contact-item">
                                                 <div className="contact-avatar">{contact.name?.[0]}</div>
                                                 <div className="contact-details">

@@ -50,7 +50,7 @@ export default function ClientActionBoard({ onViewDeal }) {
                     title: `${candidate.firstName} @ ${project.name}`,
                     description: `Status: ${p.status}`,
                     type: 'deal',
-                    urgency: 'Medium',
+                    urgency: 'MEDIUM',
                     meta: 'Active Deal'
                 });
             }

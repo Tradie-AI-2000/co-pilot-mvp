@@ -233,6 +233,38 @@ export default function GoldenHourMode(props) {
     };
 
     const handleSendDraft = () => {
+        // 1. Trigger External Action
+        if (draftingMode === 'sms') {
+            // Determine best mobile number
+            const targetPhone = isClient
+                ? (entity.keyContacts?.[0]?.phone || entity.mobile || entity.phone)
+                : (entity.mobile || entity.phone);
+
+            if (targetPhone) {
+                // Open Text Window (Messages/SMS)
+                window.location.href = `sms:${targetPhone}?body=${encodeURIComponent(draftMessage)}`;
+            } else {
+                alert("No mobile number available for this contact.");
+                return; // Stop if we can't send
+            }
+
+        } else if (draftingMode === 'email') {
+            // Determine best email
+            const targetEmail = isClient
+                ? (entity.keyContacts?.[0]?.email || entity.email)
+                : (entity.email);
+
+            if (targetEmail) {
+                // Open Email Client
+                const subject = encodeURIComponent("Quick Question"); // Default subject
+                window.location.href = `mailto:${targetEmail}?subject=${subject}&body=${encodeURIComponent(draftMessage)}`;
+            } else {
+                alert("No email address available for this contact.");
+                return;
+            }
+        }
+
+        // 2. Log Action
         processLog(draftingMode, { notes: draftMessage });
         setDraftingMode(null);
     };

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Send, Calculator, User, Building2, Paperclip, AlertTriangle, Shield, Mail, MessageCircle, Smartphone } from "lucide-react";
+import { X, Send, Calculator, User, Building2, Paperclip, AlertTriangle, Shield, Mail, MessageCircle, Smartphone, Copy, Check } from "lucide-react";
 import { useData } from "../../context/data-context.js";
 import { checkVisaCompliance, generatePhaseMessage, formatWhatsAppLink } from "../../services/construction-logic.js";
 
@@ -26,6 +26,7 @@ export default function FloatCandidateModal({ candidate, isOpen, onClose, prefil
     const [emailSubject, setEmailSubject] = useState(defaultSubject);
     const [emailBody, setEmailBody] = useState("");
     const [smsBody, setSmsBody] = useState("");
+    const [copied, setCopied] = useState(false);
 
     // Derived Data - VITAL FOR LOGGING
     const selectedClient = clients.find(c => c.id === (typeof selectedClientId === 'string' ? selectedClientId : selectedClientId.toString()));
@@ -37,6 +38,39 @@ export default function FloatCandidateModal({ candidate, isOpen, onClose, prefil
     );
 
     const selectedProject = projects.find(p => String(p.id) === String(selectedProjectId));
+
+    // --- NEW: Combine Client & Project Contacts ---
+    const projectContacts = [];
+    if (selectedProject) {
+        if (selectedProject.projectManager) {
+            projectContacts.push({
+                name: selectedProject.projectManager,
+                role: "Project Manager",
+                email: selectedProject.projectManagerEmail,
+                phone: selectedProject.projectManagerMobile
+            });
+        }
+        if (selectedProject.siteManager) {
+            projectContacts.push({
+                name: selectedProject.siteManager,
+                role: "Site Manager",
+                email: selectedProject.siteManagerEmail,
+                phone: selectedProject.siteManagerMobile
+            });
+        }
+        if (selectedProject.additionalContacts && Array.isArray(selectedProject.additionalContacts)) {
+            selectedProject.additionalContacts.forEach(c => {
+                if (c.name) projectContacts.push({ ...c, role: c.role || "Associate" });
+            });
+        }
+    }
+
+    // Filter out duplicates (simple name check) and empty names
+    const effectiveContacts = [...clientContacts, ...projectContacts].filter((c, index, self) =>
+        c.name && index === self.findIndex((t) => (
+            t.name === c.name
+        ))
+    );
 
     // Visa Compliance Logic
     const complianceCheck = candidate && selectedProject
@@ -111,11 +145,26 @@ Joe`;
         recordFloat('SMS', smsBody);
     };
 
-    const handleOutlook = () => {
+    const handleEmail = () => {
         const to = selectedContact?.email || "";
-        const mailto = `mailto:${to}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+        const subject = encodeURIComponent(emailSubject);
+        const body = encodeURIComponent(emailBody);
+        const mailto = `mailto:${to}?subject=${subject}&body=${body}`;
+
+        console.log("Attempting to open email client with:", mailto);
+
+        // Standard way to trigger mail client
         window.location.href = mailto;
+
         recordFloat('Email', emailBody);
+    };
+
+    const handleCopy = () => {
+        const textToCopy = `Subject: ${emailSubject}\n\n${emailBody}`;
+        navigator.clipboard.writeText(textToCopy);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        recordFloat('Manual Copy', emailBody);
     };
 
     return (
@@ -182,7 +231,7 @@ Joe`;
                                             }}
                                         >
                                             <option value="">Select Person...</option>
-                                            {clientContacts.map((c, idx) => (
+                                            {effectiveContacts.map((c, idx) => (
                                                 <option key={idx} value={JSON.stringify(c)}>
                                                     {c.name} ({c.role}) {c.email ? `- ${c.email}` : ''}
                                                 </option>
@@ -334,13 +383,22 @@ Joe`;
                             >
                                 <Smartphone size={16} /> SMS
                             </button>
+
                             <button
                                 className="btn-success"
-                                onClick={handleOutlook}
+                                onClick={handleEmail}
                                 disabled={!complianceCheck.valid || !selectedContact?.email}
-                                title="Open in Outlook"
+                                title="Open Default Email Client"
                             >
-                                <Mail size={16} /> Outlook
+                                <Mail size={16} /> Email
+                            </button>
+                            <button
+                                className="btn-copy"
+                                onClick={handleCopy}
+                                title="Copy to Clipboard"
+                            >
+                                {copied ? <Check size={16} /> : <Copy size={16} />}
+                                {copied ? "Copied" : "Copy"}
                             </button>
                         </div>
                     )}
@@ -431,6 +489,7 @@ Joe`;
                 .btn-whatsapp { background: #25d366; color: white; border: none; padding: 0.6rem 1rem; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; }
                 .btn-sms { background: #6366f1; color: white; border: none; padding: 0.6rem 1rem; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; }
                 .btn-success { background: #0078d4; color: white; border: none; padding: 0.6rem 1rem; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; }
+                .btn-copy { background: #475569; color: white; border: none; padding: 0.6rem 1rem; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; }
                 
                 .btn-primary:disabled, .btn-whatsapp:disabled, .btn-sms:disabled, .btn-success:disabled { opacity: 0.5; cursor: not-allowed; }
             `}</style>

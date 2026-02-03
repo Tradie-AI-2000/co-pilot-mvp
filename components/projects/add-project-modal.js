@@ -523,7 +523,11 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
 
     const defaultFormData = {
         name: "", description: "", assetOwner: "", client: "", assignedCompanyIds: [], address: "", tier: "Tier 1", type: "Healthcare", value: "", funding: "Government/Public", cartersLink: "", greenStar: "No", status: "Planning",
-        projectDirector: "", seniorQS: "", siteManager: "", additionalSiteManagers: [], safetyOfficer: "", gateCode: "",
+        name: "", description: "", assetOwner: "", client: "", assignedCompanyIds: [], address: "", tier: "Tier 1", type: "Healthcare", value: "", funding: "Government/Public", cartersLink: "", greenStar: "No", status: "Planning",
+        projectManager: "", projectManagerEmail: "", projectManagerMobile: "",
+        siteManager: "", siteManagerEmail: "", siteManagerMobile: "",
+        additionalContacts: [], // NEW: Flexible contacts array
+        gateCode: "",
         engagementType: "confirmed", // 'confirmed' | 'speculative'
         phaseSettings: {},
         clientDemands: [], // NEW: Direct Client Demands
@@ -797,44 +801,90 @@ export default function AddProjectModal({ isOpen, onClose, onSave, initialData }
 
                         {activeTab === "contacts" && (
                             <div className="tab-pane">
-                                <div className="form-row">
-                                    <div className="form-group">
-                                        <label>Project Director</label>
-                                        <input type="text" value={formData.projectDirector || ""} onChange={(e) => updateFormData("projectDirector", e.target.value)} placeholder="Name / Phone" />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>Senior QS</label>
-                                        <input type="text" value={formData.seniorQS || ""} onChange={(e) => updateFormData("seniorQS", e.target.value)} placeholder="Name / Phone" />
+                                {/* --- SECTION 1: PROJECT MANAGER --- */}
+                                <div className="info-block mb-4 p-3 bg-secondary/10 rounded-lg border border-secondary/20">
+                                    <div className="flex gap-2 items-center">
+                                        <Users size={16} className="text-secondary" />
+                                        <span className="text-xs font-bold text-secondary uppercase tracking-wider">Project Leadership</span>
                                     </div>
                                 </div>
-                                <div className="form-row">
-                                    <div className="form-group">
-                                        <label>Site Manager (Lead)</label>
-                                        <input type="text" value={formData.siteManager || ""} onChange={(e) => updateFormData("siteManager", e.target.value)} placeholder="Name / Phone" />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>Health & Safety Officer</label>
-                                        <input type="text" value={formData.safetyOfficer || ""} onChange={(e) => updateFormData("safetyOfficer", e.target.value)} placeholder="Name / Phone" />
-                                    </div>
-                                </div>
-                                {(formData.additionalSiteManagers || []).map((sm, index) => (
-                                    <div className="form-group" key={index}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                            <label>Site Manager #{index + 2}</label>
-                                            <button type="button" onClick={() => {
-                                                const newSMs = formData.additionalSiteManagers.filter((_, i) => i !== index);
-                                                updateFormData("additionalSiteManagers", newSMs);
-                                            }} className="text-red-400 text-[10px] font-black uppercase tracking-widest">Remove</button>
+
+                                <div className="form-group mb-6">
+                                    <label>Project Manager (Principal)</label>
+                                    <div className="grid grid-cols-1 gap-2">
+                                        <input type="text" value={formData.projectManager || ""} onChange={(e) => updateFormData("projectManager", e.target.value)} placeholder="Full Name" />
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <input type="email" value={formData.projectManagerEmail || ""} onChange={(e) => updateFormData("projectManagerEmail", e.target.value)} placeholder="Email Address" />
+                                            <input type="tel" value={formData.projectManagerMobile || ""} onChange={(e) => updateFormData("projectManagerMobile", e.target.value)} placeholder="Mobile Phone" />
                                         </div>
-                                        <input type="text" value={sm} onChange={(e) => {
-                                            const newSMs = [...(formData.additionalSiteManagers || [])];
-                                            newSMs[index] = e.target.value;
-                                            updateFormData("additionalSiteManagers", newSMs);
-                                        }} placeholder="Name / Phone" />
+                                    </div>
+                                </div>
+
+                                {/* --- SECTION 2: SITE MANAGER --- */}
+                                <div className="form-group mb-6">
+                                    <label>Site Manager (Site Lead)</label>
+                                    <div className="grid grid-cols-1 gap-2">
+                                        <input type="text" value={formData.siteManager || ""} onChange={(e) => updateFormData("siteManager", e.target.value)} placeholder="Full Name" />
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <input type="email" value={formData.siteManagerEmail || ""} onChange={(e) => updateFormData("siteManagerEmail", e.target.value)} placeholder="Email Address" />
+                                            <input type="tel" value={formData.siteManagerMobile || ""} onChange={(e) => updateFormData("siteManagerMobile", e.target.value)} placeholder="Mobile Phone" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* --- SECTION 3: ADDITIONAL CONTACTS --- */}
+                                <div className="divider-h my-4 border-t border-slate-700/50"></div>
+                                <label className="mb-2 block">Additional Contacts / Site Associates</label>
+
+                                {(formData.additionalContacts || []).map((contact, index) => (
+                                    <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-700/50 mb-3" key={index}>
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className="text-[10px] text-slate-400 font-bold uppercase">Contact #{index + 1}</span>
+                                            <button type="button" onClick={() => {
+                                                const newContacts = formData.additionalContacts.filter((_, i) => i !== index);
+                                                updateFormData("additionalContacts", newContacts);
+                                            }} className="text-red-400 text-[10px] font-black uppercase tracking-widest hover:text-red-300">
+                                                Remove
+                                            </button>
+                                        </div>
+                                        <input
+                                            type="text"
+                                            className="mb-2"
+                                            value={contact.name || ""}
+                                            onChange={(e) => {
+                                                const newContacts = [...(formData.additionalContacts || [])];
+                                                newContacts[index] = { ...contact, name: e.target.value };
+                                                updateFormData("additionalContacts", newContacts);
+                                            }}
+                                            placeholder="Role / Name (e.g. H&S Officer: John Doe)"
+                                        />
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <input
+                                                type="email"
+                                                value={contact.email || ""}
+                                                onChange={(e) => {
+                                                    const newContacts = [...(formData.additionalContacts || [])];
+                                                    newContacts[index] = { ...contact, email: e.target.value };
+                                                    updateFormData("additionalContacts", newContacts);
+                                                }}
+                                                placeholder="Email"
+                                            />
+                                            <input
+                                                type="tel"
+                                                value={contact.phone || ""}
+                                                onChange={(e) => {
+                                                    const newContacts = [...(formData.additionalContacts || [])];
+                                                    newContacts[index] = { ...contact, phone: e.target.value };
+                                                    updateFormData("additionalContacts", newContacts);
+                                                }}
+                                                placeholder="Phone / Mobile"
+                                            />
+                                        </div>
                                     </div>
                                 ))}
-                                <button type="button" onClick={() => updateFormData("additionalSiteManagers", [...(formData.additionalSiteManagers || []), ""])} className="btn-dashed">
-                                    + Add Associate Site Manager
+
+                                <button type="button" onClick={() => updateFormData("additionalContacts", [...(formData.additionalContacts || []), { name: "", email: "", phone: "" }])} className="btn-dashed">
+                                    <Plus size={14} /> Add Additional Contact
                                 </button>
                             </div>
                         )}

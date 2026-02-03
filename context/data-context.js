@@ -68,11 +68,18 @@ export function DataProvider({ children }) {
         return {
             ...project,
             assetOwner: project.assetOwner || project.asset_owner || "",
-            projectDirector: project.projectDirector || project.project_director || "",
-            seniorQS: project.seniorQS || project.senior_qs || "",
+            // --- UPDATED CONTACTS ---
+            projectManager: project.projectManager || project.project_manager || "",
+            projectManagerEmail: project.projectManagerEmail || project.project_manager_email || "",
+            projectManagerMobile: project.projectManagerMobile || project.project_manager_mobile || "",
+
             siteManager: project.siteManager || project.site_manager || "",
-            siteManagerPhone: project.siteManagerPhone || project.site_manager_phone || "",
-            safetyOfficer: project.safetyOfficer || project.safety_officer || "",
+            siteManagerEmail: project.siteManagerEmail || project.site_manager_email || "",
+            siteManagerMobile: project.siteManagerMobile || project.site_manager_mobile || "",
+
+            additionalContacts: project.additionalContacts || project.additional_contacts || [],
+            // ------------------------
+
             publicTransport: project.publicTransport || project.public_transport || "No",
             gateCode: project.gateCode || project.gate_code || "",
             clientDemands: project.clientDemands || project.client_demands || [],
