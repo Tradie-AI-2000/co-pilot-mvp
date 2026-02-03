@@ -129,6 +129,14 @@ function ProjectsContent() {
 
     // --- Market Intel Logic ---
 
+    const handleMapEditProject = (marker) => {
+        const project = projects.find(p => p.id === marker.id);
+        if (project) {
+            setEditingProject(project);
+            setIsModalOpen(true);
+        }
+    };
+
     const handleMapProjectSelect = (project) => {
         setMapSelectedProject(project);
         fetchIsochrone(project);
@@ -330,6 +338,7 @@ function ProjectsContent() {
                                 }))}
                                 polygonData={isochroneData}
                                 onMarkerClick={handleMarkerClick}
+                                onEditProject={handleMapEditProject}
                                 activeMarkerId={mapSelectedProject?.id}
                                 candidates={candidates}
                             />

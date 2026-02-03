@@ -7,6 +7,7 @@ import L from 'leaflet';
 import { booleanPointInPolygon, point } from '@turf/turf';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
+import { ExternalLink } from 'lucide-react';
 
 // Fix for default marker icons in Next.js
 const iconUrl = 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png';
@@ -38,6 +39,7 @@ function MapController({ center }) {
 export default function RealMap({
     markers = [],
     onMarkerClick,
+    onEditProject, // NEW
     activeMarkerId,
     renderPopup,
     getMarkerIcon,
@@ -98,6 +100,7 @@ export default function RealMap({
                         getCoords={getCoords}
                         polygonData={polygonData}
                         onMarkerClick={onMarkerClick}
+                        onEditProject={onEditProject} // NEW
                         renderPopup={renderPopup}
                         candidates={candidates}
                     />
@@ -196,7 +199,7 @@ export default function RealMap({
     );
 }
 
-function DraggableMarker({ marker, getCoords, polygonData, onMarkerClick, renderPopup, candidates = [] }) {
+function DraggableMarker({ marker, getCoords, polygonData, onMarkerClick, onEditProject, renderPopup, candidates = [] }) {
     const position = getCoords(marker);
     let isInside = false;
     let color = marker.color || 'blue';
@@ -328,6 +331,36 @@ function DraggableMarker({ marker, getCoords, polygonData, onMarkerClick, render
                                         </div>
                                     </div>
                                 ))}
+                            </div>
+                        )}
+
+                        {/* Project Action Button */}
+                        {marker.type === 'project' && (
+                            <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #e2e8f0' }}>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (onEditProject) onEditProject(marker);
+                                    }}
+                                    style={{
+                                        width: '100%',
+                                        background: '#0f172a',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        padding: '6px',
+                                        fontSize: '10px',
+                                        fontWeight: '700',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '4px',
+                                        textTransform: 'uppercase'
+                                    }}
+                                >
+                                    Open Project Console <ExternalLink size={10} />
+                                </button>
                             </div>
                         )}
                     </div>
