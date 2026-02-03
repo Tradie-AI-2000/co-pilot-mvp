@@ -19,10 +19,10 @@ export const ClientCandidateDTO = {
 
         // Compliance Badges
         const badges = [];
-        if (candidate.compliance && candidate.compliance.includes("Site Safe")) {
+        if (candidate.tickets && candidate.tickets.includes("Site Safe")) {
             badges.push("Site Safe");
         }
-        if (candidate.compliance && candidate.compliance.includes("LBP")) {
+        if (candidate.tickets && candidate.tickets.includes("LBP")) {
             badges.push("LBP");
         }
         if (candidate.residency === "Citizen" || candidate.residency === "Resident") {
@@ -34,7 +34,7 @@ export const ClientCandidateDTO = {
             displayName: `${candidate.firstName} ${candidate.lastName ? candidate.lastName[0] + '.' : ''}`,
             role: candidate.role,
             // Use chargeRate as the public 'rate' (what the client pays)
-            rate: candidate.chargeRate, 
+            rate: candidate.chargeRate,
             location: candidate.suburb || candidate.state,
             badges: badges,
             rating: candidate.satisfactionRating || 5,

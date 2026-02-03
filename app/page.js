@@ -2,28 +2,28 @@
 
 import { useState, useEffect } from 'react';
 import { useData } from "../context/data-context.js";
-import StatCard from "../components/stat-card.js";
-import FocusFeedCard from "../components/focus-feed-card.js";
-import ProjectIntelligencePanel from "../components/project-intelligence-panel.js";
-import AddProjectModal from "../components/add-project-modal.js";
+import StatCard from "../components/dashboard/stat-card.js";
+import FocusFeedCard from "../components/dashboard/focus-feed-card.js";
+import ProjectIntelligencePanel from "../components/projects/project-intelligence-panel.js";
+import AddProjectModal from "../components/projects/add-project-modal.js";
 import { useCrew } from "../context/crew-context.js";
-import WhatsAppBlaster from "../components/whatsapp-blaster.js";
-import BenchLiabilityWidget from "../components/bench-liability-widget.js";
-import RedeploymentRadar from "../components/redeployment-radar.js";
+import WhatsAppBlaster from "../components/crm/whatsapp-blaster.js";
+import BenchLiabilityWidget from "../components/dashboard/bench-liability-widget.js";
+import RedeploymentRadar from "../components/dashboard/redeployment-radar.js";
 
 // 👇 OLD COMPONENT (REMOVED)
 // import ClientSidePanel from "../components/client-side-panel.js";
 
 // 👇 NEW COMPONENT (ADDED)
-import ClientDetailsModal from "../components/client-details-modal.js";
+import ClientDetailsModal from "../components/crm/client-details-modal.js";
 
-import ActivePlacementsModal from "../components/active-placements-modal.js";
-import ActionDrawer from "../components/action-drawer.js";
-import ActiveBenchModal from "../components/active-bench-modal.js";
-import CandidateModal from "../components/candidate-modal.js";
-import DealFlowSummary from "../components/deal-flow-summary.js";
-import DealFlowModal from "../components/deal-flow-modal.js";
-import ClientDemandWidget from "../components/client-demand-widget.js";
+import ActivePlacementsModal from "../components/candidates/active-placements-modal.js";
+import ActionDrawer from "../components/dashboard/action-drawer.js";
+import ActiveBenchModal from "../components/candidates/active-bench-modal.js";
+import CandidateModal from "../components/candidates/candidate-modal.js";
+import DealFlowSummary from "../components/crm/deal-flow-summary.js";
+import DealFlowModal from "../components/crm/deal-flow-modal.js";
+import ClientDemandWidget from "../components/crm/client-demand-widget.js";
 
 export default function PredictiveCommandCenter() {
   return (
@@ -145,22 +145,19 @@ function DashboardContent() {
       <div className="dashboard-container">
         {/* Zone 1: The Scoreboard */}
         <section className="scoreboard">
-          {stats.slice(0, 1).map((stat, index) => (
+          {stats.map((stat, index) => (
             <StatCard key={index} {...stat} />
-          ))}
-          <BenchLiabilityWidget
-            candidates={candidates}
-            liability={benchLiability}
-            onViewBench={() => setViewBenchList(true)}
-          />
-          {stats.slice(1).map((stat, index) => (
-            <StatCard key={index + 1} {...stat} />
           ))}
         </section>
 
         {/* Zone 1.5: Risk Control Center */}
         <section className="risk-control">
-          <RedeploymentRadar candidates={candidates} />
+          <RedeploymentRadar candidates={candidates} onViewCandidate={setSelectedCandidate} />
+          <BenchLiabilityWidget
+            candidates={candidates}
+            liability={benchLiability}
+            onViewBench={() => setViewBenchList(true)}
+          />
         </section>
 
         <div className="main-grid">
@@ -309,14 +306,14 @@ function DashboardContent() {
 
         .scoreboard {
           display: grid;
-          grid-template-columns: repeat(5, 1fr);
+          grid-template-columns: repeat(4, 1fr);
           gap: 1rem;
           flex-shrink: 0;
         }
 
         .risk-control {
             display: grid;
-            grid-template-columns: 1fr;
+            grid-template-columns: 1.5fr 1fr;
             gap: 1rem;
             flex-shrink: 0;
             max-height: 300px;

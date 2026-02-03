@@ -8,10 +8,10 @@ import { geocodeAddress } from "../../services/geocoding.js";
 import { analyzeProjectRisk } from "../../services/risk-logic.js";
 import { calculateRecruitmentDemand, groupProjectsBy } from "../../services/recruitment-logic.js";
 
-import AddProjectModal from "../../components/add-project-modal.js";
-import GeospatialMap from "../../components/geospatial-map.js";
-import ProjectList from "../../components/project-list.js";
-import ProjectTimeline from "../../components/project-timeline.js";
+import AddProjectModal from "../../components/projects/add-project-modal.js";
+import GeospatialMap from "../../components/maps/geospatial-map.js";
+import ProjectList from "../../components/projects/project-list.js";
+import ProjectTimeline from "../../components/projects/project-timeline.js";
 
 function ProjectsContent() {
     const { projects, addProject, updateProject, clients, candidates } = useData();
@@ -197,7 +197,7 @@ function ProjectsContent() {
     const handleWidgetSelection = (project) => {
         handleMapProjectSelect(project); // Focus on map
         setClickedWidget(null); // Close modal
-        
+
         // OPTIONAL: If we want to open the edit modal too
         // setEditingProject(project);
         // setIsModalOpen(true);

@@ -3,15 +3,15 @@
 import { useState, useMemo } from "react";
 import { useData } from "../../context/data-context.js";
 import { Target, Zap } from "lucide-react";
-import ClientSidePanel from "../../components/client-side-panel.js";
-import FloatCandidateModal from "../../components/float-candidate-modal.js";
-import MatchListModal from "../../components/match-list-modal.js";
-import GoldenHourMode from "../../components/golden-hour-mode.js";
-import RelationshipDecayWidget from "../../components/relationship-decay-widget.js";
-import RelationshipActionModal from "../../components/relationship-action-modal.js";
+import ClientSidePanel from "../../components/crm/client-side-panel.js";
+import FloatCandidateModal from "../../components/crm/float-candidate-modal.js";
+import MatchListModal from "../../components/crm/match-list-modal.js";
+import GoldenHourMode from "../../components/crm/golden-hour-mode.js";
+import RelationshipDecayWidget from "../../components/crm/relationship-decay-widget.js";
+import RelationshipActionModal from "../../components/crm/relationship-action-modal.js";
 
 // [NEW] Import the advanced widget we just created
-import ActivityPulseWidget from "../../components/activity-pulse-widget.js";
+import ActivityPulseWidget from "../../components/crm/activity-pulse-widget.js";
 
 import { RELATED_ROLES, WORKFORCE_MATRIX, PHASE_MAP } from "../../services/construction-logic.js";
 import { parse, differenceInDays, isValid } from 'date-fns';

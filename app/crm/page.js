@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { useData } from "../../context/data-context.js";
-import EnhancedClientDetailsModal from "../../components/enhanced-client-details-modal.js";
-import ClientCard from "../../components/client-card.js";
-import AddClientModal from "../../components/add-client-modal.js";
-import ClientActionBoard from "../../components/client-action-board.js";
-import PlacementTicketModal from "../../components/placement-ticket-modal.js";
-import RegionGrid from "../../components/region-grid.js";
-import TradeGrid from "../../components/trade-grid.js";
-import ClientTierBoard from "../../components/client-tier-board.js";
+import EnhancedClientDetailsModal from "../../components/crm/enhanced-client-details-modal.js";
+import ClientCard from "../../components/crm/client-card.js";
+import AddClientModal from "../../components/crm/add-client-modal.js";
+import ClientActionBoard from "../../components/crm/client-action-board.js";
+import PlacementTicketModal from "../../components/financials/placement-ticket-modal.js";
+import RegionGrid from "../../components/shared/region-grid.js";
+import TradeGrid from "../../components/shared/trade-grid.js";
+import ClientTierBoard from "../../components/crm/client-tier-board.js";
 import { Search, Filter, Plus, Users, Upload, Download, ChevronRight, Home } from "lucide-react";
 
 export default function CRMPage() {

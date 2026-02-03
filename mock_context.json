@@ -1,0 +1,24 @@
+{
+  "candidates": [
+    { "id": "c1", "name": "John Doe", "status": "On Job", "role": "Carpenter", "chargeRate": 65, "payRate": 35, "firstName": "John", "lastName": "Doe" },
+    { "id": "c2", "name": "Jane Smith", "status": "Available", "role": "Hammerhand", "guaranteedHours": 40, "payRate": 25, "firstName": "Jane", "lastName": "Smith", "residency": "Work Visa", "visaExpiry": "2026-03-01" },
+    { "id": "c3", "name": "Bob Builder", "status": "On Job", "role": "Site Manager", "chargeRate": 90, "payRate": 50, "firstName": "Bob", "lastName": "Builder", "currentProject": "Sky Tower" }
+  ],
+  "projects": [
+    { "id": "p1", "name": "Sky Tower", "status": "Active", "region": "Auckland" },
+    { "id": "p2", "name": "Hospital Wing", "status": "Planning", "clientDemands": [{"role": "Carpenter", "quantity": 4}] }
+  ],
+  "clients": [
+    { "id": "cl1", "name": "Fletchers", "lastContact": "2025-12-01T00:00:00Z", "financials": { "ytdRevenue": "$500,000" } },
+    { "id": "cl2", "name": "Hawkins", "lastContact": "2026-01-20T00:00:00Z" }
+  ],
+  "financials": {
+    "weeklyRevenue": 6200,
+    "weeklyPayroll": 3400,
+    "weeklyGrossProfit": 2800,
+    "benchLiability": 1000
+  },
+  "moneyMoves": [
+    { "id": "n1", "type": "PRE_EMPTIVE_STRIKE", "title": "Rainmaker Alert", "description": "Rain forecast next week." }
+  ]
+}

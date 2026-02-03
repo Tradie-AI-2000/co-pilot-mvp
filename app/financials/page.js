@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { useData } from "../../context/data-context.js";
-import FloatCandidateModal from "../../components/float-candidate-modal.js";
-import PlacementTicketModal from "../../components/placement-ticket-modal.js";
-import FinancialForecastWidget from "../../components/financial-forecast-widget.js";
-import CommissionDashboard from "../../components/commission-dashboard.js";
+import FloatCandidateModal from "../../components/crm/float-candidate-modal.js";
+import PlacementTicketModal from "../../components/financials/placement-ticket-modal.js";
+import FinancialForecastWidget from "../../components/financials/financial-forecast-widget.js";
+import CommissionDashboard from "../../components/financials/commission-dashboard.js";
 import { DollarSign, TrendingUp, TrendingDown, AlertCircle, PieChart, ArrowRight } from "lucide-react";
 
 export default function FinancialsPage() {

@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import AgentSignalCard from '../../components/agent-signal-card.js';
+import AgentSignalCard from '../../components/shared/agent-signal-card.js';
 
 // --- AGENT REGISTRY ---
 const AGENTS = [
@@ -209,7 +209,7 @@ function ChatInterface({ context, history, onUpdateHistory }) {
                         <div className={`max-w-[85%] p-5 rounded-xl border text-sm leading-relaxed shadow-lg ${m.role === 'assistant'
                             ? 'bg-slate-900/80 border-slate-800 text-slate-300'
                             : 'bg-sky-600 text-white border-sky-500'
-                            }`}> 
+                            }`}>
                             <div className="prose prose-invert prose-sm max-w-none">
                                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                     {m.content}

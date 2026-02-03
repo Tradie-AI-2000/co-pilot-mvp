@@ -1,19 +1,19 @@
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
-import Card from "../../components/card.js";
+import Card from "../../components/shared/card.js";
 import { Search, Filter, Map, List, Plus, Download, Upload, CheckCircle, MapPin, Briefcase, Zap, Users, ChevronRight, Calendar, LayoutGrid, Table, X } from "lucide-react";
 import { useData } from "../../context/data-context.js"; // Import context hook
-import CandidateDashboard from "../../components/candidate-dashboard.js";
-import CandidateMap from "../../components/candidate-map.js";
-import SquadBuilder from "../../components/squad-builder.js";
-import RegionGrid from "../../components/region-grid.js";
-import TradeGrid from "../../components/trade-grid.js";
-import CandidateModal from "../../components/candidate-modal.js";
-import WeeklyCheckinWidget from "../../components/weekly-checkin-widget.js";
-import BenchRoster from "../../components/bench-roster.js";
-import HotListModal from "../../components/hot-list-modal.js";
-import { FinishingSoonWidget, ClientDemandWidget, SharePointModal } from "../../components/sharepoint-mirror-widgets.js";
+import CandidateDashboard from "../../components/candidates/candidate-dashboard.js";
+import CandidateMap from "../../components/candidates/candidate-map.js";
+import SquadBuilder from "../../components/candidates/squad-builder.js";
+import RegionGrid from "../../components/shared/region-grid.js";
+import TradeGrid from "../../components/shared/trade-grid.js";
+import CandidateModal from "../../components/candidates/candidate-modal.js";
+import WeeklyCheckinWidget from "../../components/candidates/weekly-checkin-widget.js";
+import BenchRoster from "../../components/candidates/bench-roster.js";
+import HotListModal from "../../components/candidates/hot-list-modal.js";
+import { FinishingSoonWidget, ClientDemandWidget, SharePointModal } from "../../components/shared/sharepoint-mirror-widgets.js";
 import { mockSharePointData } from "../../services/enhanced-mock-data.js";
 
 

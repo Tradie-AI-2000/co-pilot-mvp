@@ -1,0 +1,149 @@
+🥒 Pickle Rick Agent Auditor 🥒
+=================================
+Testing Agent: jarvis
+Message: Give me a desk pulse. #desk-pulse
+--- Response ---
+Okay, initiating `desk-pulse` sequence. Analyzing `data-context.js` and `memories.md` for current desk state.
+
+**Smoko Summary:**
+
+*   **Active Headcount:** 2 / Target: (Calculating based on `data-context.js` and `2026-forecasts.json`.  Will update with specific target number).
+*   **The Bleed (Revenue at Risk):**  Currently evaluating at-risk placements. (Pulling data from `data-context.js` to identify projects nearing completion or with potential issues.  Will update with specific dollar amount).
+*   **Urgent Compliance Hard Stops:** None detected at this time. (Checking `data-context.js` for missing inductions, certifications, or other critical compliance requirements.).
+
+**Desk Pulse Detailed Breakdown:**
+
+...
+----------------
+
+Testing Agent: jarvis
+Message: Run crisis interceptor. #crisis-interceptor
+--- Response ---
+Okay, initiating **Crisis Interceptor** protocol.
+
+Based on available `data-context.js` and `memories.md` (which I have loaded), I will identify active "Crisis" signals (No-Show, Risk, Decay), find replacements, check arrival times, and draft a solution-first script for the recruiter.
+
+Let's analyze for any crises in the system.
+...
+----------------
+
+Testing Agent: jarvis
+Message: Run rainmaker protocol. #rainmaker
+--- Response ---
+Okay, Commander. Executing Rainmaker protocol. #rainmaker
+
+```tool_code
+# Tool Selection:
+# Based on persona and instructions, I need to execute rainmaker protocol to drive revenue. I will need access to the following tools: weather forecast, active projects, and available workforce.
+
+# Task Breakdown:
+# 1. Fetch weather forecast using api/nudges.
+# 2. Identify outdoor crews at risk based on weather.
+# 3. Identify indoor/fit-out projects suitable for upsell.
+...
+----------------
+
+Testing Agent: jarvis
+Message: Audit the desk. #audit-desk
+--- Response ---
+Okay, commencing desk audit as per Commander's directive. Analyzing placements against construction logic and hard stop compliance.
+
+```
+<instructions>
+Scan `data-context.js` placements against `construction-logic.js`.
+Flag any trade-logic violations (e.g. Civil Phase project with Fit-out roles).
+Flag any Hard Stop violations (e.g. Missing Induction).
+</instructions>
+```
+
+...
+----------------
+
+Testing Agent: jarvis
+Message: Generate strategic report. #strategic-report
+--- Response ---
+Okay, Commander. Executing #strategic-report.
+
+```
+<instructions>
+Compare current revenue/margin from `data-context.js` against `2026-forecasts.json`.
+Generate a "Build House" vs "Civil House" performance breakdown.
+Highlight gaps and recommend strategic focus for next month.
+</instructions>
+```
+
+...
+----------------
+
+Testing Agent: jarvis
+Message: Analyze client demand. #client-demand
+--- Response ---
+Okay, processing directive "Analyze client demand. #client-demand" and initiating `client-demand` prompt.
+
+```
+<instructions>
+Analyze "Client Demand" pipeline.
+Identify high-value leads.
+Draft outreach or follow-up actions.
+</instructions>
+```
+
+...
+----------------
+
+Testing Agent: jarvis
+Message: Check migrant workforce status. #migrant-workforce
+--- Response ---
+Okay, initiating **Migrant Workforce** analysis.
+
+```tool_code
+# Analysis of Filipino Migrant Workforce pipeline.
+
+# Placeholder for actual implementation.  Currently returning mock data.
+
+migrant_pipeline_status = {
+    "Visa Applications": {
+        "Total": 15,
+...
+----------------
+
+Testing Agent: negotiator
+Message: Client offering 5 for Carpenter. #rate-defense
+--- Response ---
+Okay, 5 for a Carpenter is a non-starter.
+
+"I understand the $5/hour offer. However, our carpenters are fully inducted, available immediately, and have a proven track record on Sky Tower. That reliability minimizes your risk and keeps the project on schedule."
+
+"To bridge the gap, would a commitment to a 6-month contract allow for a rate that's mutually agreeable? I'm thinking $5.75 with that commitment, which brings them in cheaper than standard hires after benefits."
+...
+----------------
+
+Testing Agent: compliance
+Message: Check visas. #visa-check
+--- Response ---
+Understood. Initiating #visa-check. I require the candidate's visa information to proceed. Please provide details, including:
+
+*   Visa type
+*   Visa expiry date
+*   Visa conditions (if any, specify limitations on employment or employer)
+
+Pending this information, the current status is:
+...
+----------------
+
+Testing Agent: scout
+Message: Find me a finishing carpenter.
+--- Response ---
+Okay, Commander. Eyes On. Asset Identified.
+
+# [AGENT: SCOUT] | INTEL: HIGH
+
+Executing Directive. Standby for "Target List" and Competitor Analysis.
+
+## Target List (Tender Scan)
+
+| Project         | Phase        | Internal Lead | Notes                                                                                   |
+|-----------------|--------------|---------------|-----------------------------------------------------------------------------------------|
+...
+----------------
+

@@ -273,6 +273,7 @@ export function DataProvider({ children }) {
         isSyncing, activityLogs,
         addCandidate, updateCandidate, addProject, updateProject, addClient, updateClient, addRole, floatCandidate,
         assignCandidateToProject,
+        submitPortalBooking: (cart, projectId, specs) => console.log("Booking Submitted:", { cart, projectId, specs }),
         syncFromSupabase,
         logActivity
     };

@@ -1,0 +1,504 @@
+----------------------------------------------------
+TESTING AGENT: stellar_gm
+PROMPT: GM, give me a quick executive summary of the business health right now. Are we hitting our margin targets?
+----------------------------------------------------
+Log setup complete: /var/folders/yj/d8t5bhcx7231xwzv1347p3t40000gn/T/agents_log/agent.20260202_065825.log
+To access latest log: tail -F /var/folders/yj/d8t5bhcx7231xwzv1347p3t40000gn/T/agents_log/agent.latest.log
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/cli/cli.py:189: UserWarning: [EXPERIMENTAL] InMemoryCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  credential_service = InMemoryCredentialService()
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/auth/credential_service/in_memory_credential_service.py:33: UserWarning: [EXPERIMENTAL] BaseCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  super().__init__()
+Running agent GM, type exit to exit.
+[user]: [GM]: To assess whether we are hitting our margin targets, I need a detailed financial analysis. I will transfer this request to the Accountant.
+
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/bin/adk", line 7, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/click/core.py", line 1485, in __call__
+    return self.main(*args, **kwargs)
+           ~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/click/core.py", line 1406, in main
+    rv = self.invoke(ctx)
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/click/core.py", line 1873, in invoke
+    return _process_result(sub_ctx.command.invoke(sub_ctx))
+                           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/click/core.py", line 1269, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+           ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/click/core.py", line 824, in invoke
+    return callback(*args, **kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/cli/cli_tools_click.py", line 126, in wrapper
+    return func(*args, **kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/cli/cli_tools_click.py", line 528, in wrapper
+    return func(*args, **kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/cli/cli_tools_click.py", line 618, in cli_run
+    asyncio.run(
+    ~~~~~~~~~~~^
+        run_cli(
+        ^^^^^^^^
+    ...<9 lines>...
+        )
+        ^
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/cli/cli.py", line 244, in run_cli
+    await run_interactively(
+    ...<5 lines>...
+    )
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/cli/cli.py", line 123, in run_interactively
+    async for event in agen:
+    ...<2 lines>...
+          click.echo(f'[{event.author}]: {text}')
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/runners.py", line 562, in run_async
+    async for event in agen:
+      yield event
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/runners.py", line 550, in _run_with_trace
+    async for event in agen:
+      yield event
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/runners.py", line 779, in _exec_with_plugin
+    async for event in agen:
+    ...<64 lines>...
+        yield event
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/runners.py", line 539, in execute
+    async for event in agen:
+      yield event
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/agents/base_agent.py", line 294, in run_async
+    async for event in agen:
+      yield event
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/agents/llm_agent.py", line 468, in _run_async_impl
+    async for event in agen:
+    ...<5 lines>...
+        should_pause = True
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 382, in run_async
+    async for event in agen:
+      last_event = event
+      yield event
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 469, in _run_one_step_async
+    async for event in agen:
+    ...<3 lines>...
+      yield event
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 582, in _postprocess_async
+    async for event in agen:
+      yield event
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 735, in _postprocess_handle_function_calls_async
+    async for event in agen:
+      yield event
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/agents/base_agent.py", line 294, in run_async
+    async for event in agen:
+      yield event
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/agents/llm_agent.py", line 468, in _run_async_impl
+    async for event in agen:
+    ...<5 lines>...
+        should_pause = True
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 382, in run_async
+    async for event in agen:
+      last_event = event
+      yield event
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 469, in _run_one_step_async
+    async for event in agen:
+    ...<3 lines>...
+      yield event
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 582, in _postprocess_async
+    async for event in agen:
+      yield event
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 700, in _postprocess_handle_function_calls_async
+    if function_response_event := await functions.handle_function_calls_async(
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        invocation_context, function_call_event, llm_request.tools_dict
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ):
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/flows/llm_flows/functions.py", line 199, in handle_function_calls_async
+    return await handle_function_call_list_async(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/flows/llm_flows/functions.py", line 245, in handle_function_call_list_async
+    function_response_events = await asyncio.gather(*tasks)
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/flows/llm_flows/functions.py", line 431, in _execute_single_function_call_async
+    function_response_event = await _run_with_trace()
+                              ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/flows/llm_flows/functions.py", line 380, in _run_with_trace
+    raise tool_error
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/flows/llm_flows/functions.py", line 367, in _run_with_trace
+    function_response = await __call_tool_async(
+                        ^^^^^^^^^^^^^^^^^^^^^^^^
+        tool, args=function_args, tool_context=tool_context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/flows/llm_flows/functions.py", line 789, in __call_tool_async
+    return await tool.run_async(args=args, tool_context=tool_context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/tools/function_tool.py", line 218, in run_async
+    return await self._invoke_callable(self.func, args_to_call)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/tools/function_tool.py", line 235, in _invoke_callable
+    return target(**args_to_call)
+  File "/Users/joeward/Antigravity Projects/Co-Pilot/agents-swarm/stellar_accountant/tools/financials.py", line 26, in get_financial_health
+    response = sb.table("candidates").select("*").eq("status", "Placed").execute()
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/postgrest/_sync/request_builder.py", line 53, in execute
+    raise APIError(dict(json_obj))
+postgrest.exceptions.APIError: {'message': 'invalid input value for enum candidate_status: "Placed"', 'code': '22P02', 'hint': None, 'details': None}
+
+
+----------------------------------------------------
+TESTING AGENT: stellar_gm
+PROMPT: We have a new project starting in Auckland next week. Can you check with the team if we have any available Carpenters who can work on a visa?
+----------------------------------------------------
+Log setup complete: /var/folders/yj/d8t5bhcx7231xwzv1347p3t40000gn/T/agents_log/agent.20260202_065834.log
+To access latest log: tail -F /var/folders/yj/d8t5bhcx7231xwzv1347p3t40000gn/T/agents_log/agent.latest.log
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/cli/cli.py:189: UserWarning: [EXPERIMENTAL] InMemoryCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  credential_service = InMemoryCredentialService()
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/auth/credential_service/in_memory_credential_service.py:33: UserWarning: [EXPERIMENTAL] BaseCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  super().__init__()
+Running agent GM, type exit to exit.
+[user]: [Immigration]: We have 3 candidates with approved visas and 45 already on shore. I do not have the ability to determine their job titles. I will transfer you to the Candidate Manager to determine if any of the candidates are Carpenters.
+
+[CandidateMgr]: Okay, I will search for available Carpenters who can work on a visa for the Auckland project.
+
+
+[CandidateMgr]: Okay, I found 5 Carpenters. John Publico is currently floated. I'll check if he is Visa-enabled by enriching his profile with mobility data.
+
+[CandidateMgr]: My apologies, I was unable to find more details regarding John Publico. Please note that he is currently on the bench.
+
+[user]: 
+
+----------------------------------------------------
+TESTING AGENT: stellar_accountant
+PROMPT: Audit my current placements. What is our total weekly payroll liability including the 1.30 burden?
+----------------------------------------------------
+Log setup complete: /var/folders/yj/d8t5bhcx7231xwzv1347p3t40000gn/T/agents_log/agent.20260202_065846.log
+To access latest log: tail -F /var/folders/yj/d8t5bhcx7231xwzv1347p3t40000gn/T/agents_log/agent.latest.log
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/cli/cli.py:189: UserWarning: [EXPERIMENTAL] InMemoryCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  credential_service = InMemoryCredentialService()
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/auth/credential_service/in_memory_credential_service.py:33: UserWarning: [EXPERIMENTAL] BaseCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  super().__init__()
+Running agent Accountant, type exit to exit.
+[user]: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/bin/adk", line 7, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/click/core.py", line 1485, in __call__
+    return self.main(*args, **kwargs)
+           ~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/click/core.py", line 1406, in main
+    rv = self.invoke(ctx)
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/click/core.py", line 1873, in invoke
+    return _process_result(sub_ctx.command.invoke(sub_ctx))
+                           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/click/core.py", line 1269, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+           ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/click/core.py", line 824, in invoke
+    return callback(*args, **kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/cli/cli_tools_click.py", line 126, in wrapper
+    return func(*args, **kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/cli/cli_tools_click.py", line 528, in wrapper
+    return func(*args, **kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/cli/cli_tools_click.py", line 618, in cli_run
+    asyncio.run(
+    ~~~~~~~~~~~^
+        run_cli(
+        ^^^^^^^^
+    ...<9 lines>...
+        )
+        ^
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/cli/cli.py", line 244, in run_cli
+    await run_interactively(
+    ...<5 lines>...
+    )
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/cli/cli.py", line 123, in run_interactively
+    async for event in agen:
+    ...<2 lines>...
+          click.echo(f'[{event.author}]: {text}')
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/runners.py", line 562, in run_async
+    async for event in agen:
+      yield event
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/runners.py", line 550, in _run_with_trace
+    async for event in agen:
+      yield event
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/runners.py", line 779, in _exec_with_plugin
+    async for event in agen:
+    ...<64 lines>...
+        yield event
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/runners.py", line 539, in execute
+    async for event in agen:
+      yield event
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/agents/base_agent.py", line 294, in run_async
+    async for event in agen:
+      yield event
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/agents/llm_agent.py", line 468, in _run_async_impl
+    async for event in agen:
+    ...<5 lines>...
+        should_pause = True
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 382, in run_async
+    async for event in agen:
+      last_event = event
+      yield event
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 469, in _run_one_step_async
+    async for event in agen:
+    ...<3 lines>...
+      yield event
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 582, in _postprocess_async
+    async for event in agen:
+      yield event
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 700, in _postprocess_handle_function_calls_async
+    if function_response_event := await functions.handle_function_calls_async(
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        invocation_context, function_call_event, llm_request.tools_dict
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ):
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/flows/llm_flows/functions.py", line 199, in handle_function_calls_async
+    return await handle_function_call_list_async(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/flows/llm_flows/functions.py", line 245, in handle_function_call_list_async
+    function_response_events = await asyncio.gather(*tasks)
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/flows/llm_flows/functions.py", line 431, in _execute_single_function_call_async
+    function_response_event = await _run_with_trace()
+                              ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/flows/llm_flows/functions.py", line 380, in _run_with_trace
+    raise tool_error
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/flows/llm_flows/functions.py", line 367, in _run_with_trace
+    function_response = await __call_tool_async(
+                        ^^^^^^^^^^^^^^^^^^^^^^^^
+        tool, args=function_args, tool_context=tool_context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/flows/llm_flows/functions.py", line 789, in __call_tool_async
+    return await tool.run_async(args=args, tool_context=tool_context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/tools/function_tool.py", line 218, in run_async
+    return await self._invoke_callable(self.func, args_to_call)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/tools/function_tool.py", line 235, in _invoke_callable
+    return target(**args_to_call)
+  File "/Users/joeward/Antigravity Projects/Co-Pilot/agents-swarm/stellar_accountant/tools/financials.py", line 26, in get_financial_health
+    response = sb.table("candidates").select("*").eq("status", "Placed").execute()
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/postgrest/_sync/request_builder.py", line 53, in execute
+    raise APIError(dict(json_obj))
+postgrest.exceptions.APIError: {'message': 'invalid input value for enum candidate_status: "Placed"', 'code': '22P02', 'hint': None, 'details': None}
+
+
+----------------------------------------------------
+TESTING AGENT: stellar_accountant
+PROMPT: Do we have any 'Critical' margin risks? List any placements where the gross margin is below 15%.
+----------------------------------------------------
+Log setup complete: /var/folders/yj/d8t5bhcx7231xwzv1347p3t40000gn/T/agents_log/agent.20260202_065856.log
+To access latest log: tail -F /var/folders/yj/d8t5bhcx7231xwzv1347p3t40000gn/T/agents_log/agent.latest.log
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/cli/cli.py:189: UserWarning: [EXPERIMENTAL] InMemoryCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  credential_service = InMemoryCredentialService()
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/auth/credential_service/in_memory_credential_service.py:33: UserWarning: [EXPERIMENTAL] BaseCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  super().__init__()
+Running agent Accountant, type exit to exit.
+[user]: Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.13/bin/adk", line 7, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/click/core.py", line 1485, in __call__
+    return self.main(*args, **kwargs)
+           ~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/click/core.py", line 1406, in main
+    rv = self.invoke(ctx)
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/click/core.py", line 1873, in invoke
+    return _process_result(sub_ctx.command.invoke(sub_ctx))
+                           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/click/core.py", line 1269, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+           ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/click/core.py", line 824, in invoke
+    return callback(*args, **kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/cli/cli_tools_click.py", line 126, in wrapper
+    return func(*args, **kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/cli/cli_tools_click.py", line 528, in wrapper
+    return func(*args, **kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/cli/cli_tools_click.py", line 618, in cli_run
+    asyncio.run(
+    ~~~~~~~~~~~^
+        run_cli(
+        ^^^^^^^^
+    ...<9 lines>...
+        )
+        ^
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/cli/cli.py", line 244, in run_cli
+    await run_interactively(
+    ...<5 lines>...
+    )
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/cli/cli.py", line 123, in run_interactively
+    async for event in agen:
+    ...<2 lines>...
+          click.echo(f'[{event.author}]: {text}')
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/runners.py", line 562, in run_async
+    async for event in agen:
+      yield event
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/runners.py", line 550, in _run_with_trace
+    async for event in agen:
+      yield event
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/runners.py", line 779, in _exec_with_plugin
+    async for event in agen:
+    ...<64 lines>...
+        yield event
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/runners.py", line 539, in execute
+    async for event in agen:
+      yield event
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/agents/base_agent.py", line 294, in run_async
+    async for event in agen:
+      yield event
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/agents/llm_agent.py", line 468, in _run_async_impl
+    async for event in agen:
+    ...<5 lines>...
+        should_pause = True
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 382, in run_async
+    async for event in agen:
+      last_event = event
+      yield event
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 469, in _run_one_step_async
+    async for event in agen:
+    ...<3 lines>...
+      yield event
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 582, in _postprocess_async
+    async for event in agen:
+      yield event
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/flows/llm_flows/base_llm_flow.py", line 700, in _postprocess_handle_function_calls_async
+    if function_response_event := await functions.handle_function_calls_async(
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        invocation_context, function_call_event, llm_request.tools_dict
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ):
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/flows/llm_flows/functions.py", line 199, in handle_function_calls_async
+    return await handle_function_call_list_async(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/flows/llm_flows/functions.py", line 245, in handle_function_call_list_async
+    function_response_events = await asyncio.gather(*tasks)
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/flows/llm_flows/functions.py", line 431, in _execute_single_function_call_async
+    function_response_event = await _run_with_trace()
+                              ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/flows/llm_flows/functions.py", line 380, in _run_with_trace
+    raise tool_error
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/flows/llm_flows/functions.py", line 367, in _run_with_trace
+    function_response = await __call_tool_async(
+                        ^^^^^^^^^^^^^^^^^^^^^^^^
+        tool, args=function_args, tool_context=tool_context
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/flows/llm_flows/functions.py", line 789, in __call_tool_async
+    return await tool.run_async(args=args, tool_context=tool_context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/tools/function_tool.py", line 218, in run_async
+    return await self._invoke_callable(self.func, args_to_call)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/tools/function_tool.py", line 235, in _invoke_callable
+    return target(**args_to_call)
+  File "/Users/joeward/Antigravity Projects/Co-Pilot/agents-swarm/stellar_accountant/tools/financials.py", line 26, in get_financial_health
+    response = sb.table("candidates").select("*").eq("status", "Placed").execute()
+  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/postgrest/_sync/request_builder.py", line 53, in execute
+    raise APIError(dict(json_obj))
+postgrest.exceptions.APIError: {'message': 'invalid input value for enum candidate_status: "Placed"', 'code': '22P02', 'hint': None, 'details': None}
+
+
+----------------------------------------------------
+TESTING AGENT: stellar_candidate_mgr
+PROMPT: Find me all available Carpenters and tell me which ones are 'Mobile' (on work visas or Filipino).
+----------------------------------------------------
+Log setup complete: /var/folders/yj/d8t5bhcx7231xwzv1347p3t40000gn/T/agents_log/agent.20260202_065906.log
+To access latest log: tail -F /var/folders/yj/d8t5bhcx7231xwzv1347p3t40000gn/T/agents_log/agent.latest.log
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/cli/cli.py:189: UserWarning: [EXPERIMENTAL] InMemoryCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  credential_service = InMemoryCredentialService()
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/auth/credential_service/in_memory_credential_service.py:33: UserWarning: [EXPERIMENTAL] BaseCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  super().__init__()
+Running agent CandidateMgr, type exit to exit.
+[user]: [CandidateMgr]: I found these Carpenters: John Publico, Marlon Rosagaran, Marlon Mahinay, Victorino Simbre, and Carlito Hingada. None of them are marked as mobile. This is a Bench Zero situation! We need to get John Publico deployed ASAP. The others are currently deployed.
+
+[user]: 
+
+----------------------------------------------------
+TESTING AGENT: stellar_sales_lead
+PROMPT: Audit my Tier 1 clients for decay. Who hasn't been contacted in 40 days?
+----------------------------------------------------
+Log setup complete: /var/folders/yj/d8t5bhcx7231xwzv1347p3t40000gn/T/agents_log/agent.20260202_065917.log
+To access latest log: tail -F /var/folders/yj/d8t5bhcx7231xwzv1347p3t40000gn/T/agents_log/agent.latest.log
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/cli/cli.py:189: UserWarning: [EXPERIMENTAL] InMemoryCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  credential_service = InMemoryCredentialService()
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/auth/credential_service/in_memory_credential_service.py:33: UserWarning: [EXPERIMENTAL] BaseCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  super().__init__()
+Running agent SalesLead, type exit to exit.
+[user]: [SalesLead]: Great news! None of your Tier 1 clients have been silent for over 40 days. They are all active.
+
+[user]: 
+
+----------------------------------------------------
+TESTING AGENT: stellar_systems_it
+PROMPT: Run a system diagnostic. Is the sync healthy?
+----------------------------------------------------
+Log setup complete: /var/folders/yj/d8t5bhcx7231xwzv1347p3t40000gn/T/agents_log/agent.20260202_065927.log
+To access latest log: tail -F /var/folders/yj/d8t5bhcx7231xwzv1347p3t40000gn/T/agents_log/agent.latest.log
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/cli/cli.py:189: UserWarning: [EXPERIMENTAL] InMemoryCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  credential_service = InMemoryCredentialService()
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/auth/credential_service/in_memory_credential_service.py:33: UserWarning: [EXPERIMENTAL] BaseCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  super().__init__()
+Running agent SystemsIT, type exit to exit.
+[user]: [SystemsIT]: The database is connected and the sync status is Green (Simulated). The system is healthy.
+
+[user]: 
+
+----------------------------------------------------
+TESTING AGENT: stellar_immigration
+PROMPT: Show me the migrant pipeline status.
+----------------------------------------------------
+Log setup complete: /var/folders/yj/d8t5bhcx7231xwzv1347p3t40000gn/T/agents_log/agent.20260202_065937.log
+To access latest log: tail -F /var/folders/yj/d8t5bhcx7231xwzv1347p3t40000gn/T/agents_log/agent.latest.log
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/cli/cli.py:189: UserWarning: [EXPERIMENTAL] InMemoryCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  credential_service = InMemoryCredentialService()
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/auth/credential_service/in_memory_credential_service.py:33: UserWarning: [EXPERIMENTAL] BaseCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  super().__init__()
+Running agent Immigration, type exit to exit.
+[user]: [Immigration]: We have 2 candidates with flights booked, 45 on shore, 12 in screening, 3 with visas approved, and 5 with visas submitted.
+
+[user]: 
+

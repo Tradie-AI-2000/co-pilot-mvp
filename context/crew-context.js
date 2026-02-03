@@ -40,7 +40,7 @@ export function CrewProvider({ children }) {
     const [deployedData, setDeployedData] = useState(null);
 
     const validateCompliance = () => {
-        const nonCompliant = draftSquad.filter(c => !c.compliance?.includes('Site Safe'));
+        const nonCompliant = draftSquad.filter(c => !c.tickets?.includes('Site Safe'));
         return {
             isValid: nonCompliant.length === 0,
             nonCompliant

@@ -1,60 +1,240 @@
-[debug] [2026-01-28T00:42:45.273Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-28T00:42:45.275Z] > authorizing via signed-in user (joe@tradieai.co.nz)
-[debug] [2026-01-28T00:42:45.284Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-28T00:42:45.284Z] > authorizing via signed-in user (joe@tradieai.co.nz)
-[debug] [2026-01-28T00:42:45.641Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-28T00:42:45.641Z] > authorizing via signed-in user (joe@tradieai.co.nz)
-[debug] [2026-01-28T00:42:45.642Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-28T00:42:45.642Z] > authorizing via signed-in user (joe@tradieai.co.nz)
-[debug] [2026-01-28T00:42:45.773Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-28T00:42:45.773Z] > authorizing via signed-in user (joe@tradieai.co.nz)
-[debug] [2026-01-28T00:42:45.774Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-28T00:42:45.774Z] > authorizing via signed-in user (joe@tradieai.co.nz)
-[debug] [2026-01-28T00:46:08.773Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-28T00:46:08.774Z] > authorizing via signed-in user (joe@tradieai.co.nz)
-[debug] [2026-01-28T00:46:08.782Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-28T00:46:08.782Z] > authorizing via signed-in user (joe@tradieai.co.nz)
-[debug] [2026-01-28T00:46:09.117Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-28T00:46:09.118Z] > authorizing via signed-in user (joe@tradieai.co.nz)
-[debug] [2026-01-28T00:46:09.118Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-28T00:46:09.118Z] > authorizing via signed-in user (joe@tradieai.co.nz)
-[debug] [2026-01-28T00:46:09.250Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-28T00:46:09.250Z] > authorizing via signed-in user (joe@tradieai.co.nz)
-[debug] [2026-01-28T00:46:09.251Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-28T00:46:09.251Z] > authorizing via signed-in user (joe@tradieai.co.nz)
-[debug] [2026-01-28T17:25:26.024Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-28T17:25:26.026Z] > authorizing via signed-in user (joe@tradieai.co.nz)
-[debug] [2026-01-28T17:25:26.039Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-28T17:25:26.040Z] > authorizing via signed-in user (joe@tradieai.co.nz)
-[debug] [2026-01-28T17:25:26.384Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-28T17:25:26.384Z] > authorizing via signed-in user (joe@tradieai.co.nz)
-[debug] [2026-01-28T17:25:26.385Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-28T17:25:26.385Z] > authorizing via signed-in user (joe@tradieai.co.nz)
-[debug] [2026-01-28T17:25:26.865Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-28T17:25:26.867Z] > authorizing via signed-in user (joe@tradieai.co.nz)
-[debug] [2026-01-28T17:25:26.871Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-28T17:25:26.872Z] > authorizing via signed-in user (joe@tradieai.co.nz)
-[debug] [2026-01-28T17:58:13.451Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-28T17:58:13.453Z] > authorizing via signed-in user (joe@tradieai.co.nz)
-[debug] [2026-01-28T17:58:13.473Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-28T17:58:13.473Z] > authorizing via signed-in user (joe@tradieai.co.nz)
-[debug] [2026-01-28T17:58:13.835Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-28T17:58:13.835Z] > authorizing via signed-in user (joe@tradieai.co.nz)
-[debug] [2026-01-28T17:58:13.836Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-28T17:58:13.836Z] > authorizing via signed-in user (joe@tradieai.co.nz)
-[debug] [2026-01-28T17:58:14.300Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-28T17:58:14.301Z] > authorizing via signed-in user (joe@tradieai.co.nz)
-[debug] [2026-01-28T17:58:14.301Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-28T17:58:14.301Z] > authorizing via signed-in user (joe@tradieai.co.nz)
-[debug] [2026-01-29T17:54:36.498Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-29T17:54:36.500Z] > authorizing via signed-in user (joe@tradieai.co.nz)
-[debug] [2026-01-29T17:54:36.523Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-29T17:54:36.523Z] > authorizing via signed-in user (joe@tradieai.co.nz)
-[debug] [2026-01-29T17:54:36.908Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-29T17:54:36.908Z] > authorizing via signed-in user (joe@tradieai.co.nz)
-[debug] [2026-01-29T17:54:36.908Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-29T17:54:36.908Z] > authorizing via signed-in user (joe@tradieai.co.nz)
-[debug] [2026-01-29T17:54:37.373Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-29T17:54:37.373Z] > authorizing via signed-in user (joe@tradieai.co.nz)
-[debug] [2026-01-29T17:54:37.374Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-01-29T17:54:37.374Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-30T20:14:57.362Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-30T20:14:57.363Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-30T20:14:57.370Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-30T20:14:57.370Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-30T20:14:58.053Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-30T20:14:58.053Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-30T20:14:58.053Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-30T20:14:58.053Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-30T20:14:58.285Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-30T20:14:58.286Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-30T20:14:58.286Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-30T20:14:58.286Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T02:30:56.958Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T02:30:56.959Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T02:30:56.966Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T02:30:56.966Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T02:30:57.321Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T02:30:57.321Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T02:30:57.321Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T02:30:57.321Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T02:30:57.553Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T02:30:57.553Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T02:30:57.554Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T02:30:57.554Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T02:31:38.138Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T02:31:38.140Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T02:31:38.147Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T02:31:38.148Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T02:31:38.498Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T02:31:38.498Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T02:31:38.498Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T02:31:38.498Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T02:31:38.633Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T02:31:38.633Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T02:31:38.633Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T02:31:38.633Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T02:40:39.816Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T02:40:39.819Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T02:40:39.844Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T02:40:39.844Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T02:40:40.186Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T02:40:40.186Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T02:40:40.187Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T02:40:40.187Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T02:40:40.319Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T02:40:40.320Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T02:40:40.320Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T02:40:40.320Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T02:50:29.096Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T02:50:29.097Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T02:50:29.113Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T02:50:29.113Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T02:50:29.457Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T02:50:29.457Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T02:50:29.458Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T02:50:29.458Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T02:50:29.589Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T02:50:29.590Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T02:50:29.590Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T02:50:29.590Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T20:00:04.655Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T20:00:04.658Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T20:00:04.668Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T20:00:04.668Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T20:00:05.011Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T20:00:05.011Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T20:00:05.012Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T20:00:05.012Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T20:00:05.243Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T20:00:05.243Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T20:00:05.244Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T20:00:05.244Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T20:15:16.510Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T20:15:16.511Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T20:15:16.521Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T20:15:16.521Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T20:15:16.861Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T20:15:16.862Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T20:15:16.867Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T20:15:16.867Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T20:15:16.999Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T20:15:17.000Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-01-31T20:15:17.000Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-31T20:15:17.000Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T00:17:19.229Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T00:17:19.231Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T00:17:19.239Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T00:17:19.239Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T00:17:19.588Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T00:17:19.588Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T00:17:19.589Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T00:17:19.589Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T00:17:19.721Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T00:17:19.722Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T00:17:19.723Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T00:17:19.723Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T03:36:14.156Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T03:36:14.159Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T03:36:14.192Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T03:36:14.193Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T03:36:14.549Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T03:36:14.550Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T03:36:14.550Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T03:36:14.550Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T03:36:14.688Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T03:36:14.688Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T03:36:14.688Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T03:36:14.689Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T03:36:48.230Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T03:36:48.233Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T03:36:48.241Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T03:36:48.241Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T03:36:48.569Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T03:36:48.569Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T03:36:48.570Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T03:36:48.570Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T03:36:48.708Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T03:36:48.708Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T03:36:48.708Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T03:36:48.708Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T05:01:59.074Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T05:01:59.076Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T05:01:59.092Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T05:01:59.092Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T05:01:59.436Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T05:01:59.436Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T05:01:59.437Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T05:01:59.437Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T05:01:59.567Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T05:01:59.568Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T05:01:59.568Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T05:01:59.568Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T05:02:30.798Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T05:02:30.799Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T05:02:30.806Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T05:02:30.806Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T05:02:31.138Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T05:02:31.138Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T05:02:31.139Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T05:02:31.139Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T05:02:31.289Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T05:02:31.289Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T05:02:31.289Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T05:02:31.289Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T06:03:25.700Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T06:03:25.702Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T06:03:25.710Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T06:03:25.710Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T06:03:26.085Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T06:03:26.085Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T06:03:26.086Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T06:03:26.086Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T06:03:26.742Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T06:03:26.742Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-01T06:03:26.743Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-01T06:03:26.743Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T05:55:39.281Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T05:55:39.283Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T05:55:39.296Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T05:55:39.296Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T05:55:39.683Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T05:55:39.683Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T05:55:39.684Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T05:55:39.684Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T05:55:40.352Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T05:55:40.352Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T05:55:40.353Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T05:55:40.353Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T05:56:13.181Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T05:56:13.182Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T05:56:13.190Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T05:56:13.190Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T05:56:14.040Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T05:56:14.040Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T05:56:14.041Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T05:56:14.041Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T05:56:14.254Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T05:56:14.254Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T05:56:14.255Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T05:56:14.255Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T05:58:02.979Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T05:58:02.981Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T05:58:02.989Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T05:58:02.989Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T05:58:03.700Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T05:58:03.702Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T05:58:03.703Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T05:58:03.703Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T05:58:03.927Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T05:58:03.927Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T05:58:03.928Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T05:58:03.928Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T05:58:44.930Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T05:58:44.932Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T05:58:44.941Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T05:58:44.941Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T05:58:45.314Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T05:58:45.314Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T05:58:45.314Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T05:58:45.314Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T05:58:45.456Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T05:58:45.456Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T05:58:45.457Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T05:58:45.457Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T08:18:40.171Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T08:18:40.173Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T08:18:40.181Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T08:18:40.181Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T08:18:40.956Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T08:18:40.957Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T08:18:40.957Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T08:18:40.957Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T08:18:41.241Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T08:18:41.241Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T08:18:41.242Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T08:18:41.242Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T10:02:18.355Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T10:02:18.358Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T10:02:18.370Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T10:02:18.370Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T10:02:18.742Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T10:02:18.743Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T10:02:18.743Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T10:02:18.743Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T10:02:18.919Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T10:02:18.919Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T10:02:18.920Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T10:02:18.920Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T17:31:02.175Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T17:31:02.177Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T17:31:02.185Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T17:31:02.185Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T17:31:02.524Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T17:31:02.524Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T17:31:02.525Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T17:31:02.525Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T17:31:02.658Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T17:31:02.658Z] > authorizing via signed-in user (joe@tradieai.co.nz)
+[debug] [2026-02-02T17:31:02.658Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-02T17:31:02.658Z] > authorizing via signed-in user (joe@tradieai.co.nz)

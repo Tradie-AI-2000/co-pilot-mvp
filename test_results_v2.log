@@ -1,0 +1,66 @@
+----------------------------------------------------
+TESTING AGENT: stellar_gm
+PROMPT: GM, give me a quick executive summary of the business health right now. Are we hitting our margin targets?
+----------------------------------------------------
+Log setup complete: /var/folders/yj/d8t5bhcx7231xwzv1347p3t40000gn/T/agents_log/agent.20260202_070204.log
+To access latest log: tail -F /var/folders/yj/d8t5bhcx7231xwzv1347p3t40000gn/T/agents_log/agent.latest.log
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/cli/cli.py:189: UserWarning: [EXPERIMENTAL] InMemoryCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  credential_service = InMemoryCredentialService()
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/auth/credential_service/in_memory_credential_service.py:33: UserWarning: [EXPERIMENTAL] BaseCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  super().__init__()
+Running agent GM, type exit to exit.
+[user]: [GM]: To assess if we are hitting our margin targets, I need a detailed financial analysis. I'll transfer this to the Accountant for a comprehensive report.
+
+[Accountant]: Here's a snapshot of our financial health:
+
+*   **Gross Margin:** \$15,788 (23.82%). Revenue is \$66,280.
+*   **Payroll Liability:** \$50,492 (based on 36 headcount and 1.3x burden).
+*   **"Busy Fool" Alert:** Joe Ward flagged with a Net GP of \$396 (below the \$400 threshold). This deal needs immediate review!
+
+[user]: 
+
+----------------------------------------------------
+TESTING AGENT: stellar_accountant
+PROMPT: Audit my current placements. What is our total weekly payroll liability including the 1.30 burden?
+----------------------------------------------------
+Log setup complete: /var/folders/yj/d8t5bhcx7231xwzv1347p3t40000gn/T/agents_log/agent.20260202_070219.log
+To access latest log: tail -F /var/folders/yj/d8t5bhcx7231xwzv1347p3t40000gn/T/agents_log/agent.latest.log
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/cli/cli.py:189: UserWarning: [EXPERIMENTAL] InMemoryCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  credential_service = InMemoryCredentialService()
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/auth/credential_service/in_memory_credential_service.py:33: UserWarning: [EXPERIMENTAL] BaseCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  super().__init__()
+Running agent Accountant, type exit to exit.
+[user]: [Accountant]: Gross Margin is $15,788. Margin Percent is 23.82%. Total weekly payroll liability is $50,492. I have also identified that Joe Ward is a "Busy Fool" deal with NetGP of $396.
+
+[user]: 
+
+----------------------------------------------------
+TESTING AGENT: stellar_candidate_mgr
+PROMPT: I have a new site in Auckland. Can you build a squad for me?
+----------------------------------------------------
+Log setup complete: /var/folders/yj/d8t5bhcx7231xwzv1347p3t40000gn/T/agents_log/agent.20260202_070234.log
+To access latest log: tail -F /var/folders/yj/d8t5bhcx7231xwzv1347p3t40000gn/T/agents_log/agent.latest.log
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/cli/cli.py:189: UserWarning: [EXPERIMENTAL] InMemoryCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  credential_service = InMemoryCredentialService()
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/auth/credential_service/in_memory_credential_service.py:33: UserWarning: [EXPERIMENTAL] BaseCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  super().__init__()
+Running agent CandidateMgr, type exit to exit.
+[user]: [CandidateMgr]: OK. I ran the squad builder for Auckland, but no squads were generated. This could be due to a lack of available candidates in that region matching the 1 Senior + 2 Juniors criteria. I'll need to investigate the candidate pool in Auckland to see what's available. Can you tell me which roles you are looking for?
+
+[user]: 
+
+----------------------------------------------------
+TESTING AGENT: stellar_sales_lead
+PROMPT: Audit my Tier 1 clients for decay.
+----------------------------------------------------
+Log setup complete: /var/folders/yj/d8t5bhcx7231xwzv1347p3t40000gn/T/agents_log/agent.20260202_070250.log
+To access latest log: tail -F /var/folders/yj/d8t5bhcx7231xwzv1347p3t40000gn/T/agents_log/agent.latest.log
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/cli/cli.py:189: UserWarning: [EXPERIMENTAL] InMemoryCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  credential_service = InMemoryCredentialService()
+/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/site-packages/google/adk/auth/credential_service/in_memory_credential_service.py:33: UserWarning: [EXPERIMENTAL] BaseCredentialService: This feature is experimental and may change or be removed in future versions without notice. It may introduce breaking changes at any time.
+  super().__init__()
+Running agent SalesLead, type exit to exit.
+[user]: [SalesLead]: No Tier 1 clients are currently decaying. All have "Never" been silent for >40 days. Stay sharp.
+
+[user]: 
+

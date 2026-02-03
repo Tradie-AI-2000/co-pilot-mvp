@@ -16,8 +16,8 @@ export const metadata = {
   description: "Intelligent recruitment assistant for labour hire and trade roles.",
 };
 
-import Sidebar from "../components/sidebar.js";
-import ClientProviders from "../components/client-providers.js";
+import Sidebar from "../components/layout/sidebar.js";
+import ClientProviders from "../components/shared/client-providers.js";
 
 export default function RootLayout({ children }) {
   return (
