@@ -223,6 +223,7 @@ export const nudges = pgTable('nudges', {
     isSeen: boolean('is_seen').default(false),
     isActioned: boolean('is_actioned').default(false),
     snoozedUntil: timestamp('snoozed_until', { withTimezone: true }),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
