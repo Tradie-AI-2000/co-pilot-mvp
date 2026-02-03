@@ -14,7 +14,14 @@ export const marketService = {
      */
     getTenders: async (filters = {}) => {
         try {
-            const query = db.select().from(marketTenders);
+            // DEBUG: Simplified query to isolate column issues
+            const query = db.select({
+                id: marketTenders.id,
+                title: marketTenders.title,
+                description: marketTenders.description,
+                status: marketTenders.status,
+                createdAt: marketTenders.createdAt
+            }).from(marketTenders);
 
             // Filters
             if (filters.region) {
